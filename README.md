@@ -78,7 +78,7 @@
 ```
 .
 ├── README.md                    ← 你在这里
-├── TODO.md                      ← 34 项任务清单，带负责人和截止日
+├── TODO.md                      ← 36 项任务清单，带负责人和截止日
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md              ← 协作规范（文件命名、站会、交接标准）
 ├── docs/                        ← 正文文档（可 diff、可 review）
@@ -259,6 +259,7 @@ uvicorn infer_api:app --host 0.0.0.0 --port 8000
 | 三个人怎么分工、每天做什么 | [`docs/07-分工与计划.md`](docs/07-分工与计划.md) |
 | 报名怎么填、资格怎么确认 | [`docs/08-报名事项.md`](docs/08-报名事项.md) |
 | 落选的另外两个方案 | [`docs/09-备选方案.md`](docs/09-备选方案.md) |
+| **明天上山要拍什么**（负责材料的人必看） | [`docs/10-素材拍摄清单.md`](docs/10-素材拍摄清单.md) |
 | 五个 Agent 的完整提示词 | [`docs/安巡Agent_提示词库.md`](docs/安巡Agent_提示词库.md) |
 | 带排版的成品文档 | [`assets/html/`](assets/html/) |
 
