@@ -65,6 +65,21 @@ docs: 补写第 11 页指标说明
 - 大改动开分支：`feat/agent-workflow`、`data/ppe-v2`
 - 小改动直接 `main`
 
+### 网络受限时的推送方式
+
+本机无法直连 `github.com:443`（`git push` 会失败），但 `api.github.com` 可访问。
+
+用这个脚本代替 `git push`：
+
+```bash
+git add -A && git commit -m "feat: xxx"
+python tools/push_via_api.py
+```
+
+它把本地索引里的全部文件通过 GitHub REST API 写成一个新 commit，追加到远程 `main`。可反复运行，幂等。
+
+> 队友网络正常的话，直接用 `git push` 即可——这个脚本只是本机的绕行方案。
+
 ### 提交前自查
 
 - [ ] 代码能跑（`python demo.py` 不报错）

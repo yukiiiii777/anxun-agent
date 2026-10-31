@@ -101,6 +101,7 @@
 │   ├── data/ppe.yaml            数据集配置
 │   └── requirements.txt
 ├── assets/html/                 ← 排版成品（浏览器直接看）
+├── tools/push_via_api.py        ← 网络受限时的推送脚本（见 CONTRIBUTING）
 └── team/                        ← 团队信息
 ```
 
