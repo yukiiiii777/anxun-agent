@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>守净 Agent · 医疗赛道选题与作品方案</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --ink2:#4a4a4a; --ink3:#7a7a7a;
+    --line:#e6e4dd; --bg:#fbfaf7; --card:#ffffff;
+    --red:#a32d2d; --redbg:#fcebeb;
+    --blue:#185fa5; --bluebg:#e6f1fb;
+    --amber:#854f0b; --amberbg:#faeeda;
+    --green:#3b6d11; --greenbg:#eaf3de;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.75;
+    font-size:15px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:56px 32px 100px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:24px;margin-bottom:40px}
+  .kicker{font-size:12px;letter-spacing:.16em;color:var(--ink3);margin-bottom:12px}
+  h1{font-size:32px;font-weight:600;line-height:1.3;letter-spacing:-.01em}
+  .sub{font-size:15px;color:var(--ink2);margin-top:10px}
+  .meta{display:flex;gap:28px;margin-top:22px;flex-wrap:wrap;font-size:12.5px;color:var(--ink3)}
+  .meta b{color:var(--ink2);font-weight:500}
+
+  h2{font-size:20px;font-weight:600;margin:52px 0 18px;padding-left:14px;border-left:3px solid var(--ink);line-height:1.4}
+  h3{font-size:16px;font-weight:600;margin:28px 0 10px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink2)}
+  ul,ol{margin:10px 0 10px 22px;color:var(--ink2)}
+  li{margin:6px 0}
+  b,strong{color:var(--ink);font-weight:600}
+
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;background:var(--card)}
+  th{text-align:left;font-weight:600;color:var(--ink);background:#f4f2ec;padding:10px 12px;border-bottom:1px solid var(--line)}
+  td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  table.plain th{background:transparent}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin:18px 0}
+  .callout{border-left:3px solid;border-radius:0 8px 8px 0;padding:14px 18px;margin:18px 0;font-size:14px}
+  .c-red{background:var(--redbg);border-color:var(--red);color:#6d1d1d}
+  .c-blue{background:var(--bluebg);border-color:var(--blue);color:#123f6b}
+  .c-amber{background:var(--amberbg);border-color:var(--amber);color:#5c3608}
+  .c-green{background:var(--greenbg);border-color:var(--green);color:#2a4f0c}
+  .callout b{color:inherit}
+
+  .tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:4px;background:#f0eee8;color:var(--ink2);margin-right:6px}
+  .tag.red{background:var(--redbg);color:var(--red)}
+  .tag.blue{background:var(--bluebg);color:var(--blue)}
+  .tag.green{background:var(--greenbg);color:var(--green)}
+  .tag.amber{background:var(--amberbg);color:var(--amber)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+  .box .bt{font-size:13px;font-weight:600;margin-bottom:6px}
+  .box .bd{font-size:12.5px;color:var(--ink3);line-height:1.6}
+
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}
+  .flow .step{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-size:12.5px;color:var(--ink2)}
+  .flow .arw{color:var(--ink3);font-size:13px}
+
+  .slide-row{display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .slide-row:last-child{border-bottom:none}
+  .slide-num{flex:0 0 34px;color:var(--ink3);font-family:ui-monospace,monospace;font-size:12px}
+  .slide-name{flex:0 0 200px;font-weight:500;color:var(--ink)}
+  .slide-desc{flex:1;color:var(--ink3);font-size:12.5px}
+
+  footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink3)}
+  @media (max-width:720px){
+    .wrap{padding:32px 18px 64px}
+    h1{font-size:24px}
+    .grid2,.grid3{grid-template-columns:1fr}
+    .slide-name{flex:1 0 100%}
+    .slide-desc{margin-left:34px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">第二届全国人工智能应用创新大赛 · 通用赛道 · 医疗领域 · 本科生组</div>
+  <h1>守净 Agent<br>面向医院院感防控的视觉合规监测多智能体系统</h1>
+  <div class="sub">医疗赛道选题论证 + 作品实现方案 + 20 页 PPT 逐页大纲 + 10 天倒排计划</div>
+  <div class="meta">
+    <span><b>参赛单位</b> 上海中侨职业技术大学 · 人工智能学院</span>
+    <span><b>命题领域</b> 医疗</span>
+    <span><b>建议人数</b> 3 人 + 1 指导老师</span>
+    <span><b>方案版本</b> 2026-10-31</span>
+  </div>
+</header>
+
+<h2>一、为什么是院感，而不是问诊</h2>
+
+<p>走医疗赛道最大的陷阱是这个：<strong>大多数人会做「智能问诊 / 健康咨询」Agent</strong>——因为不需要任何数据、一晚上就能搭出来、讲起来还显得专业。结果就是评委一天要看几十个几乎一样的对话机器人。</p>
+
+<p>院感防控（IPC，Infection Prevention and Control）是另一种打法。它属于官方定义里的「<strong>医疗流程智能化升级</strong>」，但它考核的对象是<strong>医院的管理动作</strong>，不是病人的诊断结论。这一区别带来三个直接好处：</p>
+
+<div class="grid3">
+  <div class="box">
+    <div class="bt">不碰诊断红线</div>
+    <div class="bd">不输出任何医疗建议，不涉及 AI 辅助诊断的伦理争议和医疗器械资质问题。答辩时这是优势不是短板。</div>
+  </div>
+  <div class="box">
+    <div class="bt">数据可以自采</div>
+    <div class="bd">手卫生动作、防护穿戴、医废投放都能在实训室模拟拍摄，不需要医院病历或影像数据。</div>
+  </div>
+  <div class="box">
+    <div class="bt">能力直接复用</div>
+    <div class="bd">你的 YOLO 检测 + 姿态估计能力是主干，不是点缀。技术章节能写实、有指标。</div>
+  </div>
+</div>
+
+<div class="callout c-blue">
+<b>一句话定位：</b>把「手卫生依从性、防护穿戴、医疗废物分类」这三件靠人盯、靠填表、靠抽查的事，变成一条<strong>由多个 Agent 协同完成、有视觉模型做眼睛、有院感规范做依据、有科室整改做闭环</strong>的自动化流程。
+</div>
+
+<h2>二、痛点为什么成立</h2>
+
+<table>
+  <tr><th style="width:20%">痛点</th><th style="width:40%">具体表现</th><th>可论证的抓手</th></tr>
+  <tr>
+    <td><b>手卫生依从性虚高</b></td>
+    <td>国际通行做法是「直接观察法」由院感专员现场盯人记录，但这是<b>霍桑效应</b>最典型的场景——被盯的时候人人洗手，专员一走就恢复原样。样本量还受人力限制。</td>
+    <td>霍桑效应是有文献支撑的方法学缺陷，<b>在这里主动指出行业方法的局限，是评委最认的「问题理解深度」</b></td>
+  </tr>
+  <tr>
+    <td><b>监测频次不足</b></td>
+    <td>院感科通常只有 1–3 人，要覆盖全院几十个科室，只能按月抽查重点科室</td>
+    <td>覆盖率是可量化指标：人工抽查 vs 全天候覆盖</td>
+  </tr>
+  <tr>
+    <td><b>医废分类错误</b></td>
+    <td>感染性、损伤性废物混投是卫生监督执法检查的高频扣分项，且存在职业暴露风险</td>
+    <td>分类错误率是硬指标，且有明确法规依据</td>
+  </tr>
+  <tr>
+    <td><b>预警滞后</b></td>
+    <td>院感聚集性事件往往在病例数上升后才被发现，缺少过程指标的早期信号</td>
+    <td>引入 SPC 统计过程控制，从「事后统计」转到「过程预警」</td>
+  </tr>
+</table>
+
+<div class="callout c-amber">
+<b>引用的规范必须逐条核对原文，这是答辩生死线。</b>本方案涉及的可引用文件方向（<span class="tag amber">需你自行核实版本与条款号</span>）：《医院感染管理办法》、《医务人员手卫生规范》WS/T 313、《医疗废物管理条例》、《医院消毒卫生标准》GB 15982。手卫生指征可对标 WHO「手卫生五个时刻」——接触患者前、清洁/无菌操作前、体液暴露风险后、接触患者后、接触患者周围环境后。这五条是国际通用框架，讲出来评委一听就知道你查过资料。<b>条款号、发布年份、现行有效性，提交前务必到国家卫健委或标准全文数据库核对。</b>
+</div>
+
+<h2>三、系统架构：五个 Agent</h2>
+
+<p>不要做成一个大 Agent 塞满提示词，评委会觉得在套模板。<strong>按院感管理流程拆角色</strong>，每个 Agent 职责单一、输入输出明确。</p>
+
+<div class="flow">
+  <span class="step">① 监测规划 Agent</span><span class="arw">→</span>
+  <span class="step">② 视觉感知 Agent</span><span class="arw">→</span>
+  <span class="step">③ 风险研判 Agent</span><span class="arw">→</span>
+  <span class="step">④ 整改闭环 Agent</span><span class="arw">→</span>
+  <span class="step">⑤ 规范问答 Agent</span>
+</div>
+
+<table>
+  <tr><th style="width:18%">Agent</th><th style="width:32%">职责</th><th>关键设计（答辩讲这个）</th></tr>
+  <tr>
+    <td><b>① 监测规划</b></td>
+    <td>按科室风险等级（ICU、手术室、血透室、新生儿科为高危）和历史依从性数据，动态分配监测点位与频次</td>
+    <td>不是平均用力，是<b>风险加权</b>——有限算力优先投给高危科室</td>
+  </tr>
+  <tr>
+    <td><b>② 视觉感知</b></td>
+    <td>识别手卫生动作关键节点、口罩/手套/隔离衣穿戴状态、医废投放类别</td>
+    <td><b>这是你的护城河</b>。模型作为 Agent 的原生 tool 接入，不是外挂</td>
+  </tr>
+  <tr>
+    <td><b>③ 风险研判</b></td>
+    <td>聚合到科室层面计算依从率、做趋势判断、识别异常波动并给风险等级</td>
+    <td>用 <b>SPC 控制图</b>判断「是否异常」，而不是拍一个固定阈值</td>
+  </tr>
+  <tr>
+    <td><b>④ 整改闭环</b></td>
+    <td>低依从科室生成培训工单、指派院感监控员、限期复查、追踪改善曲线</td>
+    <td>PDCA 闭环，对应管理学语言，评委听得懂</td>
+  </tr>
+  <tr>
+    <td><b>⑤ 规范问答</b></td>
+    <td>RAG 检索院感规范，给出整改依据条款原文</td>
+    <td>每条建议「有出处」，这是可信度来源</td>
+  </tr>
+</table>
+
+<div class="callout c-green">
+<b>答辩杀手锏：</b>评委问「这和装个摄像头人工看有什么区别」，答案是——<b>人工看的时候人会自动表现好，机器看的时候不会。我的系统测的是真实依从性，不是被观察时的依从性。</b>这一句直接把你和「监控方案」区分开。
+</div>
+
+<h3>3.1 技术实现路线：为什么这条比训练检测模型容易</h3>
+
+<div class="callout c-blue">
+<b>关键判断：手卫生与穿戴识别，不需要从零训练一个高精度检测器。</b>不要用「训练 YOLO 检测火焰」的思路来做这件事，那是错配。
+</div>
+
+<table>
+  <tr><th style="width:14%">层级</th><th style="width:30%">做法</th><th>为什么可行</th></tr>
+  <tr><td><b>第一层</b><br>现成能力</td><td>调用开源人体姿态估计模型取关键点（手、肘、肩、头）</td><td>人体关键点检测是成熟任务，预训练模型泛化好，<b>不需要自己标注训练</b></td></tr>
+  <tr><td><b>第二层</b><br>规则判定</td><td>由关键点几何关系 + 时序判断：手是否进入洗手台区域、停留时长是否达标、是否经过规定动作节点</td><td>这是一个<b>几何与时序问题，规则可写</b>，不依赖语义理解的准确率</td></tr>
+  <tr><td><b>第三层</b><br>时序聚合</td><td>连续多帧一致才判定为一次有效手卫生，单帧异常丢弃</td><td>把单帧抖动的影响压掉，鲁棒性远高于逐帧判定</td></tr>
+  <tr><td><b>第四层</b><br>可选微调</td><td>用少量自采数据微调一个动作分类器，提升特定场景表现</td><td>是锦上添花，<b>不是成败前提</b>。时间不够可以不做</td></tr>
+</table>
+
+<p><b>为什么这比火灾检测简单？</b>火灾检测要回答的是「这是不是火」——语义边界模糊，蒸汽、粉尘反光、夕阳都能骗过模型，所以精度难提。而手卫生判定回答的是「手有没有移动到规定位置、有没有持续够时长」——<strong>这是几何和时序问题，有明确答案，规则写得出来</strong>。你之前在火焰检测上吃过的精度苦，在这个场景里大部分不会出现。</p>
+
+<div class="callout c-amber">
+<b>降级策略（写进 PPT，答辩加分）：</b>如果姿态估计在真实病房光照下不够稳定，退一档做「洗手台区域人员停留时长 + 动作幅度」的粗粒度判定，仍然能产出有意义的依从性指标。<b>分级降级意味着这个作品在任何技术条件下都能交付，而不是全有或全无。</b>评委很认这种工程成熟度。
+</div>
+
+<h2>四、数据与知识库：决定分数上限的一章</h2>
+
+<p>官方在这一章给了 2–4 页，并明确要求说明数据渠道的「<strong>权威性与时效性</strong>」。医疗领域尤其看重这个，必须写实、写出处。</p>
+
+<h3>4.1 数据来源</h3>
+<table>
+  <tr><th style="width:8%">序</th><th style="width:30%">来源</th><th style="width:16%">类型</th><th>怎么用</th></tr>
+  <tr><td>1</td><td>实训室模拟采集（主力）</td><td>一手实拍</td><td>按 WHO 五个时刻 × 七步洗手法设计动作脚本，多角度、多光照、多人拍摄。<b>主要用途是标定规则阈值</b>（停留时长、位置判定、动作时序），不是训练检测器——数据量需求低一个数量级</td></tr>
+  <tr><td>2</td><td>开源姿态估计预训练模型</td><td>成熟开源模型</td><td>提供人体关键点检测能力，开箱可用，不需要自建训练集 <span class="tag amber">具体选用哪个模型需核实并在 PPT 注明</span></td></tr>
+  <tr><td>3</td><td>院感规范与标准文本</td><td>政府规范性文件</td><td>构成知识库，条款可溯源</td></tr>
+  <tr><td>4</td><td>公开院感监测统计年报</td><td>行业权威统计</td><td>做基线对比，论证问题的普遍性 <span class="tag amber">需核实可获取性与引用口径</span></td></tr>
+</table>
+
+<div class="callout c-red">
+<b>诚实原则：</b>第 2、4 项如果最后拿不到，<b>就不要写</b>。编一个查不到出处的数据集名字，通讯评审阶段没人管，进了区域赛现场答辩被问一句就崩。宁可只写「自采 + 规范文本」两个渠道——官方要求是 2–3 个，两个合规。
+</div>
+
+<h3>4.2 知识库的四个层次</h3>
+<ul>
+  <li><b>法规层</b>：《医院感染管理办法》《医疗废物管理条例》及地方卫生监督要求</li>
+  <li><b>标准层</b>：WS/T 313 手卫生规范、GB 15982 消毒卫生标准、隔离技术规范</li>
+  <li><b>操作层</b>：七步洗手法、防护用品穿脱顺序（PPE donning/doffing 顺序本身就是考核点）</li>
+  <li><b>经验层</b>：历史整改案例、常见违规类型清单</li>
+</ul>
+
+<h3>4.3 预处理流程</h3>
+<div class="flow">
+  <span class="step">动作脚本设计</span><span class="arw">→</span>
+  <span class="step">多角度拍摄</span><span class="arw">→</span>
+  <span class="step">抽帧去重</span><span class="arw">→</span>
+  <span class="step">关键点/框标注</span><span class="arw">→</span>
+  <span class="step">数据增强</span><span class="arw">→</span>
+  <span class="step">训练与验证</span>
+</div>
+<p>文本侧走：规范 PDF 解析 → <b>按条款切分</b>（不是按字数切）→ 向量化 → 检索。按条款切分能保证检索结果永远是完整条款，不会断章取义——这个细节写进 PPT，是「预处理专业性」的直接体现。</p>
+
+<h2>五、创新性：官方标注的「额外加分」怎么填</h2>
+
+<div class="grid2">
+  <div class="box">
+    <div class="bt">创新点一：消除观察者效应</div>
+    <div class="bd">传统直接观察法测的是「被观察时的依从性」，本身有系统性偏差。非接触式连续监测测得的是真实行为分布。这不是技术炫技，是<b>方法学层面的改进</b>——主动指出行业方法的缺陷，比多做一个功能更能体现问题理解深度。</div>
+  </div>
+  <div class="box">
+    <div class="bt">创新点二：SPC 过程预警</div>
+    <div class="bd">院感监测惯常是事后统计月度感染率。本作品把统计过程控制图引入依从性监测，在指标出现异常趋势（连续多点同侧、超出控制限）时提前预警，把「事后统计」变成「过程干预」。</div>
+  </div>
+</div>
+
+<p><b>独特视角（跨学科）</b>：公共卫生的方法学（依从性测量）× 计算机视觉的检测能力 × 管理学的 PDCA 闭环。三层学科语言在一个系统里对齐——正好对应大赛「横向复合型人才」的选拔取向。这一段要写成研究贡献的口吻，不要写成宣传语。</p>
+
+<h2>六、应用结果呈现：把「能跑」变成「可验证」</h2>
+
+<div class="callout c-red">
+官方硬要求：提供至少 3 个提示词示例及输出结果，<b>并提供 Agent 智能体网址链接</b>。没有可访问的链接，方案写得再好也是零分作品。
+</div>
+
+<h3>6.1 平台选型</h3>
+<table>
+  <tr><th style="width:22%">路线</th><th style="width:26%">优点</th><th>风险</th></tr>
+  <tr><td><b>A. 扣子 / Coze 搭多 Agent</b><br><span class="tag green">推荐主用</span></td><td>1 天出可公开访问链接，多 Agent 编排成熟，上届国奖队伍多走此路线</td><td>需确认上海赛区是否强制用官方平台</td></tr>
+  <tr><td><b>B. 京东云 JoyCode</b><br><span class="tag blue">本届官方平台</span></td><td>官方平台支撑，免费提供编程与大模型调用，契合度最高</td><td>需自己写前端接口，工期更长</td></tr>
+</table>
+<p><b>建议：A 为主演示，CV 模型以 API 形式挂为 tool。</b>若赛区强制 JoyCode，用其写轻量前端调用同一套接口，两天可迁完。架构上把视觉能力做成独立 API，是降低这个风险的唯一办法。</p>
+
+<h3>6.2 三个必演示的提示词（对应官方硬要求）</h3>
+<table>
+  <tr><th style="width:8%">序</th><th style="width:40%">提示词</th><th>要展示什么</th></tr>
+  <tr><td>1</td><td>「调出本周 ICU 的手卫生依从性数据，和上周比怎么样？」</td><td>Agent 能检索真实监测数据、做趋势对比、给结论</td></tr>
+  <tr><td>2</td><td>「这个手卫生动作判定为不合格，依据是哪条规范？」</td><td>关键点判定逻辑 + 规范条款溯源，体现严谨性</td></tr>
+  <tr><td>3</td><td>「神经内科依从率连续三周下降，生成整改工单和建议」</td><td>SPC 异常识别 + 闭环工单，体现落地性</td></tr>
+</table>
+
+<h2>七、PPT 逐页大纲（20 页以内，对齐官方六章）</h2>
+
+<div class="card">
+  <div class="slide-row"><div class="slide-num">01</div><div class="slide-name">封面</div><div class="slide-desc">作品名、领域、学校、团队、指导老师</div></div>
+  <div class="slide-row"><div class="slide-num">02</div><div class="slide-name">作品背景与说明</div><div class="slide-desc">团队 3 人分工 + 一句话说清做什么 + 参考来源（官方要求单列此页）</div></div>
+  <div class="slide-row"><div class="slide-num">03</div><div class="slide-name">场景痛点</div><div class="slide-desc">直接观察法的霍桑效应 × 院感科人力不足，一页讲清方法学缺陷</div></div>
+  <div class="slide-row"><div class="slide-num">04</div><div class="slide-name">数据来源一：自采模拟数据</div><div class="slide-desc">动作脚本设计、拍摄规模、场景多样性</div></div>
+  <div class="slide-row"><div class="slide-num">05</div><div class="slide-name">数据来源二：迁移预训练</div><div class="slide-desc">公开数据集说明 + 为什么需要迁移（自采量有限）</div></div>
+  <div class="slide-row"><div class="slide-num">06</div><div class="slide-name">知识库构建</div><div class="slide-desc">法规/标准/操作/经验四层，附条款示例截图</div></div>
+  <div class="slide-row"><div class="slide-num">07</div><div class="slide-name">数据预处理流程</div><div class="slide-desc">图像链路 + 文本链路两条并列流程图</div></div>
+  <div class="slide-row"><div class="slide-num">08</div><div class="slide-name">分析方法选择</div><div class="slide-desc">为什么用多 Agent、为什么引入 SPC 控制图</div></div>
+  <div class="slide-row"><div class="slide-num">09</div><div class="slide-name">分析流程思维导图</div><div class="slide-desc">官方点名要「思维导图形式」，别用普通流程图</div></div>
+  <div class="slide-row"><div class="slide-num">10</div><div class="slide-name">系统架构</div><div class="slide-desc">五 Agent 协同图 + 数据流箭头</div></div>
+  <div class="slide-row"><div class="slide-num">11</div><div class="slide-name">模型实测指标</div><div class="slide-desc">关键点识别精度、检测 FPS、混淆矩阵——证明不是 PPT 模型</div></div>
+  <div class="slide-row"><div class="slide-num">12</div><div class="slide-name">创新点一</div><div class="slide-desc">消除观察者效应：测真实行为而非被观察行为</div></div>
+  <div class="slide-row"><div class="slide-num">13</div><div class="slide-name">创新点二 + 跨学科视角</div><div class="slide-desc">SPC 过程预警 + 公卫×视觉×管理三学科融合（官方加分页）</div></div>
+  <div class="slide-row"><div class="slide-num">14</div><div class="slide-name">结果解读</div><div class="slide-desc">实测案例：从监测异常到工单到复查改善的完整时间线</div></div>
+  <div class="slide-row"><div class="slide-num">15</div><div class="slide-name">价值量化</div><div class="slide-desc">监测覆盖率、整改闭环时长、分类错误率三个指标前后对比</div></div>
+  <div class="slide-row"><div class="slide-num">16</div><div class="slide-name">问题与优化建议</div><div class="slide-desc">主动承认 2–3 个不足并给优化路径，别装完美</div></div>
+  <div class="slide-row"><div class="slide-num">17</div><div class="slide-name">风险识别与应对</div><div class="slide-desc">隐私合规、医护接受度、识别准确率三类风险</div></div>
+  <div class="slide-row"><div class="slide-num">18</div><div class="slide-name">应用对话界面</div><div class="slide-desc">真实截图，不要设计稿</div></div>
+  <div class="slide-row"><div class="slide-num">19</div><div class="slide-name">提示词示例 + Agent 链接</div><div class="slide-desc">3 组提示词及输出 + 可点击链接（官方硬要求）</div></div>
+  <div class="slide-row"><div class="slide-num">20</div><div class="slide-name">结尾</div><div class="slide-desc">落地路径与展望，1 页收住</div></div>
+</div>
+
+<h2>八、6 分钟答辩视频脚本</h2>
+
+<table>
+  <tr><th style="width:14%">时间</th><th style="width:28%">内容</th><th>要点</th></tr>
+  <tr><td>0:00–0:45</td><td>反常识开场</td><td>「医院每年都在测手卫生依从性，但测出来的数字，恰恰是最不可信的数字」——用霍桑效应切入，比「随着人工智能的发展」强十倍</td></tr>
+  <tr><td>0:45–1:30</td><td>我们的答案</td><td>五个 Agent 各做什么，配架构图，一句话讲清</td></tr>
+  <tr><td>1:30–2:40</td><td>数据与知识库</td><td>自采数据的脚本设计逻辑 + 四层知识库，强调权威性</td></tr>
+  <tr><td>2:40–4:20</td><td>现场演示</td><td><b>最关键的 100 秒。</b>真实录屏：视频输入 → 动作判定 → 依从率统计 → SPC 异常 → 工单 → 条款依据。连续交互，别剪太碎</td></tr>
+  <tr><td>4:20–5:20</td><td>价值与创新</td><td>两个创新点 + 三个量化指标</td></tr>
+  <tr><td>5:20–6:00</td><td>风险与展望</td><td>主动说局限，展示清醒度</td></tr>
+</table>
+
+<h2>九、10 天倒排计划</h2>
+
+<table>
+  <tr><th style="width:16%">日期</th><th style="width:30%">任务</th><th>交付物</th></tr>
+  <tr><td>10.31 – 11.01</td><td>确认本校校赛承办状态、组队、官网注册缴费</td><td>队伍建成、账号就绪</td></tr>
+  <tr><td>11.01 – 11.02</td><td>设计动作脚本，在实训室拍第一批素材（洗手/戴口罩/医废投放）</td><td>50–100 段短视频，覆盖多角度多光照</td></tr>
+  <tr><td>11.02 – 11.03</td><td>Coze 搭五 Agent 骨架，跑通第一条链路</td><td>可访问的 Agent 链接 v0.1</td></tr>
+  <tr><td>11.03 – 11.05</td><td>接入姿态估计，标定判定规则，封装为 API 挂进感知 Agent</td><td>链路 v0.2，能看到真实判定结果</td></tr>
+  <tr><td>11.04 – 11.05</td><td>规范知识库入库 + 条款检索测试</td><td>能回答 10 个典型院感问题</td></tr>
+  <tr><td>11.05 – 11.06</td><td>整理数据章节素材：数据统计、精度指标、SPC 控制图样例</td><td>图表素材包</td></tr>
+  <tr><td>11.06 – 11.07</td><td>PPT 20 页成稿</td><td>PPT v1</td></tr>
+  <tr><td>11.07 – 11.08</td><td>录屏 + 配音，6 分钟视频</td><td>MP4 成片</td></tr>
+  <tr><td>11.08 – 11.09</td><td>打包上传 + 自查清单核对</td><td>官网提交成功截图</td></tr>
+  <tr><td>11.09 – 11.10</td><td>缓冲 + 修改后重新上传</td><td>最终版（以最后一次上传为准）</td></tr>
+</table>
+
+<div class="callout c-red">
+<b>把死线提前到 11 月 9 日。</b>官网只接受单个压缩包、以最后一次上传覆盖为准，但 10 号晚上系统拥堵、上传失败是常见事故，没有补救通道。<b>数据采集这一步最容易拖延，务必第一二天拍完</b>——模型训练可以晚，素材不能等。
+</div>
+
+<h2>十、风险清单与答辩预设问题</h2>
+
+<h3>10.1 执行风险</h3>
+<table>
+  <tr><th style="width:30%">风险</th><th style="width:10%">概率</th><th>应对</th></tr>
+  <tr><td>本校不承办校赛，无法进入三级赛制</td><td class="tag red">高</td><td>找辅导员/教务处确认；看上海赛区是否设虚拟校赛（首届有此机制）</td></tr>
+  <tr><td>赛区强制要求 JoyCode，Coze 作品不被接受</td><td class="tag blue">中</td><td>查本赛区通知原文；视觉能力做成独立 API，前端可快速迁移</td></tr>
+  <tr><td>自采素材拍摄不顺（场地、人员配合）</td><td class="tag blue">中</td><td>规则标定只需少量样本，拍 50–100 段即可起步；退一步用公开视频先跑通链路，PPT 如实说明素材规模</td></tr>
+  <tr><td>时间被软件杯、挑杯挤占</td><td class="tag red">高</td><td>只保留感知 + 研判两个 Agent，砍掉工单和问答，作品仍完整</td></tr>
+  <tr><td>医疗领域参赛队多，同质化竞争激烈</td><td class="tag amber">中</td><td>差异化不在场景而在<b>方法学</b>——霍桑效应切入点是别人抄不走的叙事</td></tr>
+</table>
+
+<h3>10.2 评委可能问的问题</h3>
+<ul>
+  <li><b>「这不就是监控员工吗？」</b>→ 关键在设计原则：数据只聚合到科室层面用于培训改进，不做个人排名、不做处罚依据；只存动作类别与计数，不存人脸。这既是伦理立场也是落地前提。</li>
+  <li><b>「动作识别准不准？漏判怎么办？」</b>→ 报实测指标，讲清楚只做高置信度判定，低置信转人工复核，<b>宁可漏报不误报</b>——因为误判会直接摧毁医护的信任。</li>
+  <li><b>「这和现成的院感监测系统有什么区别？」</b>→ 现有系统多是人工录入 + 事后统计；本作品是过程数据的自动采集 + 实时预警 + 闭环整改。</li>
+  <li><b>「医院凭什么买？」</b>→ 等级医院评审和院感质控考核有硬性指标，依从性数据是必查项；替代的是人工观察的人力成本。</li>
+  <li><b>「数据隐私怎么合规？」</b>→ 视频边缘侧处理不出院，只上传结构化结论；不采集人脸与患者身份信息，符合最小必要原则。</li>
+  <li><b>「为什么选医疗而不是制造或教育？」</b>→ 这个问题要准备。答案不要讲「医疗更有价值」，讲「院感防控的数据可以通过模拟采集获得，而诊断类数据拿不到，所以这是我能做扎实的那一块」——诚实且专业。</li>
+</ul>
+
+<footer>
+  <p>本方案基于 2026-10-31 官网公开信息及多校校赛通知整理。赛题形式、平台要求、作品格式以本校校赛承办单位通知与大赛官网《报名须知》《作品提交说明》最新版为准。</p>
+  <p>涉及医疗卫生法规、标准条款、数据集出处的内容，提交前必须逐条核对原文与现行有效性。</p>
+</footer>
+
+</div>
+</body>
+</html>

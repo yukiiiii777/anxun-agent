@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安巡 Agent · 实施手册</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --ink2:#4a4a4a; --ink3:#7a7a7a;
+    --line:#e6e4dd; --bg:#fbfaf7; --card:#ffffff;
+    --red:#a32d2d; --redbg:#fcebeb;
+    --blue:#185fa5; --bluebg:#e6f1fb;
+    --amber:#854f0b; --amberbg:#faeeda;
+    --green:#3b6d11; --greenbg:#eaf3de;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.75;
+    font-size:15px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:56px 32px 100px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:24px;margin-bottom:40px}
+  .kicker{font-size:12px;letter-spacing:.16em;color:var(--ink3);margin-bottom:12px}
+  h1{font-size:30px;font-weight:600;line-height:1.3;letter-spacing:-.01em}
+  .sub{font-size:15px;color:var(--ink2);margin-top:10px}
+  .meta{display:flex;gap:28px;margin-top:22px;flex-wrap:wrap;font-size:12.5px;color:var(--ink3)}
+  .meta b{color:var(--ink2);font-weight:500}
+
+  h2{font-size:20px;font-weight:600;margin:52px 0 18px;padding-left:14px;border-left:3px solid var(--ink);line-height:1.4}
+  h3{font-size:16px;font-weight:600;margin:28px 0 10px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink2)}
+  ul,ol{margin:10px 0 10px 22px;color:var(--ink2)}
+  li{margin:6px 0}
+  b,strong{color:var(--ink);font-weight:600}
+
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;background:var(--card)}
+  th{text-align:left;font-weight:600;color:var(--ink);background:#f4f2ec;padding:10px 12px;border-bottom:1px solid var(--line)}
+  td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin:18px 0}
+  .callout{border-left:3px solid;border-radius:0 8px 8px 0;padding:14px 18px;margin:18px 0;font-size:14px}
+  .c-red{background:var(--redbg);border-color:var(--red);color:#6d1d1d}
+  .c-blue{background:var(--bluebg);border-color:var(--blue);color:#123f6b}
+  .c-amber{background:var(--amberbg);border-color:var(--amber);color:#5c3608}
+  .c-green{background:var(--greenbg);border-color:var(--green);color:#2a4f0c}
+  .callout b{color:inherit}
+
+  .tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:4px;background:#f0eee8;color:var(--ink2);margin-right:6px}
+  .tag.red{background:var(--redbg);color:var(--red)}
+  .tag.blue{background:var(--bluebg);color:var(--blue)}
+  .tag.green{background:var(--greenbg);color:var(--green)}
+  .tag.amber{background:var(--amberbg);color:var(--amber)}
+
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}
+  .flow .step{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-size:12.5px;color:var(--ink2)}
+  .flow .arw{color:var(--ink3);font-size:13px}
+
+  .shot{display:flex;gap:16px;padding:14px 0;border-bottom:1px dashed var(--line)}
+  .shot:last-child{border-bottom:none}
+  .shot-t{flex:0 0 62px;font-family:ui-monospace,monospace;font-size:12px;color:var(--ink3);padding-top:2px}
+  .shot-b{flex:1}
+  .shot-v{font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:4px}
+  .shot-d{font-size:12.5px;color:var(--ink3);line-height:1.65}
+  .shot-n{font-size:12.5px;color:var(--blue);margin-top:6px;padding-left:10px;border-left:2px solid #B5D4F4}
+
+  .check{list-style:none;margin-left:0}
+  .check li{padding-left:26px;position:relative;margin:9px 0}
+  .check li::before{content:"";position:absolute;left:0;top:6px;width:13px;height:13px;border:1.5px solid #b4b2a9;border-radius:3px}
+
+  code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;background:#f4f2ec;padding:2px 6px;border-radius:3px;color:var(--ink2)}
+  pre{background:#f4f2ec;border-radius:8px;padding:14px 16px;overflow-x:auto;margin:12px 0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;line-height:1.7;color:var(--ink2)}
+
+  footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink3)}
+  @media (max-width:720px){
+    .wrap{padding:32px 18px 64px}
+    h1{font-size:23px}
+    .shot{flex-direction:column;gap:6px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">实施手册 · 从提示词到能演示的完整路径</div>
+  <h1>安巡 Agent · 落地执行手册</h1>
+  <div class="sub">数据流设计 · 模型训练口径 · 平台搭建步骤 · 6 分钟视频分镜 · 提交前自查</div>
+  <div class="meta">
+    <span><b>配套文件</b> 安巡Agent_提示词库.md</span>
+    <span><b>目标</b> 11.08 前产出可演示作品</span>
+  </div>
+</header>
+
+<h2>一、数据流设计</h2>
+
+<p>先把数据怎么流转画清楚，搭平台的时候照着填，不会乱。</p>
+
+<div class="flow">
+  <span class="step">摄像头 / 视频文件</span><span class="arw">→</span>
+  <span class="step">抽帧</span><span class="arw">→</span>
+  <span class="step">检测模型 API</span><span class="arw">→</span>
+  <span class="step">② 视觉感知</span><span class="arw">→</span>
+  <span class="step">③ 隐患研判</span><span class="arw">→</span>
+  <span class="step">④ 工单闭环</span><span class="arw">→</span>
+  <span class="step">复查归档</span>
+</div>
+
+<p>旁边三条支线：<b>① 巡检规划</b>在每日开始时产出计划，决定拍哪里；<b>⑤ 合规问答</b>随时被 ③④ 调用取法规依据；<b>历史数据</b>回流给 ① ③，让风险加权和 L 值算得出来。</p>
+
+<div class="callout c-blue">
+<b>架构上的一个关键决定：</b>检测模型必须封装成独立的 <b>HTTP API</b>，而不是塞在 Agent 内部。<br>
+好处有三：① 平台迁移时不重写（Coze 换 JoyCode 只换调用地址）；② 评委能直接访问这个接口验证；③ 模型迭代不影响上层。
+</div>
+
+<h2>二、三个核心数据结构</h2>
+
+<p>不要用散落的变量，一开始就定成三张表。后面生成工单、算 L 值都靠它们。</p>
+
+<h3>2.1 区域表 regions</h3>
+<table>
+  <tr><th style="width:22%">字段</th><th style="width:16%">类型</th><th>说明</th></tr>
+  <tr><td>region_id</td><td>string</td><td>区域编号，如 <code>A-03</code></td></tr>
+  <tr><td>name</td><td>string</td><td>区域名称，如「3 号车间东侧通道」</td></tr>
+  <tr><td>risk_class</td><td>enum</td><td>动火 / 危化品 / 高处 / 有限空间 / 普通</td></tr>
+  <tr><td>owner</td><td>string</td><td>责任班组长</td></tr>
+  <tr><td>violation_30d</td><td>int</td><td>近 30 天违规次数（用于 L 值计算）</td></tr>
+</table>
+
+<h3>2.2 事件表 events</h3>
+<table>
+  <tr><th style="width:22%">字段</th><th style="width:16%">类型</th><th>说明</th></tr>
+  <tr><td>event_id</td><td>string</td><td>事件编号</td></tr>
+  <tr><td>region_id</td><td>string</td><td>关联区域</td></tr>
+  <tr><td>ts</td><td>datetime</td><td>发生时间戳</td></tr>
+  <tr><td>violation_type</td><td>enum</td><td>未戴安全帽 / 未穿反光背心 / 未戴护目镜 / 通道占用</td></tr>
+  <tr><td>confidence</td><td>float</td><td>检测置信度</td></tr>
+  <tr><td>evidence</td><td>string</td><td>证据图路径或帧号</td></tr>
+  <tr><td>level_L / level_S / risk_R</td><td>int</td><td>风险矩阵三要素</td></tr>
+  <tr><td>grade</td><td>enum</td><td>红 / 橙 / 黄 / 蓝</td></tr>
+</table>
+
+<h3>2.3 工单表 tickets</h3>
+<table>
+  <tr><th style="width:22%">字段</th><th style="width:16%">类型</th><th>说明</th></tr>
+  <tr><td>ticket_id</td><td>string</td><td>工单编号</td></tr>
+  <tr><td>event_id</td><td>string</td><td>关联事件</td></tr>
+  <tr><td>requirement</td><td>string</td><td>可验证的整改动作</td></tr>
+  <tr><td>assignee</td><td>string</td><td>责任人</td></tr>
+  <tr><td>due_at</td><td>datetime</td><td>整改时限</td></tr>
+  <tr><td>review_at</td><td>datetime</td><td>复查时间</td></tr>
+  <tr><td>status</td><td>enum</td><td>派单 / 整改中 / 待复查 / 已闭环 / 逾期</td></tr>
+</table>
+
+<div class="callout c-green">
+<b>这三张表就是「结果解读」和「价值量化」两页 PPT 的数据来源。</b>没有表，你只能讲感觉；有表，你能出图表：违规趋势、闭环时长分布、逾期率。评委看图表比看文字快十倍。
+</div>
+
+<h2>三、模型训练口径</h2>
+
+<p>这部分的重点是<b>指标能报得出来、报得诚实</b>。评委不会追问 mAP 小数点，但一定会问「误报怎么办」。</p>
+
+<h3>3.1 类别设计</h3>
+<table>
+  <tr><th style="width:20%">类别</th><th style="width:20%">必要性</th><th>说明</th></tr>
+  <tr><td>person</td><td><span class="tag red">必须</span></td><td>人员基准框，所有判定都以它为参照</td></tr>
+  <tr><td>helmet</td><td><span class="tag red">必须</span></td><td>安全帽，核心判定对象</td></tr>
+  <tr><td>vest</td><td><span class="tag green">建议</span></td><td>反光背心，扩展判定维度</td></tr>
+  <tr><td>goggles</td><td><span class="tag amber">可选</span></td><td>防护眼镜，目标小、难检测，时间不够就砍</td></tr>
+</table>
+
+<p><b>四类起步，两类保底。</b>person + helmet 两个类别就能撑起完整演示，不要一开始铺太大。</p>
+
+<h3>3.2 数据增强：每种都对应一个现场问题</h3>
+<table>
+  <tr><th style="width:26%">增强方式</th><th style="width:26%">针对的现场问题</th><th>怎么做</th></tr>
+  <tr><td>亮度/对比度扰动</td><td>车间光线不均、逆光、夜间</td><td>Gamma 变换 + 直方图均衡，模拟弱光</td></tr>
+  <tr><td>随机遮挡</td><td>设备遮挡、多人重叠</td><td>Random Erasing，遮挡比例 10–30%</td></tr>
+  <tr><td>多角度翻转 + 旋转</td><td>摄像头安装角度不同</td><td>水平/垂直翻转 + 小角度旋转</td></tr>
+  <tr><td>尺度缩放</td><td>远近不同的监控距离</td><td>随机缩放 + Mosaic</td></tr>
+  <tr><td>运动模糊</td><td>人员走动造成拖影</td><td>运动模糊核，低概率施加</td></tr>
+</table>
+
+<div class="callout c-amber">
+<b>PPT 上一定要这样写：</b>「针对车间逆光场景，采用 Gamma 变换模拟弱光；针对多人遮挡，采用 Random Erasing 遮挡 10–30%。」<br>
+而不是「我们做了数据增强」。<b>说出每种增强对应哪个现场问题，证明你下过现场；只说做了增强，证明你会调库。</b>
+</div>
+
+<h3>3.3 指标口径（答辩要能张口就来）</h3>
+<table>
+  <tr><th style="width:22%">指标</th><th style="width:22%">目标值</th><th>为什么重要</th></tr>
+  <tr><td>mAP@0.5</td><td>≥ 0.85</td><td>常规检测指标，说明模型可用</td></tr>
+  <tr><td>误报率</td><td>≤ 10%</td><td><b>比 mAP 更该强调</b>——工业场景误报会让人直接关掉告警</td></tr>
+  <tr><td>漏报率</td><td>≤ 5%</td><td>安全场景漏报后果更严重，要主动说</td></tr>
+  <tr><td>单帧推理耗时</td><td>≤ 50 ms</td><td>证明能做实时，不是离线跑批</td></tr>
+</table>
+
+<p><b>不要报 99% 这种数字。</b>工业检测报 99% 反而让评委怀疑你不懂现场。报一个真实但不完美、并能解释误差来源的数字，可信度高得多。</p>
+
+<h2>四、平台搭建步骤</h2>
+
+<h3>4.1 五步搭完（扣子 / Coze 路径）</h3>
+<ol>
+  <li><b>部署检测 API</b>：模型封装成 HTTP 服务（本地可先用内网穿透临时对外），接口定义为 <code>POST /detect</code>，入参图片 URL 或 base64，出参检测框列表。</li>
+  <li><b>创建 Bot</b>：新建一个 Bot，把人设和 ② 视觉感知 Agent 的提示词贴进去。</li>
+  <li><b>挂知识库</b>：上传法规与标准 PDF，<b>按条款切分</b>，挂到 ⑤ 合规问答 Agent。</li>
+  <li><b>建工作流</b>：把风险矩阵计算做成工作流节点（L 值查表 → S 值查表 → 相乘 → 映射等级），避免让模型算乘法。</li>
+  <li><b>发布拿到链接</b>：发布为「Bot 商店 / 公开访问」，把链接写进 PPT 第 19 页。</li>
+</ol>
+
+<div class="callout c-red">
+<b>第 4 步最容易做错：</b>很多人让大模型自己算 L×S，结果同一个违规两次算出不同等级。必须做成工作流里的确定性节点，输入同样的 L 和 S，永远输出同样的等级。<b>这是可复现性的底线，也是答辩时敢让人当场重算的底气。</b>
+</div>
+
+<h3>4.2 如果赛区强制 JoyCode</h3>
+<p>把检测 API 原样部署到 JoyCode 的云函数或容器；上层用一个简单前端页面调三个接口（检测、定级、生成工单）。<b>因为业务逻辑都写在提示词和 API 里，迁移只涉及界面，2 天能完成。</b>这也是第一节强调「模型独立成 API」的原因。</p>
+
+<h2>五、6 分钟视频分镜</h2>
+
+<p>按镜头写，录的时候照着一镜一镜拍，比自由发挥快得多。</p>
+
+<div class="card">
+  <div class="shot">
+    <div class="shot-t">0:00</div>
+    <div class="shot-b">
+      <div class="shot-v">黑屏白字 · 3 秒</div>
+      <div class="shot-d">屏幕中央一行字：「一个安全员，管不了三个车间。」</div>
+      <div class="shot-n">旁白：法规要求每个作业人员正确佩戴劳动防护用品。但现实是——检查的人一走，帽子就摘了。</div>
+    </div>
+  </div>
+  <div class="shot">
+    <div class="shot-t">0:20</div>
+    <div class="shot-b">
+      <div class="shot-v">现场照片 + 数据条</div>
+      <div class="shot-d">几张厂区实拍（没戴帽/通道堆放），叠加「人工巡检覆盖率」「检查前后合规率差」的对比数字</div>
+      <div class="shot-n">旁白：不是工人不怕，是没人盯着。安全员一个人管几个车间，覆盖不过来。</div>
+    </div>
+  </div>
+  <div class="shot">
+    <div class="shot-t">0:45</div>
+    <div class="shot-b">
+      <div class="shot-v">方案总览 · 架构图</div>
+      <div class="shot-d">五个 Agent 的横向链路图，逐个亮起</div>
+      <div class="shot-n">旁白：安巡 Agent 把这条链路交给五个角色协同——规划、看、判、派、查。</div>
+    </div>
+  </div>
+  <div class="shot">
+    <div class="shot-t">1:30</div>
+    <div class="shot-b">
+      <div class="shot-v">数据与知识库</div>
+      <div class="shot-d">公开数据集规模 + 自采场景照片 + 四层知识库结构</div>
+      <div class="shot-n">旁白：公开数据集保证泛化，自采数据保证落地。法规知识库让每一条结论都能追到条款。</div>
+    </div>
+  </div>
+  <div class="shot">
+    <div class="shot-t">2:30</div>
+    <div class="shot-b">
+      <div class="shot-v">演示第一段 · 识别（40 秒）</div>
+      <div class="shot-d">真实画面播放 → 检测框实时出现 → 未戴帽者被标红 → 置信度显示</div>
+      <div class="shot-n">旁白：画面里三个人，两个戴了，一个没有。系统给出 0.87 的置信度。</div>
+    </div>
+  </div>
+  <div class="shot">
+    <div class="shot-t">3:10</div>
+    <div class="shot-b">
+      <div class="shot-v">演示第二段 · 定级（30 秒）</div>
+      <div class="shot-d">同一违规在不同区域被算出不同等级：普通区 R=9 橙色 / 高处作业区 R=12 红色</div>
+      <div class="shot-n">旁白：同样是没戴帽子，在高处作业区是立即停工的红色风险，在普通车间是当日整改的橙色。</div>
+    </div>
+  </div>
+  <div class="shot">
+    <div class="shot-t">3:40</div>
+    <div class="shot-b">
+      <div class="shot-v">演示第三段 · 闭环（40 秒）</div>
+      <div class="shot-d">工单自动生成 → 责任人、2 小时时限、可验证整改动作 → 条款依据弹出</div>
+      <div class="shot-n">旁白：工单不是「加强管理」，是「补发 3 顶安全帽并登记发放记录」。依据是 XX 法第 X 条。</div>
+    </div>
+  </div>
+  <div class="shot">
+    <div class="shot-t">4:20</div>
+    <div class="shot-b">
+      <div class="shot-v">技术判断 · 为什么放弃火焰检测</div>
+      <div class="shot-d">语义判断 vs 存在性判断的对比图</div>
+      <div class="shot-n">旁白：我们试过火焰检测，放弃了。那是语义问题，误报高到不可用；这是存在性问题，有明确答案。</div>
+    </div>
+  </div>
+  <div class="shot">
+    <div class="shot-t">5:00</div>
+    <div class="shot-b">
+      <div class="shot-v">价值量化 + 创新点</div>
+      <div class="shot-d">三个指标的前后对比条形图</div>
+      <div class="shot-n">旁白：覆盖率、闭环时长、真实合规率。</div>
+    </div>
+  </div>
+  <div class="shot">
+    <div class="shot-t">5:40</div>
+    <div class="shot-b">
+      <div class="shot-v">收尾 · 局限性</div>
+      <div class="shot-d">一页列明当前不足与下一步</div>
+      <div class="shot-n">旁白：当前只在单一厂区验证，跨场景泛化仍需数据；我们下一步做的是……</div>
+    </div>
+  </div>
+</div>
+
+<div class="callout c-amber">
+<b>录制要点：</b>① 演示三段务必连续录屏，不要剪碎——评委要看的是「一次交互里跑通全链路」；② 别念 PPT，用讲的；③ 画中画人像，观感比纯录屏好一档；④ 全程语速平稳，6 分钟不要赶，官方要求是「不超过」，不是「必须满」。
+</div>
+
+<h2>六、提交前自查清单</h2>
+
+<h3>6.1 格式硬性要求</h3>
+<ul class="check">
+  <li>PPT ≤ 20 页，16:9，≤ 50 MB</li>
+  <li>视频 MP4，≤ 6 分钟，≤ 300 MB</li>
+  <li>压缩包 ≤ 200 MB，<b>只有一个文件</b>（不接受多文件上传）</li>
+  <li>命名格式：<code>命题领域-学校-队长姓名-作品名称</code></li>
+  <li>PPT 第 19 页含可点击的 Agent 链接（<b>自己点一遍确认能打开</b>）</li>
+  <li>PPT 第 19 页含 ≥ 3 个提示词示例及对应输出截图</li>
+</ul>
+
+<h3>6.2 内容完整性（对照官方六章）</h3>
+<ul class="check">
+  <li>作品背景与说明：有团队分工、有参考来源</li>
+  <li>数据收集与处理：≥ 2 个数据渠道，说明权威性与时效性；有预处理流程图</li>
+  <li>分析过程：有方法选择依据；<b>有思维导图</b>（官方点名要求的形式）</li>
+  <li>创新性与独特视角：1–2 个创新点 + 跨学科视角</li>
+  <li>结果解释与建议：结果价值、2–3 条不足与建议、风险识别与应对</li>
+  <li>应用结果呈现：对话界面截图 + 提示词 + 链接</li>
+</ul>
+
+<h3>6.3 技术核查</h3>
+<ul class="check">
+  <li>Agent 链接在<b>非本人设备</b>上能打开并正常交互</li>
+  <li>演示用的案例数据已固定，不会因重跑而变</li>
+  <li>风险定级可复现：同一输入连跑三次，等级一致</li>
+  <li>法规条款引用能在原文中逐字查到</li>
+  <li>输出中不含任何人脸身份信息（自查一遍截图）</li>
+  <li>模型指标是自己实测的，不是引用别人的</li>
+</ul>
+
+<h3>6.4 答辩准备</h3>
+<ul class="check">
+  <li>能一句话说清「为什么放弃火焰检测」</li>
+  <li>能背出误报率与漏报率，并对「误报怎么办」有分层回答</li>
+  <li>准备好「这不就是摄像头+AI 识别吗」的反驳</li>
+  <li>准备好「商业上谁付钱」的回答</li>
+  <li>准备好「工人抵触隐私」的伦理立场</li>
+</ul>
+
+<div class="callout c-red">
+<b>最后一条提醒：</b>把提交死线设成 <b>11 月 9 日</b>。官网以最后一次上传覆盖为准，但 10 号晚上系统拥堵、上传失败没有任何补救通道。多留一天，比多改一版重要。
+</div>
+
+<footer>
+  <p>本手册配合《安巡Agent_提示词库.md》使用。法规条款、标准号、数据集出处须在提交前逐条核实。</p>
+</footer>
+
+</div>
+</body>
+</html>

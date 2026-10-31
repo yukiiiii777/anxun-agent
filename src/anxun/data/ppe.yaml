@@ -1,0 +1,14 @@
+# 安巡 Agent · PPE 检测数据集配置
+#
+# 类别顺序必须固定，改动后需重新训练，否则模型输出与规则引擎错位。
+# 训练集/验证集划分建议 8:2，且同一视频的帧不要跨集（避免数据泄漏）。
+
+path: ./data/ppe
+train: images/train
+val: images/val
+
+names:
+  0: person
+  1: helmet
+  2: vest
+  3: goggles

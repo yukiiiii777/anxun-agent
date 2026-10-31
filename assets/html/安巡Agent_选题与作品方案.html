@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安巡 Agent · 厂区安全巡检选题与作品方案</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --ink2:#4a4a4a; --ink3:#7a7a7a;
+    --line:#e6e4dd; --bg:#fbfaf7; --card:#ffffff;
+    --red:#a32d2d; --redbg:#fcebeb;
+    --blue:#185fa5; --bluebg:#e6f1fb;
+    --amber:#854f0b; --amberbg:#faeeda;
+    --green:#3b6d11; --greenbg:#eaf3de;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.75;
+    font-size:15px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:56px 32px 100px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:24px;margin-bottom:40px}
+  .kicker{font-size:12px;letter-spacing:.16em;color:var(--ink3);margin-bottom:12px}
+  h1{font-size:32px;font-weight:600;line-height:1.3;letter-spacing:-.01em}
+  .sub{font-size:15px;color:var(--ink2);margin-top:10px}
+  .meta{display:flex;gap:28px;margin-top:22px;flex-wrap:wrap;font-size:12.5px;color:var(--ink3)}
+  .meta b{color:var(--ink2);font-weight:500}
+
+  h2{font-size:20px;font-weight:600;margin:52px 0 18px;padding-left:14px;border-left:3px solid var(--ink);line-height:1.4}
+  h3{font-size:16px;font-weight:600;margin:28px 0 10px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink2)}
+  ul,ol{margin:10px 0 10px 22px;color:var(--ink2)}
+  li{margin:6px 0}
+  b,strong{color:var(--ink);font-weight:600}
+
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;background:var(--card)}
+  th{text-align:left;font-weight:600;color:var(--ink);background:#f4f2ec;padding:10px 12px;border-bottom:1px solid var(--line)}
+  td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  table.plain th{background:transparent}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin:18px 0}
+  .callout{border-left:3px solid;border-radius:0 8px 8px 0;padding:14px 18px;margin:18px 0;font-size:14px}
+  .c-red{background:var(--redbg);border-color:var(--red);color:#6d1d1d}
+  .c-blue{background:var(--bluebg);border-color:var(--blue);color:#123f6b}
+  .c-amber{background:var(--amberbg);border-color:var(--amber);color:#5c3608}
+  .c-green{background:var(--greenbg);border-color:var(--green);color:#2a4f0c}
+  .callout b{color:inherit}
+
+  .tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:4px;background:#f0eee8;color:var(--ink2);margin-right:6px}
+  .tag.red{background:var(--redbg);color:var(--red)}
+  .tag.blue{background:var(--bluebg);color:var(--blue)}
+  .tag.green{background:var(--greenbg);color:var(--green)}
+  .tag.amber{background:var(--amberbg);color:var(--amber)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+  .box .bt{font-size:13px;font-weight:600;margin-bottom:6px}
+  .box .bd{font-size:12.5px;color:var(--ink3);line-height:1.6}
+
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}
+  .flow .step{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-size:12.5px;color:var(--ink2)}
+  .flow .arw{color:var(--ink3);font-size:13px}
+
+  .slide-row{display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .slide-row:last-child{border-bottom:none}
+  .slide-num{flex:0 0 34px;color:var(--ink3);font-family:ui-monospace,monospace;font-size:12px}
+  .slide-name{flex:0 0 200px;font-weight:500;color:var(--ink)}
+  .slide-desc{flex:1;color:var(--ink3);font-size:12.5px}
+
+  footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink3)}
+  @media (max-width:720px){
+    .wrap{padding:32px 18px 64px}
+    h1{font-size:24px}
+    .grid2,.grid3{grid-template-columns:1fr}
+    .slide-name{flex:1 0 100%}
+    .slide-desc{margin-left:34px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域 · 本科生组</div>
+  <h1>安巡 Agent<br>面向中小制造企业的厂区安全巡检多智能体系统</h1>
+  <div class="sub">选题论证 + 作品实现方案 + 20 页 PPT 逐页大纲 + 10 天倒排计划</div>
+  <div class="meta">
+    <span><b>参赛单位</b> 上海中侨职业技术大学 · 人工智能学院</span>
+    <span><b>命题领域</b> 制造</span>
+    <span><b>建议人数</b> 3 人 + 1 指导老师</span>
+    <span><b>方案版本</b> 2026-10-31 第二版</span>
+  </div>
+</header>
+
+<h2>一、为什么这个骨架是对的</h2>
+
+<p>厂区安全巡检这条链路的价值在于它<strong>天生就是完整闭环</strong>：发现问题 → 判断等级 → 派人整改 → 复查归档。它不是把一个大模型套上一个聊天框，而是一条有起点、有终点、有责任人的业务流程。评委看三段就能明白你在解决什么。</p>
+
+<p>更要紧的是<strong>演示性</strong>。校赛是通讯评审，评委看的是 6 分钟视频。有摄像头画面、有告警弹出、有工单生成的作品，和只有对话框一问一答的作品，观感完全不在一个量级。<strong>这是三个候选方案里唯一一个「有画面」的。</strong></p>
+
+<div class="callout c-green">
+<b>结论先说：</b>骨架保留，只换掉感知任务。从「火灾/烟雾检测」换成 <b>PPE 穿戴检测</b>（安全帽、反光背心、防护眼镜）。这一换，把整个方案的技术风险从「高」降到「低」，其他部分一个字都不用动。
+</div>
+
+<h2>二、为什么换掉火灾检测</h2>
+
+<p>不是因为做不了模型——你能训练，双卡流程是通的。真正的原因是<strong>这个任务的类型选错了</strong>：</p>
+
+<table>
+  <tr><th style="width:20%">对比项</th><th style="width:36%">火灾/烟雾检测</th><th>PPE 穿戴检测</th></tr>
+  <tr>
+    <td><b>任务本质</b></td>
+    <td>语义判断——「这像不像火」</td>
+    <td>存在性判断——「头上有没有安全帽」</td>
+  </tr>
+  <tr>
+    <td><b>干扰源</b></td>
+    <td>蒸汽、粉尘反光、夕阳、红色物料、焊接火花，都能骗过模型，且这些干扰在工业现场<b>到处都是</b></td>
+    <td>遮挡、光照不足。干扰明确，可用数据增强针对性解决</td>
+  </tr>
+  <tr>
+    <td><b>精度天花板</b></td>
+    <td>受场景分布影响大，换一个厂区性能就掉，泛化难</td>
+    <td>类别少、形态稳定、边界清晰，公开数据集充足，精度容易做上去且稳定</td>
+  </tr>
+  <tr>
+    <td><b>演示风险</b></td>
+    <td>现场光线一变就可能漏检，录屏最容易翻车</td>
+    <td>现场拍几段就能稳定出结果，<b>录几遍都一致</b></td>
+  </tr>
+  <tr>
+    <td><b>法规刚性</b></td>
+    <td>消防安全检查，但不归安全员日常考核</td>
+    <td>《安全生产法》明确要求提供符合标准的个体防护装备并监督佩戴，是安全检查的<b>必查项</b></td>
+  </tr>
+</table>
+
+<div class="callout c-blue">
+<b>答辩话术（这段话很值钱）：</b>「我们一开始做的是火焰和烟雾检测，后来放弃了。原因是火焰检测回答的是『这像不像火』——这是一个语义问题，蒸汽、粉尘反光、红色物料都能造成误报，在真实厂区里误报率高到无法使用。<b>我们换成 PPE 穿戴检测，回答的是『头上有没有安全帽』——这是一个存在性问题，有明确答案，模型可以做到稳定可靠。</b>在工业场景里，宁可做一个可靠的小任务，也不做一个不可靠的大任务。」<br><br>
+这段话同时展示了三件事：你做过、你试错过、你懂什么问题该用什么技术。<b>主动说出放弃过什么，比吹自己做成过什么更有说服力。</b>
+</div>
+
+<h2>三、痛点为什么成立</h2>
+
+<table>
+  <tr><th style="width:22%">痛点</th><th style="width:40%">具体表现</th><th>可论证的抓手</th></tr>
+  <tr>
+    <td><b>法规刚性、执行虚化</b></td>
+    <td>《安全生产法》要求生产经营单位为从业人员提供符合国家标准的劳动防护用品，并监督、教育其正确佩戴使用。但中小厂实际靠班组长目视、靠检查前突击提醒</td>
+    <td>法规条款可直接进知识库，成为 Agent 判断依据</td>
+  </tr>
+  <tr>
+    <td><b>人工盯不住</b></td>
+    <td>一个安全员管几个车间，无法全天候覆盖；工人见到检查人员才戴，人一走就摘——这是安全管理里公认的老问题</td>
+    <td>「被检查时的合规率」与「真实合规率」的差距，可量化</td>
+  </tr>
+  <tr>
+    <td><b>隐患闭环断裂</b></td>
+    <td>发现了、记录了、没人整改，下次还是同一批人同一批问题</td>
+    <td>闭环时长是可量化指标，最容易出效果图</td>
+  </tr>
+  <tr>
+    <td><b>记录造假与追溯难</b></td>
+    <td>纸质巡检表事后补填是行业公开的秘密，出了事故无法还原当时状态</td>
+    <td>Agent 自动留痕，时间戳与画面证据绑定</td>
+  </tr>
+</table>
+
+<h2>四、系统架构：五个 Agent</h2>
+
+<p>按业务流程拆角色，职责单一、输入输出明确。这是原方案里最不该动的部分，全部保留。</p>
+
+<div class="flow">
+  <span class="step">① 巡检规划 Agent</span><span class="arw">→</span>
+  <span class="step">② 视觉感知 Agent</span><span class="arw">→</span>
+  <span class="step">③ 隐患研判 Agent</span><span class="arw">→</span>
+  <span class="step">④ 工单闭环 Agent</span><span class="arw">→</span>
+  <span class="step">⑤ 合规问答 Agent</span>
+</div>
+
+<table>
+  <tr><th style="width:18%">Agent</th><th style="width:32%">职责</th><th>关键设计（答辩讲这个）</th></tr>
+  <tr>
+    <td><b>① 巡检规划</b></td>
+    <td>根据厂区平面图、历史违规热区、当班班组，生成当日巡检路线与重点点位</td>
+    <td><b>风险加权覆盖</b>：历史高发点位加密巡查，不是平均用力</td>
+  </tr>
+  <tr>
+    <td><b>② 视觉感知</b></td>
+    <td>检测画面中的安全帽、反光背心、防护眼镜佩戴情况，输出带置信度的合规判定</td>
+    <td><b>你的护城河</b>。模型作为 Agent 的原生 tool，不是外挂</td>
+  </tr>
+  <tr>
+    <td><b>③ 隐患研判</b></td>
+    <td>对视觉结果做二次判断：是否误报、违规等级、是否需要立即停工处置</td>
+    <td>用<b>风险矩阵</b>（可能性 × 后果严重度）分级，不让大模型拍脑袋</td>
+  </tr>
+  <tr>
+    <td><b>④ 工单闭环</b></td>
+    <td>生成整改工单、指派责任人、设定时限、超时升级、复查归档</td>
+    <td>PDCA 闭环，管理学语言，评委听得懂</td>
+  </tr>
+  <tr>
+    <td><b>⑤ 合规问答</b></td>
+    <td>RAG 检索安全生产法规与标准，给出整改依据条款原文</td>
+    <td>每条结论「有出处」，这是可信度的来源</td>
+  </tr>
+</table>
+
+<div class="callout c-amber">
+<b>一个增强点（如果时间够）：</b>在感知层加一条「<b>通道占用检测</b>」——消防通道被货物堵塞是安全检查的高频扣分项，用框检测做区域占用判断，几乎不增加工作量。它和 PPE 共用同一个检测模型框架，等于一个模型覆盖两类隐患，性价比很高。
+</div>
+
+<h2>五、数据与知识库：决定分数上限</h2>
+
+<p>官方在这一章给 2–4 页，明确要求说明数据渠道的「<b>权威性与时效性</b>」。这一章写实，分数就稳。</p>
+
+<h3>5.1 数据来源</h3>
+<table>
+  <tr><th style="width:8%">序</th><th style="width:30%">来源</th><th style="width:16%">类型</th><th>怎么用</th></tr>
+  <tr><td>1</td><td>公开安全帽/PPE 检测数据集</td><td>学术公开数据集</td><td>安全帽检测是 CV 领域的成熟公开任务，数据量大、标注规范，作为训练基座 <span class="tag amber">具体数据集名称与出处需核实并在 PPT 注明</span></td></tr>
+  <tr><td>2</td><td>自采厂区场景数据</td><td>一手实拍</td><td>在实训场地或合作厂区拍摄真实光照、遮挡、多角度素材，解决「公开数据集不落地」的分布偏移问题</td></tr>
+  <tr><td>3</td><td>安全生产法规与标准</td><td>政府规范性文件</td><td>《安全生产法》、GB 2811 安全帽、GB 39800 个体防护装备配备规范等，构成知识库 <span class="tag amber">版本与条款号需逐条核实</span></td></tr>
+</table>
+
+<div class="callout c-red">
+<b>诚实原则：</b>数据集名称、样本量、引用出处，提交前必须能指认到具体来源。通讯评审没人查，区域赛现场被问一句就崩。<b>宁可只写两个渠道，不要写一个查不到的</b>——官方要求是 2–3 个，两个合规。
+</div>
+
+<h3>5.2 知识库四层</h3>
+<ul>
+  <li><b>法规层</b>：《安全生产法》相关条款、地方安全生产条例</li>
+  <li><b>标准层</b>：GB 2811 安全帽、GB 39800 个体防护装备配备规范、各行业劳保用品配备要求</li>
+  <li><b>操作层</b>：各岗位应配备的防护品类、正确佩戴方式</li>
+  <li><b>经验层</b>：历史违规记录、整改案例、事故通报</li>
+</ul>
+
+<h3>5.3 预处理流程</h3>
+<div class="flow">
+  <span class="step">原始视频</span><span class="arw">→</span>
+  <span class="step">抽帧去重</span><span class="arw">→</span>
+  <span class="step">标注</span><span class="arw">→</span>
+  <span class="step">针对性增强（暗光/遮挡）</span><span class="arw">→</span>
+  <span class="step">训练与验证</span><span class="arw">→</span>
+  <span class="step">推理服务化</span>
+</div>
+<p>文本侧：法规 PDF 解析 → <b>按条款切分</b>（保留条款号）→ 向量化 → 检索。按条款切分保证检索结果是完整条款，不会断章取义——这个细节写进 PPT，是「预处理专业性」的直接体现。</p>
+<p>增强策略要有针对性：暗光增强、模拟遮挡、多角度翻转。<b>不要用通用增强套餐，要说清楚每种增强针对的是哪个现场问题</b>——这体现你真的下过现场。</p>
+
+<h2>六、创新性：官方加分页怎么填</h2>
+
+<div class="grid2">
+  <div class="box">
+    <div class="bt">创新点一：感知闭环</div>
+    <div class="bd">行业通病是 Agent 只有「语言」，没有「眼睛」，只能靠人喂数据。本作品把检测模型作为 Agent 的原生感知工具，形成「看得见 → 判得准 → 落得下」的完整链路，并给出误报率实测数据佐证。</div>
+  </div>
+  <div class="box">
+    <div class="bt">创新点二：定级有据</div>
+    <div class="bd">隐患等级不由大模型自由发挥，而是「风险矩阵打分 + 法规条款映射」双重约束。既避免 LLM 幻觉导致定级随意，又让每条结论可追溯到具体条款。</div>
+  </div>
+</div>
+
+<p><b>独特视角（跨学科）</b>：安全工程的风险矩阵 × 计算机视觉的检测能力 × 管理学的 PDCA 闭环。三层学科语言在一个系统里对齐，正好对应大赛「横向复合型人才」的选拔取向。这一段要写成研究贡献的口吻，不要写成宣传语。</p>
+
+<h2>七、应用结果呈现</h2>
+
+<div class="callout c-red">
+官方硬要求：至少 3 个提示词示例及输出，<b>并提供 Agent 智能体网址链接</b>。没有可访问链接就是零分作品。
+</div>
+
+<h3>7.1 三个必演示的提示词</h3>
+<table>
+  <tr><th style="width:8%">序</th><th style="width:44%">提示词</th><th>要展示什么</th></tr>
+  <tr><td>1</td><td>「调出今天上午 3 号车间东侧通道的巡检记录，有没有隐患？」</td><td>检索真实巡检数据，给带证据的结论</td></tr>
+  <tr><td>2</td><td>「这个画面里谁没戴安全帽？判定依据是什么？」</td><td><b>最关键</b>：视觉判定 + 置信度 + 法规条款溯源</td></tr>
+  <tr><td>3</td><td>「三号车间连续三天出现未戴安全帽，生成整改工单并给出建议」</td><td>趋势识别 + 工单闭环，体现落地性</td></tr>
+</table>
+
+<h3>7.2 平台选型</h3>
+<table>
+  <tr><th style="width:22%">路线</th><th style="width:26%">优点</th><th>风险</th></tr>
+  <tr><td><b>A. 扣子 / Coze 搭多 Agent</b><br><span class="tag green">推荐主用</span></td><td>1 天出可公开访问链接，插件机制可挂视觉 API</td><td>需确认上海赛区是否强制官方平台</td></tr>
+  <tr><td><b>B. 京东云 JoyCode</b><br><span class="tag blue">本届官方平台</span></td><td>官方平台支撑，免费提供编程与大模型调用</td><td>前端搭建成本更高</td></tr>
+</table>
+<p><b>建议：A 做交互演示，视觉模型以插件/API 形式挂载。</b>若赛区强制 JoyCode，把推理服务独立部署、前端重写即可，两天可迁。<b>把视觉能力做成独立 API 是降低这个风险的唯一办法</b>，架构上不要偷懒。</p>
+
+<h2>八、PPT 逐页大纲（20 页以内）</h2>
+
+<div class="card">
+  <div class="slide-row"><div class="slide-num">01</div><div class="slide-name">封面</div><div class="slide-desc">作品名、领域、学校、团队、指导老师</div></div>
+  <div class="slide-row"><div class="slide-num">02</div><div class="slide-name">作品背景与说明</div><div class="slide-desc">团队 3 人分工 + 一句话说清做什么 + 参考来源（官方要求单列此页）</div></div>
+  <div class="slide-row"><div class="slide-num">03</div><div class="slide-name">场景痛点</div><div class="slide-desc">法规刚性 vs 执行虚化，用对比图讲清矛盾</div></div>
+  <div class="slide-row"><div class="slide-num">04</div><div class="slide-name">数据来源一：公开数据集</div><div class="slide-desc">规模、标注质量、权威性说明</div></div>
+  <div class="slide-row"><div class="slide-num">05</div><div class="slide-name">数据来源二：自采数据</div><div class="slide-desc">采集场景、解决什么分布偏移问题、量级</div></div>
+  <div class="slide-row"><div class="slide-num">06</div><div class="slide-name">知识库构建</div><div class="slide-desc">法规/标准/操作/经验四层，附条款示例截图</div></div>
+  <div class="slide-row"><div class="slide-num">07</div><div class="slide-name">数据预处理流程</div><div class="slide-desc">流程图 + <b>每种数据增强针对哪个现场问题</b></div></div>
+  <div class="slide-row"><div class="slide-num">08</div><div class="slide-name">分析方法选择</div><div class="slide-desc">为什么多 Agent、为什么用风险矩阵定级</div></div>
+  <div class="slide-row"><div class="slide-num">09</div><div class="slide-name">分析流程思维导图</div><div class="slide-desc">官方点名要「思维导图形式」，别用普通流程图</div></div>
+  <div class="slide-row"><div class="slide-num">10</div><div class="slide-name">系统架构</div><div class="slide-desc">五 Agent 协同图 + 数据流箭头</div></div>
+  <div class="slide-row"><div class="slide-num">11</div><div class="slide-name">模型实测指标</div><div class="slide-desc">mAP、误报率、FPS、混淆矩阵——证明不是 PPT 模型</div></div>
+  <div class="slide-row"><div class="slide-num">12</div><div class="slide-name">为什么放弃火焰检测</div><div class="slide-desc"><b>本作品最有辨识度的一页。</b>语义判断 vs 存在性判断的对比</div></div>
+  <div class="slide-row"><div class="slide-num">13</div><div class="slide-name">创新点 + 跨学科视角</div><div class="slide-desc">感知闭环 + 定级有据 + 三层学科融合（官方加分页）</div></div>
+  <div class="slide-row"><div class="slide-num">14</div><div class="slide-name">结果解读</div><div class="slide-desc">实测案例：从告警到工单到复查的完整时间线</div></div>
+  <div class="slide-row"><div class="slide-num">15</div><div class="slide-name">价值量化</div><div class="slide-desc">巡检覆盖率、闭环时长、真实合规率三个指标前后对比</div></div>
+  <div class="slide-row"><div class="slide-num">16</div><div class="slide-name">问题与优化建议</div><div class="slide-desc">主动承认 2–3 个不足并给优化路径，别装完美</div></div>
+  <div class="slide-row"><div class="slide-num">17</div><div class="slide-name">风险识别与应对</div><div class="slide-desc">隐私（工人影像）、误报信任、责任边界三类风险</div></div>
+  <div class="slide-row"><div class="slide-num">18</div><div class="slide-name">应用对话界面</div><div class="slide-desc">真实截图，不要设计稿</div></div>
+  <div class="slide-row"><div class="slide-num">19</div><div class="slide-name">提示词示例 + Agent 链接</div><div class="slide-desc">3 组提示词及输出 + 可点击链接（官方硬要求）</div></div>
+  <div class="slide-row"><div class="slide-num">20</div><div class="slide-name">结尾</div><div class="slide-desc">落地路径与展望，1 页收住</div></div>
+</div>
+
+<h2>九、6 分钟答辩视频脚本</h2>
+
+<table>
+  <tr><th style="width:14%">时间</th><th style="width:28%">内容</th><th>要点</th></tr>
+  <tr><td>0:00–0:45</td><td>开场：一个真实的矛盾</td><td>「法规要求每个工人都戴安全帽，但检查的人一走，帽子就摘了。安全员管不过来，因为一个人管不了几个车间。」</td></tr>
+  <tr><td>0:45–1:30</td><td>我们的答案</td><td>五个 Agent 各做什么，配架构图</td></tr>
+  <tr><td>1:30–2:30</td><td>数据与知识库</td><td>公开数据集 + 自采数据 + 四层知识库，强调权威性与现场适配</td></tr>
+  <tr><td>2:30–4:20</td><td>现场演示</td><td><b>最关键的 110 秒。</b>真实录屏：画面输入 → 框出未戴帽者 → 置信度 → 研判等级 → 工单 → 条款依据。连续交互，别剪碎</td></tr>
+  <tr><td>4:20–5:20</td><td>技术判断与价值</td><td>为什么放弃火焰检测 + 两个创新点 + 三个量化指标</td></tr>
+  <tr><td>5:20–6:00</td><td>风险与展望</td><td>主动说局限，展示清醒度</td></tr>
+</table>
+
+<div class="callout c-amber">
+<b>录制注意：</b>语言简洁流畅、画面声音清晰是官方原话。不要念 PPT，要讲。建议录屏 + 画中画人像。<b>演示段落一定要用真实画面而不是示意图</b>——这是本方案最大的优势，别浪费。
+</div>
+
+<h2>十、10 天倒排计划</h2>
+
+<table>
+  <tr><th style="width:16%">日期</th><th style="width:30%">任务</th><th>交付物</th></tr>
+  <tr><td>10.31 – 11.01</td><td>确认本校校赛承办状态、组队、官网注册缴费</td><td>队伍建成、账号就绪</td></tr>
+  <tr><td>11.01 – 11.02</td><td>拍自采素材（安全帽/反光背心，多光照多角度）；整理公开数据集</td><td>可用训练素材</td></tr>
+  <tr><td>11.02 – 11.03</td><td>训练 PPE 检测模型，测 mAP 与误报率</td><td>可用的模型 + 指标表</td></tr>
+  <tr><td>11.03 – 11.04</td><td>Coze 搭五 Agent 骨架，模型封装 API 挂进感知 Agent</td><td>可访问的 Agent 链接 v0.1</td></tr>
+  <tr><td>11.04 – 11.05</td><td>法规知识库入库 + 风险矩阵定级表</td><td>能回答 10 个典型安全问题</td></tr>
+  <tr><td>11.05 – 11.06</td><td>整理图表素材：混淆矩阵、指标表、闭环流程图</td><td>图表素材包</td></tr>
+  <tr><td>11.06 – 11.07</td><td>PPT 20 页成稿</td><td>PPT v1</td></tr>
+  <tr><td>11.07 – 11.08</td><td>录屏 + 配音，6 分钟视频</td><td>MP4 成片</td></tr>
+  <tr><td>11.08 – 11.09</td><td>打包上传 + 自查清单核对</td><td>官网提交成功截图</td></tr>
+  <tr><td>11.09 – 11.10</td><td>缓冲 + 修改后重新上传</td><td>最终版（以最后一次上传为准）</td></tr>
+</table>
+
+<div class="callout c-red">
+<b>死线提前到 11 月 9 日。</b>官网只收单个压缩包、最后一次上传覆盖前次，10 号晚上系统拥堵无补救通道。<b>这个方案的时间风险集中在「拍素材 + 训模型」的前三天</b>——模型出不来，后面全是空谈。
+</div>
+
+<h2>十一、风险清单与答辩预设问题</h2>
+
+<h3>11.1 执行风险</h3>
+<table>
+  <tr><th style="width:30%">风险</th><th style="width:10%">概率</th><th>应对</th></tr>
+  <tr><td>本校不承办校赛，无法进入三级赛制</td><td class="tag red">高</td><td>找辅导员/教务处确认；看上海赛区是否设虚拟校赛</td></tr>
+  <tr><td>赛区强制要求 JoyCode</td><td class="tag blue">中</td><td>查赛区通知原文；推理服务独立部署，前端可快速迁移</td></tr>
+  <tr><td>自采素材拍不到（场地、人员）</td><td class="tag blue">中</td><td>公开数据集已能支撑主干；自采可缩到 300–500 张，如实说明</td></tr>
+  <tr><td>时间被软件杯、挑杯挤占</td><td class="tag red">高</td><td>只保留感知 + 研判两个 Agent，砍掉工单和问答，作品仍完整</td></tr>
+</table>
+
+<h3>11.2 评委可能问的问题</h3>
+<ul>
+  <li><b>「这不就是装个摄像头+AI 识别吗？」</b>→ 传统方案只报警不定责、不闭环；本作品输出的是可执行工单和法规依据，是管理闭环不是监控画面。</li>
+  <li><b>「检测准确率多少？误报怎么办？」</b>→ 报实测 mAP、误报率、FPS，讲多帧一致性抑制 + 人工复核兜底，<b>不吹 100%</b>。</li>
+  <li><b>「工人会抵触被拍吗？」</b>→ 只做防护装备识别，不做人脸识别、不做行为分析；数据用于班组级改进而非个人处罚。这是设计原则，也是落地前提。</li>
+  <li><b>「为什么不做火灾检测？」</b>→ 语义判断 vs 存在性判断的任务类型差异。<b>这个问题答好了，整场答辩就赢了</b>。</li>
+  <li><b>「商业上谁付钱？」</b>→ 中小制造企业按厂区年费订阅，或园区统采；替代的是安全员人力与事故成本。</li>
+  <li><b>「和现有安防厂商的产品比呢？」</b>→ 安防厂商做的是「看」，我们做的是「管」——从画面到工单到复查，链路更长。</li>
+</ul>
+
+<footer>
+  <p>本方案基于 2026-10-31 官网公开信息及多校校赛通知整理。赛题形式、平台要求、作品格式以本校校赛承办单位通知与大赛官网《报名须知》《作品提交说明》最新版为准。</p>
+  <p>涉及安全生产法规、国家标准条款、数据集出处的内容，提交前必须逐条核对原文与现行有效性。</p>
+</footer>
+
+</div>
+</body>
+</html>

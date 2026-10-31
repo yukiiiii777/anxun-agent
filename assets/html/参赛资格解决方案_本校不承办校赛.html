@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>参赛资格解决方案 · 本校不承办校赛怎么办</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --ink2:#4a4a4a; --ink3:#7a7a7a;
+    --line:#e6e4dd; --bg:#fbfaf7; --card:#ffffff;
+    --red:#a32d2d; --redbg:#fcebeb;
+    --blue:#185fa5; --bluebg:#e6f1fb;
+    --amber:#854f0b; --amberbg:#faeeda;
+    --green:#3b6d11; --greenbg:#eaf3de;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.75;
+    font-size:15px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:56px 32px 100px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:24px;margin-bottom:40px}
+  .kicker{font-size:12px;letter-spacing:.16em;color:var(--ink3);margin-bottom:12px}
+  h1{font-size:30px;font-weight:600;line-height:1.3;letter-spacing:-.01em}
+  .sub{font-size:15px;color:var(--ink2);margin-top:10px}
+
+  h2{font-size:20px;font-weight:600;margin:52px 0 18px;padding-left:14px;border-left:3px solid var(--ink);line-height:1.4}
+  h3{font-size:16px;font-weight:600;margin:26px 0 10px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink2)}
+  ul,ol{margin:10px 0 10px 22px;color:var(--ink2)}
+  li{margin:6px 0}
+  b,strong{color:var(--ink);font-weight:600}
+
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;background:var(--card)}
+  th{text-align:left;font-weight:600;color:var(--ink);background:#f4f2ec;padding:10px 12px;border-bottom:1px solid var(--line)}
+  td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin:18px 0}
+  .callout{border-left:3px solid;border-radius:0 8px 8px 0;padding:14px 18px;margin:18px 0;font-size:14px}
+  .c-red{background:var(--redbg);border-color:var(--red);color:#6d1d1d}
+  .c-blue{background:var(--bluebg);border-color:var(--blue);color:#123f6b}
+  .c-amber{background:var(--amberbg);border-color:var(--amber);color:#5c3608}
+  .c-green{background:var(--greenbg);border-color:var(--green);color:#2a4f0c}
+  .callout b{color:inherit}
+
+  .tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:4px;background:#f0eee8;color:var(--ink2);margin-right:6px}
+  .tag.red{background:var(--redbg);color:var(--red)}
+  .tag.blue{background:var(--bluebg);color:var(--blue)}
+  .tag.green{background:var(--greenbg);color:var(--green)}
+  .tag.amber{background:var(--amberbg);color:var(--amber)}
+
+  .path{border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin:18px 0;background:var(--card);position:relative}
+  .path.rec{border:2px solid var(--blue)}
+  .path-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .path-n{font-size:18px;font-weight:600;color:var(--ink)}
+  .path-t{font-size:13px;color:var(--ink3)}
+
+  .quote{background:#f4f2ec;border-radius:8px;padding:14px 16px;font-size:13px;color:var(--ink2);line-height:1.75;margin:12px 0}
+  .quote .src{display:block;font-size:11.5px;color:var(--ink3);margin-top:8px}
+
+  .msg{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin:12px 0;font-size:13.5px;line-height:1.85;color:var(--ink2)}
+  .msg .mh{font-size:12px;color:var(--ink3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+
+  .step{display:flex;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .step:last-child{border-bottom:none}
+  .step-n{flex:0 0 24px;height:24px;border-radius:50%;background:#f0eee8;color:var(--ink2);font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .step-b{flex:1;color:var(--ink2)}
+  .step-b b{color:var(--ink)}
+
+  code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;background:#f4f2ec;padding:2px 6px;border-radius:3px;color:var(--ink2)}
+
+  footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink3)}
+  @media (max-width:720px){
+    .wrap{padding:32px 18px 64px}
+    h1{font-size:23px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">安巡 Agent · 参赛资格专项方案</div>
+  <h1>本校不承办校赛，怎么参赛</h1>
+  <div class="sub">三条合法路径 · 优先级排序 · 今天就能执行</div>
+</header>
+
+<h2>一、问题定性</h2>
+
+<p>通用赛道是「校赛 → 区域赛 → 全国总决赛」三级赛制，<b>必须逐级晋级、不得跨级</b>。本校不承办校赛，等于第一级没有出口。</p>
+
+<p>但这不是死路。大赛的校赛管理办法里，对这种情况有专门的兜底安排。</p>
+
+<div class="quote">
+8) 鼓励各学校自行组织校赛。<b>如确因数量太少或其他原因确实无法举办校赛的学校，可不举办校赛，由区域赛承办方集中起来组织虚拟校赛</b>，产生晋级区域赛的团队，<b>但不设校赛奖</b>。
+<span class="src">——《全国人工智能应用创新大赛校赛须知》，全国人工智能应用创新大赛组委会</span>
+</div>
+
+<div class="callout c-amber">
+<b>这是 2025 年首届版本的条款，第二届大概率沿用，但必须自己核实。</b>核实方法在第三节，5 分钟能查完。不要只凭这一条就去报名。
+</div>
+
+<h2>二、三条路径</h2>
+
+<div class="path rec">
+  <div class="path-h">
+    <span class="path-n">路径 A · 虚拟校赛</span>
+    <span class="tag green">首选</span>
+    <span class="path-t">有明文依据，代价最小</span>
+  </div>
+  <p>由<b>上海赛区承办单位</b>把各校无法办校赛的队伍集中起来组织虚拟校赛，评审后产生晋级区域赛的名单。</p>
+  <table>
+    <tr><th style="width:20%">代价</th><td><b>不设校赛奖</b>——拿不到校级证书，但不影响区域赛与国赛的评奖</td></tr>
+    <tr><th>时间</th><td>跟着校赛窗口走，即 11.11–11.20 之间评审；报名与作品提交仍是 11.10 24:00</td></tr>
+    <tr><th>动作</th><td>联系上海赛区承办单位，说明本校不办校赛，申请纳入虚拟校赛</td></tr>
+  </table>
+</div>
+
+<div class="path">
+  <div class="path-h">
+    <span class="path-n">路径 B · 专项赛道</span>
+    <span class="tag blue">可能更优</span>
+    <span class="path-t">若已开放赛题，可完全绕开校赛</span>
+  </div>
+  <p>官方文件明确：<b>专项赛道采用「区域赛—全国总决赛」二级赛制</b>，<b>不设校赛</b>。重庆赛区通知的原话是「专项赛道不设校赛，符合条件团队可直接报名参加区域赛」。</p>
+  <table>
+    <tr><th style="width:20%">代价</th><td>赛题由产业园区/企业发布，须契合命题单位需求；奖项由需求方设定，可能与通用赛道不同</td></tr>
+    <tr><th>前提</th><td><b>专项赛道赛题是否已开放</b>——官网目前标注「敬请期待」，必须先确认</td></tr>
+    <tr><th>优势</th><td>完全不依赖学校，路径最短。而且规则允许<b>同一团队同时报通用 + 专项</b>，不冲突</td></tr>
+  </table>
+</div>
+
+<div class="path">
+  <div class="path-h">
+    <span class="path-n">路径 C · 推动本校承办</span>
+    <span class="tag amber">备选</span>
+    <span class="path-t">能拿校赛奖，但需要学校配合</span>
+  </div>
+  <p>由本校二级单位（学院或教务处）向上海赛区提交校赛承办申请，经同意后组织校赛。这样走标准三级赛制，有校赛奖项。</p>
+  <table>
+    <tr><th style="width:20%">代价</th><td>需成立评审组与仲裁组、盖章报送、公示 5 个工作日——<b>流程重，10 天内跑完压力大</b></td></tr>
+    <tr><th>前提</th><td>学校愿意配合，且承办申请窗口未关闭</td></tr>
+    <tr><th>现实判断</th><td>如果学校一开始就说不承办，通常不会为单个队伍临时改主意。<b>可以试，但不要把它当主路径</b></td></tr>
+  </table>
+</div>
+
+<h2>三、今天就要做的三件事</h2>
+
+<div class="card">
+  <div class="step"><div class="step-n">1</div><div class="step-b"><b>上官网走一遍报名流程，看能不能选到本校</b><br>
+  注册登录后走到「选择参加校赛的高校」这一步，看下拉列表里有没有「上海中侨职业技术大学」。<br>
+  有 → 学校其实在系统里登记了，或系统自动归入虚拟池，直接报；<br>
+  没有 → 确认必须走路径 A，立刻联系赛区。<br>
+  <b>这一步 20 分钟，是投入产出比最高的验证。</b></div></div>
+
+  <div class="step"><div class="step-n">2</div><div class="step-b"><b>下载两份官方文件，核实虚拟校赛条款是否保留</b><br>
+  官网「资料下载」区有《全国人工智能应用创新大赛校赛管理办法》PDF 和《校赛须知》PDF，直接下载，搜「虚拟校赛」四个字。<br>
+  有 → 路径 A 成立，拿着这条去沟通，底气足；<br>
+  没有 → 只能走路径 B，或问组委会。</div></div>
+
+  <div class="step"><div class="step-n">3</div><div class="step-b"><b>找上海赛区承办单位</b><br>
+  官网「通知公告」里 10 月 30 日发布的《关于举办第二届全国人工智能应用创新大赛 上海市区域赛的通知》，打开就能看到承办单位和联系方式。<br>
+  公开搜索引擎抓不到这条，<b>必须自己上官网看</b>。找不到就在官网「联系我们」里问组委会秘书处。</div></div>
+</div>
+
+<div class="callout c-red">
+<b>顺序很重要：先验证，再沟通。</b>不要一上来就问「我能不能参赛」——对方第一反应是让你找学校。要问的是「本校不办校赛，按校赛管理办法第 X 条应纳入虚拟校赛，请问申请流程是什么」。<b>带着条款去问，和空手去问，得到的回复完全不一样。</b>
+</div>
+
+<h2>四、沟通话术</h2>
+
+<h3>4.1 给上海赛区承办单位 / 组委会</h3>
+<div class="msg">
+  <div class="mh">微信或邮件，可直接用</div>
+  老师您好，我是上海中侨职业技术大学人工智能学院 25 级本科生张璟瑜，想参加第二届全国人工智能应用创新大赛通用赛道本科生组。<br><br>
+  我校未承办本届校赛，按《全国人工智能应用创新大赛校赛管理办法》中「确因无法举办校赛的学校，由区域赛承办方组织虚拟校赛」的规定，请问上海赛区今年的虚拟校赛如何申请？需要提交哪些材料、截止时间是？<br><br>
+  我们团队 3 人，指导教师 1 位，作品方向为制造领域 AI Agent 应用，可在 11 月 10 日前完成报名缴费与作品提交。麻烦您指导，谢谢！
+</div>
+
+<div class="callout c-blue">
+<b>话术里的三个要素，缺一不可：</b><br>
+① 亮身份和组别（让对方知道该归哪个赛区、哪个组）；<br>
+② 引条款（表明你研究过规则，不是随口问）；<br>
+③ 表明已准备好（3 人、有指导老师、能按时交作品）——<b>让对方判断「这是个能落地的队伍」，回复意愿会高很多。</b>
+</div>
+
+<h3>4.2 给本校教务处 / 学院（如果还想试路径 C）</h3>
+<div class="msg">
+  <div class="mh">适合找学院教学秘书或竞赛负责人</div>
+  老师您好，第二届全国人工智能应用创新大赛（中国技术经济学会主办）的报名截止是 11 月 10 日，通用赛道需要先经过校赛才能进区域赛。<br><br>
+  想确认一下我校今年是否承办校赛？如果承办，我们需要按什么流程报名和提交作品？如果不承办，我们计划向上海赛区申请参加虚拟校赛，想请学院出具一份在读证明或推荐意见，是否可以？<br><br>
+  我们已组队并准备了作品方案，不会额外占用学院太多资源。
+</div>
+
+<h2>五、时间窗口</h2>
+
+<table>
+  <tr><th style="width:24%">事项</th><th style="width:26%">时间</th><th>说明</th></tr>
+  <tr><td>报名 + 缴费 + 作品提交</td><td><b>11.10 24:00 截止</b></td><td>硬死线，逾期原则上不再受理。作品要和报名一起交</td></tr>
+  <tr><td>校赛评审 / 虚拟校赛</td><td>11.11 – 11.20</td><td>赛区组织评审，产生晋级名单</td></tr>
+  <tr><td>区域赛</td><td>11.21 – 12.11</td><td>上海赛区</td></tr>
+  <tr><td>全国总决赛</td><td>12.25 – 12.27</td><td>现场答辩</td></tr>
+</table>
+
+<div class="callout c-amber">
+<b>关键认知：报名和作品提交是同一个死线。</b>就算参赛资格的问题还没解决，作品也得照做——「能不能参赛」和「作品做没做好」是两件独立的事，<b>不要因为前者没定就停下后者</b>。等到 11 月 5 日资格确认了才开始做，一定来不及。
+</div>
+
+<h2>六、最坏情况怎么办</h2>
+
+<p>如果虚拟校赛申请不下来、专项赛道也没开放，还有两个选择：</p>
+
+<ul>
+  <li><b>找有承办校赛的上海高校联合组队。</b>规则要求每名队员只能参加一个团队、报名时选择参加校赛的高校，跨校组队在系统里是可行的操作方向——但需该校同意，且你的组别判定按队员最高学历算（本科仍是本科生组）。<b>这条路要走通，必须提前问清楚赛区，不要自己硬填。</b></li>
+  <li><b>接受今年进不去，把作品做完留作明年。</b>这话不好听，但更实际：本次调研出的赛制规则、评审口径、作品结构、Agent 架构，明年可以直接复用，那时候提前三个月启动，冲国奖的概率远高于现在仓促上阵。</li>
+</ul>
+
+<div class="callout c-green">
+<b>但先别急着做这个判断。</b>虚拟校赛是官方写进管理办法的兜底机制，就是为了解决「学校不办」这种情况。先按第三节的三件事走一遍，大概率能解决。
+</div>
+
+<footer>
+  <p>本文引用的虚拟校赛条款出自 2025 年首届《全国人工智能应用创新大赛校赛须知》，第二届是否沿用须以上述官方最新文件为准。所引条款原文可在官网「资料下载」区核实。</p>
+</footer>
+
+</div>
+</body>
+</html>

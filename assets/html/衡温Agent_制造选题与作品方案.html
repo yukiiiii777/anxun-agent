@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>衡温 Agent · 制造赛道选题与作品方案</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --ink2:#4a4a4a; --ink3:#7a7a7a;
+    --line:#e6e4dd; --bg:#fbfaf7; --card:#ffffff;
+    --red:#a32d2d; --redbg:#fcebeb;
+    --blue:#185fa5; --bluebg:#e6f1fb;
+    --amber:#854f0b; --amberbg:#faeeda;
+    --green:#3b6d11; --greenbg:#eaf3de;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.75;
+    font-size:15px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:56px 32px 100px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:24px;margin-bottom:40px}
+  .kicker{font-size:12px;letter-spacing:.16em;color:var(--ink3);margin-bottom:12px}
+  h1{font-size:32px;font-weight:600;line-height:1.3;letter-spacing:-.01em}
+  .sub{font-size:15px;color:var(--ink2);margin-top:10px}
+  .meta{display:flex;gap:28px;margin-top:22px;flex-wrap:wrap;font-size:12.5px;color:var(--ink3)}
+  .meta b{color:var(--ink2);font-weight:500}
+
+  h2{font-size:20px;font-weight:600;margin:52px 0 18px;padding-left:14px;border-left:3px solid var(--ink);line-height:1.4}
+  h3{font-size:16px;font-weight:600;margin:28px 0 10px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink2)}
+  ul,ol{margin:10px 0 10px 22px;color:var(--ink2)}
+  li{margin:6px 0}
+  b,strong{color:var(--ink);font-weight:600}
+
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;background:var(--card)}
+  th{text-align:left;font-weight:600;color:var(--ink);background:#f4f2ec;padding:10px 12px;border-bottom:1px solid var(--line)}
+  td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  table.plain th{background:transparent}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin:18px 0}
+  .callout{border-left:3px solid;border-radius:0 8px 8px 0;padding:14px 18px;margin:18px 0;font-size:14px}
+  .c-red{background:var(--redbg);border-color:var(--red);color:#6d1d1d}
+  .c-blue{background:var(--bluebg);border-color:var(--blue);color:#123f6b}
+  .c-amber{background:var(--amberbg);border-color:var(--amber);color:#5c3608}
+  .c-green{background:var(--greenbg);border-color:var(--green);color:#2a4f0c}
+  .callout b{color:inherit}
+
+  .tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:4px;background:#f0eee8;color:var(--ink2);margin-right:6px}
+  .tag.red{background:var(--redbg);color:var(--red)}
+  .tag.blue{background:var(--bluebg);color:var(--blue)}
+  .tag.green{background:var(--greenbg);color:var(--green)}
+  .tag.amber{background:var(--amberbg);color:var(--amber)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+  .box .bt{font-size:13px;font-weight:600;margin-bottom:6px}
+  .box .bd{font-size:12.5px;color:var(--ink3);line-height:1.6}
+
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}
+  .flow .step{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-size:12.5px;color:var(--ink2)}
+  .flow .arw{color:var(--ink3);font-size:13px}
+
+  .slide-row{display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .slide-row:last-child{border-bottom:none}
+  .slide-num{flex:0 0 34px;color:var(--ink3);font-family:ui-monospace,monospace;font-size:12px}
+  .slide-name{flex:0 0 200px;font-weight:500;color:var(--ink)}
+  .slide-desc{flex:1;color:var(--ink3);font-size:12.5px}
+
+  .spec{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;background:#f4f2ec;padding:2px 6px;border-radius:3px;color:var(--ink2)}
+
+  footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink3)}
+  @media (max-width:720px){
+    .wrap{padding:32px 18px 64px}
+    h1{font-size:24px}
+    .grid2,.grid3{grid-template-columns:1fr}
+    .slide-name{flex:1 0 100%}
+    .slide-desc{margin-left:34px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域 · 本科生组</div>
+  <h1>衡温 Agent<br>面向机电工程场景的暖通设备选型与运维多智能体系统</h1>
+  <div class="sub">制造赛道选题论证 + 作品实现方案 + 20 页 PPT 逐页大纲 + 10 天倒排计划</div>
+  <div class="meta">
+    <span><b>参赛单位</b> 上海中侨职业技术大学 · 人工智能学院</span>
+    <span><b>命题领域</b> 制造</span>
+    <span><b>建议人数</b> 3 人 + 1 指导老师</span>
+    <span><b>方案版本</b> 2026-10-31 改版</span>
+  </div>
+</header>
+
+<h2>一、为什么换掉原来的方向</h2>
+
+<p>原方案把整个作品押在「一台自训练的火灾检测模型」上。问题不在于你能不能训练模型——你双卡训练的流程是通的——问题在于 <strong>风险过度集中</strong>：那台模型是备赛产物，赛后就没有再优化，精度不在最好状态。拿它当唯一支点，等于把成败交付给一个已经放下的东西。</p>
+
+<p>所以这一版换了个支点：<strong>不比模型精度，比领域知识的密度</strong>。比赛的评委是经济学、管理学背景，他们判断一个作品好坏的标准，很大程度上是「这个团队是不是真的懂这个行业」。而在暖通这一块，你手里有别人编不出来的东西：</p>
+
+<div class="card">
+  <p class="spec">39XT1822 卧式组合空调箱 · 外形 3200 × 2304 × 2004 mm · 5 个功能段 · DN80 水管接口 · 额定风量 28000 m³/h</p>
+  <p class="spec" style="margin-top:8px;">30XAV0532A 风冷 V 型螺杆冷水机组 · 外形 4798 × 2253 × 2297 mm · 制冷量 528 kW · DN125 水管接口 · 8 台风机</p>
+  <p style="margin-top:14px;font-size:13px;color:var(--ink3);">—— 这些不是从网上抄的，是你画 CAD 图纸时一个尺寸一个管口核出来的。这就是你的护城河。</p>
+</div>
+
+<div class="callout c-green">
+<b>核心判断：</b>大多数队伍讲制造业只能讲宏观（产业升级、智能制造），讲不出「DN80 的接口配多大流量」这种颗粒度。你一旦把故事讲到这个层次，评委的第一反应会是「这队真做过工程」，而不是「这队会写 prompt」。<b>这种可信度，比多一个功能值钱得多。</b>
+</div>
+
+<h2>二、选题：为什么是「选型 + 运维」</h2>
+
+<p>暖通（HVAC）是建筑能耗的主要构成部分，也是一个典型的「<strong>决策在前、成本在后</strong>」的行业：选型时算错一个参数，未来十几年的电费都在为这个错误买单。这个特性恰好适合做 Agent——因为它既有知识密集的部分（规范、样本、经验），又有可计算的确定性部分（负荷、风量、管径、能效）。</p>
+
+<h3>2.1 痛点</h3>
+<table>
+  <tr><th style="width:22%">痛点</th><th style="width:40%">具体表现</th><th>可论证的抓手</th></tr>
+  <tr>
+    <td><b>选型靠经验，校核靠手算</b></td>
+    <td>中小机电公司做项目，选型多凭老师傅经验翻厂家样本，逐项核对冷量、风量、管径、阻力。样本是 PDF，参数在几十张表里，容易漏项</td>
+    <td>校核是可复算的，错与对能被客观验证</td>
+  </tr>
+  <tr>
+    <td><b>「大马拉小车」的长期代价</b></td>
+    <td>为保证安全裕量，普遍选大一号机组。初投资增加是一次性的，但低负荷运行导致的效率下降是十几年持续发生的</td>
+    <td>可以算全生命周期成本（LCC），把偏差折算成钱</td>
+  </tr>
+  <tr>
+    <td><b>设备台账散落</b></td>
+    <td>设备信息分散在 CAD 图纸、Excel、纸质竣工资料、厂家样本里，交付后运维方拿不到完整台账</td>
+    <td>台账结构化是可展示的交付物</td>
+  </tr>
+  <tr>
+    <td><b>故障排查依赖原厂</b></td>
+    <td>设备报警后只能打厂家售后电话，排查经验留在个人脑子里，人一走知识就没了</td>
+    <td>故障树推理是有结构的，可以画出来</td>
+  </tr>
+  <tr>
+    <td><b>维保靠人记</b></td>
+    <td>维保周期按日历或运行小时，实际执行常超期，直接影响设备寿命与能效</td>
+    <td>超期率是可量化指标</td>
+  </tr>
+</table>
+
+<h3>2.2 和你的能力怎么对上</h3>
+<div class="grid3">
+  <div class="box">
+    <div class="bt">领域知识现成</div>
+    <div class="bd">AHU 功能段构成、水系统管径、风量与冷量的换算关系——你画图时全都过了一遍。</div>
+  </div>
+  <div class="box">
+    <div class="bt">素材现成</div>
+    <div class="bd">AutoCAD 图纸可直接做 PPT 配图。别的队伍只有截图，你有工程图。</div>
+  </div>
+  <div class="box">
+    <div class="bt">不依赖模型精度</div>
+    <div class="bd">全流程零视觉模型，最坏情况也不会因为「识别不准」被问倒。</div>
+  </div>
+</div>
+
+<h2>三、系统架构：五个 Agent</h2>
+
+<p>按工程流程拆角色，职责单一、输入输出明确。注意第③个 Agent 的设计——<strong>这是全篇最关键的技术判断</strong>。</p>
+
+<div class="flow">
+  <span class="step">① 台账构建 Agent</span><span class="arw">→</span>
+  <span class="step">② 选型校核 Agent</span><span class="arw">→</span>
+  <span class="step">③ 故障诊断 Agent</span><span class="arw">→</span>
+  <span class="step">④ 维保计划 Agent</span><span class="arw">→</span>
+  <span class="step">⑤ 规范问答 Agent</span>
+</div>
+
+<table>
+  <tr><th style="width:18%">Agent</th><th style="width:32%">职责</th><th>关键设计（答辩讲这个）</th></tr>
+  <tr>
+    <td><b>① 台账构建</b></td>
+    <td>从厂家样本、设备铭牌、图纸中提取型号、冷量、风量、接口管径、外形尺寸等，建立结构化设备台账</td>
+    <td>把散落在 PDF 和 CAD 里的信息变成可查询资产，这是后面所有能力的地基</td>
+  </tr>
+  <tr>
+    <td><b>② 选型校核</b></td>
+    <td>按房间负荷 → 冷量需求 → 机组选型 → 风量校核 → 水管径核算，输出选型建议与偏差提示</td>
+    <td><b>计算全部交给确定性公式引擎，LLM 只负责理解意图和组织参数</b></td>
+  </tr>
+  <tr>
+    <td><b>③ 故障诊断</b></td>
+    <td>根据报警现象（如高压报警、低压报警、水温异常）沿故障树推理可能原因，按概率排序并给排查步骤</td>
+    <td>不是让模型自由联想，是<b>沿预置故障树走</b>，每个节点有明确的判断条件</td>
+  </tr>
+  <tr>
+    <td><b>④ 维保计划</b></td>
+    <td>按运行小时与日历双维度排程，到期提醒、生成工单、记录执行结果</td>
+    <td>PDCA 闭环，对应管理学语言</td>
+  </tr>
+  <tr>
+    <td><b>⑤ 规范问答</b></td>
+    <td>RAG 检索设计规范与设备样本，给出条款原文与出处</td>
+    <td>每条结论「有出处」，这是可信度来源</td>
+  </tr>
+</table>
+
+<h2>四、这一版最强的技术点：把计算从模型手里拿走</h2>
+
+<div class="callout c-red">
+<b>这是整个方案里最能让评委眼前一亮的地方，必须单独讲清。</b>
+</div>
+
+<p>大模型的算术能力是不可靠的。让它算「28000 m³/h 风量配 DN80 水管是否合适」，它可能给你一个听上去很合理但完全错误的答案。</p>
+
+<p>所以本作品的设计原则是：<strong>语言归模型，数字归公式。</strong></p>
+
+<div class="flow">
+  <span class="step">用户自然语言提问</span><span class="arw">→</span>
+  <span class="step">LLM 抽取参数</span><span class="arw">→</span>
+  <span class="step">调用确定性计算工具</span><span class="arw">→</span>
+  <span class="step">LLM 解释结果</span>
+</div>
+
+<p>具体做法：把水流量、流速、管径、冷量、风量、阻力等换算关系封装成独立的计算函数（Python / 公式引擎），Agent 只能调用、不能自由发挥。这样带来三个好处：</p>
+<ul>
+  <li><b>结果可复现</b>——同样的输入永远同样的输出，评委当场让你重算也不会翻车</li>
+  <li><b>可审计</b>——每个数字都能追溯到用了哪条公式、哪个参数</li>
+  <li><b>可防守</b>——被问到「你凭什么这么算」，答案是「按规范的公式算的」，而不是「模型说的」</li>
+</ul>
+
+<div class="callout c-blue">
+<b>答辩话术：</b>「我们刻意<b>不让大模型做计算</b>。在工程场景里，一个算错的数字比一个说错的句子危险得多。所以我们把计算全部下沉到确定性工具，模型只负责理解你要什么、以及解释算出来的是什么意思。」<br><br>
+这句话说出来，评委会知道你不是把 AI 当万能膏药贴，而是真的想过它在什么位置可靠、在什么位置不可靠。
+</div>
+
+<h2>五、创新性：官方加分页怎么填</h2>
+
+<div class="grid2">
+  <div class="box">
+    <div class="bt">创新点一：计算与语言分离</div>
+    <div class="bd">行业里大量「AI + 工程」产品把计算也交给大模型，导致结果不可复现、无法审计。本作品把工程计算下沉为确定性工具，模型只承担语义层工作，在可靠性与可解释性上是一个实质性改进。</div>
+  </div>
+  <div class="box">
+    <div class="bt">创新点二：全生命周期成本视角</div>
+    <div class="bd">不止算「选多大」，还算「选大了以后多花多少钱」——把初投资、运行电费、维保成本放在同一张表里比较。这是把技术决策翻译成经济决策，正好对上大赛「技术经济」的底色。</div>
+  </div>
+</div>
+
+<p><b>独特视角（跨学科）</b>：暖通工程的专业判断 × 运筹与成本分析的经济视角 × 大模型 Agent 的交互范式。三层在一个系统里对齐，对应大赛「横向复合型人才」的取向。</p>
+
+<h2>六、数据与知识库</h2>
+
+<h3>6.1 数据来源</h3>
+<table>
+  <tr><th style="width:8%">序</th><th style="width:30%">来源</th><th style="width:16%">类型</th><th>怎么用</th></tr>
+  <tr><td>1</td><td>厂家设备样本与选型手册</td><td>企业公开技术资料</td><td>设备参数、性能曲线、尺寸与接口规格。这是台账构建的原料 <span class="tag amber">需注明样本版本与来源</span></td></tr>
+  <tr><td>2</td><td>国家设计规范</td><td>国家标准</td><td>GB 50736《民用建筑供暖通风与空气调节设计规范》、GB 50019《工业建筑供暖通风与空气调节设计规范》等，构成知识库与计算依据 <span class="tag amber">版本与条款号需逐条核实</span></td></tr>
+  <tr><td>3</td><td>真实项目图纸与设备台账</td><td>一手工程资料</td><td>39XT1822 AHU、30XAV0532A 冷水机组等实际设备的完整参数，作为案例验证 <span class="tag amber">涉及客户信息需脱敏</span></td></tr>
+  <tr><td>4</td><td>故障案例整理</td><td>公开技术资料归纳</td><td>构建故障树，常见报警的现象—原因映射</td></tr>
+</table>
+
+<div class="callout c-amber">
+<b>合规提醒：</b>第 3 项如果来自实际项目，<b>必须脱敏</b>——去掉甲方名称、项目地址、合同金额，只保留设备参数本身。这一点在 PPT 里主动写一句「数据已脱敏」，反而是专业度的体现。
+</div>
+
+<h3>6.2 知识库四层</h3>
+<ul>
+  <li><b>规范层</b>：设计规范、验收规范、能效标准</li>
+  <li><b>产品层</b>：设备样本参数、性能曲线、接口规格</li>
+  <li><b>计算层</b>：公式与经验系数（这正是「确定性工具」的来源）</li>
+  <li><b>经验层</b>：故障树、常见设计偏差、整改案例</li>
+</ul>
+
+<h3>6.3 预处理流程</h3>
+<div class="flow">
+  <span class="step">样本 PDF 解析</span><span class="arw">→</span>
+  <span class="step">参数抽取</span><span class="arw">→</span>
+  <span class="step">人工校验</span><span class="arw">→</span>
+  <span class="step">结构化台账</span><span class="arw">→</span>
+  <span class="step">公式引擎挂载</span>
+</div>
+<p>文本侧：规范 PDF → <b>按条款切分</b>（保留条款号）→ 向量化 → 检索。按条款切分保证检索结果是完整条款，不会断章取义。</p>
+<p>参数抽取环节要保留「<b>人工校验</b>」这一步并在 PPT 里画出来——工程参数错一个数字后果严重，全自动抽取不现实，坦诚地做成「AI 抽取 + 人工确认」，比吹全自动更可信。</p>
+
+<h2>七、应用结果呈现</h2>
+
+<div class="callout c-red">
+官方硬要求：至少 3 个提示词示例及输出，<b>并提供 Agent 智能体网址链接</b>。没有可访问链接就是零分作品。
+</div>
+
+<h3>7.1 三个必演示的提示词</h3>
+<table>
+  <tr><th style="width:8%">序</th><th style="width:46%">提示词</th><th>要展示什么</th></tr>
+  <tr><td>1</td><td>「这个 800 ㎡ 的办公区，层高 3.6 m，按规范算需要多大冷量？推荐哪台机组？」</td><td>负荷估算 → 选型建议，且数字可复算</td></tr>
+  <tr><td>2</td><td>「28280 m³/h 的机组配 DN80 水管，流速是多少？超了没有？」</td><td><b>最关键</b>：调用公式引擎给出流速与判定，演示「计算不靠模型」</td></tr>
+  <tr><td>3</td><td>「冷水机组高压报警，可能是什么原因？按可能性排序并给排查步骤」</td><td>故障树推理，体现领域经验结构化</td></tr>
+</table>
+
+<h3>7.2 平台选型</h3>
+<table>
+  <tr><th style="width:22%">路线</th><th style="width:26%">优点</th><th>风险</th></tr>
+  <tr><td><b>A. 扣子 / Coze 搭多 Agent</b><br><span class="tag green">推荐主用</span></td><td>1 天出可公开访问链接，插件机制可挂计算工具</td><td>需确认上海赛区是否强制用官方平台</td></tr>
+  <tr><td><b>B. 京东云 JoyCode</b><br><span class="tag blue">本届官方平台</span></td><td>官方平台支撑，免费提供编程与大模型调用，适合写计算服务</td><td>前端搭建成本更高</td></tr>
+</table>
+<p><b>建议：A 做交互演示，计算函数以插件/API 形式挂载。</b>若赛区强制 JoyCode，用其部署同一个计算服务，交互层两天可迁。</p>
+
+<h2>八、PPT 逐页大纲（20 页以内）</h2>
+
+<div class="card">
+  <div class="slide-row"><div class="slide-num">01</div><div class="slide-name">封面</div><div class="slide-desc">作品名、领域、学校、团队、指导老师</div></div>
+  <div class="slide-row"><div class="slide-num">02</div><div class="slide-name">作品背景与说明</div><div class="slide-desc">团队 3 人分工 + 一句话说清做什么 + 参考来源（官方要求单列此页）</div></div>
+  <div class="slide-row"><div class="slide-num">03</div><div class="slide-name">场景痛点</div><div class="slide-desc">选型靠经验、台账散落、故障靠原厂、维保靠人记</div></div>
+  <div class="slide-row"><div class="slide-num">04</div><div class="slide-name">数据来源一：厂家样本与规范</div><div class="slide-desc">样本参数体系 + 国家标准，说明权威性与时效性</div></div>
+  <div class="slide-row"><div class="slide-num">05</div><div class="slide-name">数据来源二：真实项目图纸</div><div class="slide-desc"><b>放 AutoCAD 图纸截图</b>，标注已脱敏——这是全篇最有说服力的一页</div></div>
+  <div class="slide-row"><div class="slide-num">06</div><div class="slide-name">知识库构建</div><div class="slide-desc">规范/产品/计算/经验四层结构图</div></div>
+  <div class="slide-row"><div class="slide-num">07</div><div class="slide-name">数据预处理流程</div><div class="slide-desc">PDF 解析 → 参数抽取 → 人工校验 → 台账，重点讲人工校验为何保留</div></div>
+  <div class="slide-row"><div class="slide-num">08</div><div class="slide-name">分析方法选择</div><div class="slide-desc">为什么用多 Agent、为什么用故障树而非自由推理</div></div>
+  <div class="slide-row"><div class="slide-num">09</div><div class="slide-name">分析流程思维导图</div><div class="slide-desc">官方点名要「思维导图形式」，别用普通流程图</div></div>
+  <div class="slide-row"><div class="slide-num">10</div><div class="slide-name">系统架构</div><div class="slide-desc">五 Agent 协同图 + 数据流箭头</div></div>
+  <div class="slide-row"><div class="slide-num">11</div><div class="slide-name">核心设计：计算与语言分离</div><div class="slide-desc"><b>本作品最强的一页。</b>画出「语言归模型、数字归公式」的边界</div></div>
+  <div class="slide-row"><div class="slide-num">12</div><div class="slide-name">创新点一</div><div class="slide-desc">计算下沉带来的可复现与可审计</div></div>
+  <div class="slide-row"><div class="slide-num">13</div><div class="slide-name">创新点二 + 跨学科视角</div><div class="slide-desc">全生命周期成本 + 工程×经济×AI 三层融合（官方加分页）</div></div>
+  <div class="slide-row"><div class="slide-num">14</div><div class="slide-name">结果解读</div><div class="slide-desc">实测案例：一台机组的选型校核到偏差提示全过程</div></div>
+  <div class="slide-row"><div class="slide-num">15</div><div class="slide-name">价值量化</div><div class="slide-desc">校核耗时、选型偏差率、维保超期率、LCC 差额</div></div>
+  <div class="slide-row"><div class="slide-num">16</div><div class="slide-name">问题与优化建议</div><div class="slide-desc">主动承认 2–3 个不足并给优化路径，别装完美</div></div>
+  <div class="slide-row"><div class="slide-num">17</div><div class="slide-name">风险识别与应对</div><div class="slide-desc">样本版本更新、参数抽取错误、责任边界（建议仅供参考）三类风险</div></div>
+  <div class="slide-row"><div class="slide-num">18</div><div class="slide-name">应用对话界面</div><div class="slide-desc">真实截图，不要设计稿</div></div>
+  <div class="slide-row"><div class="slide-num">19</div><div class="slide-name">提示词示例 + Agent 链接</div><div class="slide-desc">3 组提示词及输出 + 可点击链接（官方硬要求）</div></div>
+  <div class="slide-row"><div class="slide-num">20</div><div class="slide-name">结尾</div><div class="slide-desc">落地路径与展望，1 页收住</div></div>
+</div>
+
+<h2>九、6 分钟答辩视频脚本</h2>
+
+<table>
+  <tr><th style="width:14%">时间</th><th style="width:28%">内容</th><th>要点</th></tr>
+  <tr><td>0:00–0:45</td><td>开场：一个错误有多贵</td><td>「一台机组选大一号，初投资多花几万块是一次性的；但它低负荷运行十几年的电费，是几万块还是几十万块？」用 LCC 制造悬念</td></tr>
+  <tr><td>0:45–1:30</td><td>我们的答案</td><td>五个 Agent 各做什么，配架构图</td></tr>
+  <tr><td>1:30–2:40</td><td>数据与知识库</td><td>厂家样本 + 国家规范 + 真实图纸（讲脱敏），强调颗粒度</td></tr>
+  <tr><td>2:40–4:20</td><td>现场演示</td><td><b>最关键的 100 秒。</b>真实录屏：提问 → 抽参 → 算流速 → 判定超标 → 给建议 → 引条款。务必让评委看到数字是可复算的</td></tr>
+  <tr><td>4:20–5:20</td><td>核心设计与价值</td><td>计算语言分离 + 两个创新点 + 四个量化指标</td></tr>
+  <tr><td>5:20–6:00</td><td>风险与展望</td><td>主动说局限，展示清醒度</td></tr>
+</table>
+
+<h2>十、10 天倒排计划</h2>
+
+<table>
+  <tr><th style="width:16%">日期</th><th style="width:30%">任务</th><th>交付物</th></tr>
+  <tr><td>10.31 – 11.01</td><td>确认本校校赛承办状态、组队、官网注册缴费</td><td>队伍建成、账号就绪</td></tr>
+  <tr><td>11.01 – 11.02</td><td>整理设备参数，建 20–30 台设备的台账；写计算函数</td><td>结构化台账 + 可跑通的公式引擎</td></tr>
+  <tr><td>11.02 – 11.03</td><td>Coze 搭五 Agent 骨架，计算函数挂成插件</td><td>可访问的 Agent 链接 v0.1</td></tr>
+  <tr><td>11.03 – 11.04</td><td>规范知识库入库 + 故障树整理</td><td>能回答 10 个典型问题</td></tr>
+  <tr><td>11.04 – 11.05</td><td>用 39XT1822 / 30XAV0532A 做案例回测，记录校核结果</td><td>案例素材 + 数据截图</td></tr>
+  <tr><td>11.05 – 11.06</td><td>整理数据章节素材：图纸脱敏截图、指标表、LCC 对比图</td><td>图表素材包</td></tr>
+  <tr><td>11.06 – 11.07</td><td>PPT 20 页成稿</td><td>PPT v1</td></tr>
+  <tr><td>11.07 – 11.08</td><td>录屏 + 配音，6 分钟视频</td><td>MP4 成片</td></tr>
+  <tr><td>11.08 – 11.09</td><td>打包上传 + 自查清单核对</td><td>官网提交成功截图</td></tr>
+  <tr><td>11.09 – 11.10</td><td>缓冲 + 修改后重新上传</td><td>最终版（以最后一次上传为准）</td></tr>
+</table>
+
+<div class="callout c-red">
+<b>死线提前到 11 月 9 日。</b>官网只收单个压缩包、最后一次上传覆盖前次，10 号晚上系统拥堵无补救通道。<b>这个方案最大的时间风险在「建台账 + 写计算函数」，务必前两天做完</b>——这两个是后面所有演示的地基。
+</div>
+
+<h2>十一、风险清单与答辩预设问题</h2>
+
+<h3>11.1 执行风险</h3>
+<table>
+  <tr><th style="width:30%">风险</th><th style="width:10%">概率</th><th>应对</th></tr>
+  <tr><td>本校不承办校赛，无法进入三级赛制</td><td class="tag red">高</td><td>找辅导员/教务处确认；看上海赛区是否设虚拟校赛</td></tr>
+  <tr><td>赛区强制要求 JoyCode</td><td class="tag blue">中</td><td>查赛区通知原文；计算服务独立部署，前端可快速迁移</td></tr>
+  <tr><td>被质疑「这就是个问答机器人」</td><td class="tag amber">中</td><td>靠第 11 页「计算与语言分离」正面回应——有确定性计算和故障树，就不是问答</td></tr>
+  <tr><td>时间被软件杯、挑杯挤占</td><td class="tag red">高</td><td>只保留台账 + 选型校核两个 Agent，砍掉诊断和维保，仍能形成完整闭环</td></tr>
+</table>
+
+<h3>11.2 评委可能问的问题</h3>
+<ul>
+  <li><b>「厂家的选型软件已经很成熟了，你凭什么？」</b>→ <b>不要说替代厂家软件</b>。答案是：厂家软件只算自己家的产品，跨品牌项目要开五个软件；我们做的是跨品牌的统一台账 + 运维侧决策 + 故障诊断，这是厂家软件不覆盖的部分。这个防守必须提前想好，否则一问就塌。</li>
+  <li><b>「大模型算错了怎么办？」</b>→ 所以不让它算。计算走确定性公式引擎，结果可复现、可审计。</li>
+  <li><b>「数据从哪来？有没有版权问题？」</b>→ 厂家公开样本 + 国家规范 + 自有项目图纸（已脱敏）。样本仅用于参数比对，不做二次分发。</li>
+  <li><b>「谁付钱？」</b>→ 中小机电工程公司与物业运维方，按项目或按设备数订阅；替代的是老师傅经验与返工成本。</li>
+  <li><b>「这个 Agent 出错会造成工程事故吗？」</b>→ 明确定位为<b>辅助校核工具而非决策依据</b>，所有输出标注「建议值，须由注册工程师复核」。这个责任边界必须在 PPT 里写明。</li>
+  <li><b>「为什么选制造不选医疗？」</b>→ 制造是我有真实工程资料和领域知识的方向，能讲出参数级细节；医疗我只能讲框架，讲不到深处。</li>
+</ul>
+
+<h2>十二、两方案速览对比</h2>
+
+<table>
+  <tr><th style="width:22%">维度</th><th style="width:39%">衡温 Agent（制造 · 暖通）</th><th>守净 Agent（医疗 · 院感）</th></tr>
+  <tr><td>核心能力依赖</td><td>领域知识 + 确定性计算</td><td>姿态估计 + 规则引擎</td></tr>
+  <tr><td>技术实现难度</td><td><b>最低</b>，全篇无视觉依赖</td><td>中低，<b>不需自训高精度检测器</b>，几何时序规则可写，且有分级降级方案</td></tr>
+  <tr><td>叙事强度</td><td>中上（LCC 经济账 + 工程颗粒度）</td><td><b>高</b>（霍桑效应，方法学批判）</td></tr>
+  <tr><td>素材准备</td><td>图纸现成，需建 20–30 台设备台账</td><td>需自采 50–100 段动作视频</td></tr>
+  <tr><td>主要被问倒点</td><td>「厂家选型软件不够用吗」</td><td>「识别准不准」「这不就是监控员工」</td></tr>
+  <tr><td>适合什么时候选</td><td>想要纯知识型、绝不因技术翻车的作品</td><td>想要叙事更强、技术有层次感和降级余地的作品</td></tr>
+</table>
+
+<div class="callout c-blue">
+<b>两个方案有一个共同点，值得记住：都不依赖你那台旧火灾模型。</b>一个绕开视觉，一个换掉视觉任务的类型（从语义检测换成几何判定）。这也是为什么火灾模型的精度问题，不会传染到这两个方案里的任何一个。
+</div>
+
+<footer>
+  <p>本方案基于 2026-10-31 官网公开信息及多校校赛通知整理。赛题形式、平台要求、作品格式以本校校赛承办单位通知与大赛官网《报名须知》《作品提交说明》最新版为准。</p>
+  <p>涉及国家标准、规范条款、设备样本参数的内容，提交前必须逐条核对原文与现行版本。</p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# 默认：文本文件用 LF，Windows 批处理用 CRLF
+* text=auto eol=lf
+
+*.py    text eol=lf
+*.md    text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.json  text eol=lf
+*.txt   text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.js    text eol=lf
+*.sh    text eol=lf
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# 二进制
+*.pt    binary
+*.onnx  binary
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.mp4   binary
+*.zip   binary
+*.pptx  binary
+
+# GitHub 语言统计：把 HTML 排版件排除，避免误判为 HTML 项目
+assets/html/* linguist-vendored

@@ -1,0 +1,12 @@
+# 推理服务所需
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-multipart>=0.0.9
+pillow>=10.0
+
+# 训练与推理
+ultralytics>=8.3.0
+numpy>=1.24
+opencv-python>=4.8
+
+# 规则引擎与 demo 只用标准库，无需额外依赖

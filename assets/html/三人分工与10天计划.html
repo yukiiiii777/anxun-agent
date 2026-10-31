@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安巡 Agent · 三人分工与工作计划</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --ink2:#4a4a4a; --ink3:#7a7a7a;
+    --line:#e6e4dd; --bg:#fbfaf7; --card:#ffffff;
+    --red:#a32d2d; --redbg:#fcebeb;
+    --blue:#185fa5; --bluebg:#e6f1fb;
+    --amber:#854f0b; --amberbg:#faeeda;
+    --green:#3b6d11; --greenbg:#eaf3de;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei","Source Han Sans SC",sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.75;
+    font-size:15px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1020px;margin:0 auto;padding:56px 32px 100px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:24px;margin-bottom:40px}
+  .kicker{font-size:12px;letter-spacing:.16em;color:var(--ink3);margin-bottom:12px}
+  h1{font-size:30px;font-weight:600;line-height:1.3}
+  .sub{font-size:15px;color:var(--ink2);margin-top:10px}
+  .meta{display:flex;gap:26px;margin-top:20px;flex-wrap:wrap;font-size:12.5px;color:var(--ink3)}
+  .meta b{color:var(--ink2);font-weight:500}
+
+  h2{font-size:20px;font-weight:600;margin:50px 0 16px;padding-left:13px;border-left:3px solid var(--ink);line-height:1.4}
+  h3{font-size:15px;font-weight:600;margin:26px 0 10px}
+  p{margin:9px 0;color:var(--ink2)}
+  ul,ol{margin:8px 0 8px 20px;color:var(--ink2)}
+  li{margin:6px 0}
+  b,strong{color:var(--ink);font-weight:600}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px;background:var(--card)}
+  th{text-align:left;font-weight:600;color:var(--ink);background:#f4f2ec;padding:9px 11px;border-bottom:1px solid var(--line)}
+  td{padding:9px 11px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top;line-height:1.65}
+  tr:last-child td{border-bottom:none}
+
+  .callout{border-left:3px solid;border-radius:0 8px 8px 0;padding:13px 17px;margin:16px 0;font-size:14px}
+  .c-red{background:var(--redbg);border-color:var(--red)}
+  .c-blue{background:var(--bluebg);border-color:var(--blue)}
+  .c-green{background:var(--greenbg);border-color:var(--green)}
+  .c-amber{background:var(--amberbg);border-color:var(--amber)}
+  .callout b{color:inherit}
+
+  .role{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
+  .rc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .rc.hl{border:2px solid var(--blue)}
+  .rc .n{font-size:15px;font-weight:600;margin-bottom:2px}
+  .rc .r{font-size:12px;color:var(--ink3);margin-bottom:10px}
+  .rc .l{font-size:12.5px;color:var(--ink2);line-height:1.7}
+  .rc .l span{display:block;padding-left:12px;position:relative}
+  .rc .l span::before{content:"";position:absolute;left:0;top:8px;width:4px;height:4px;border-radius:50%;background:#b4b2a9}
+
+  .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:3px;background:#f0eee8;color:var(--ink2);margin-right:5px;white-space:nowrap}
+  .tag.red{background:var(--redbg);color:var(--red)}
+  .tag.blue{background:var(--bluebg);color:var(--blue)}
+  .tag.green{background:var(--greenbg);color:var(--green)}
+  .tag.amber{background:var(--amberbg);color:var(--amber)}
+
+  .day{display:flex;gap:14px;padding:13px 0;border-bottom:1px dashed var(--line)}
+  .day:last-child{border-bottom:none}
+  .day-d{flex:0 0 96px;font-size:12.5px;color:var(--ink3);padding-top:2px}
+  .day-d b{display:block;font-size:14px;color:var(--ink);font-weight:600}
+  .day-b{flex:1;font-size:13px;color:var(--ink2);line-height:1.75}
+  .day-b .who{color:var(--ink3);font-size:12px}
+
+  code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;background:#f4f2ec;padding:1px 5px;border-radius:3px}
+  footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink3)}
+  @media (max-width:820px){
+    .wrap{padding:32px 18px 64px}
+    h1{font-size:23px}
+    .role{grid-template-columns:1fr}
+    .day{flex-direction:column;gap:6px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">工作分解与分工 · 第二届全国人工智能应用创新大赛</div>
+  <h1>安巡 Agent · 三人分工与 10 天计划</h1>
+  <div class="sub">从今天 10 月 31 日到 11 月 8 日提交，把 34 项任务分到三个人头上</div>
+  <div class="meta">
+    <span><b>提交死线</b> 11.10 24:00（内部卡 11.08）</span>
+    <span><b>剩余</b> 10 天</span>
+    <span><b>团队</b> 3 人 + 1 指导老师</span>
+  </div>
+</header>
+
+<h2>一、先看关键路径</h2>
+
+<p>34 项任务里，只有一条链是断了就全盘崩的：</p>
+
+<div class="callout c-red">
+<b>数据 → 模型 → 指标 → PPT 第 11 页 / 视频演示段</b><br><br>
+这条链上，<b>数据卡一天，后面全部顺延一天</b>。而 PPT 和视频只能等指标和截图出来才能做——所以前 4 天必须把模型跑出结果，不能拖到后面。<br><br>
+这就是为什么<b>数据采集安排在第 1 天，而且是三个人一起上</b>。这不是某个人的活，是全队的第一优先级。
+</div>
+
+<h2>二、三条线并行</h2>
+
+<div class="role">
+  <div class="rc hl">
+    <div class="n">队长 · 你</div>
+    <div class="r">技术主线 + 统筹</div>
+    <div class="l">
+      <span>数据采集组织</span>
+      <span>模型训练与调优</span>
+      <span>指标评测（含误报率）</span>
+      <span>推理服务部署</span>
+      <span>技术页内容（PPT 第 10–13 页）</span>
+      <span>报名、提交、全程统筹</span>
+    </div>
+  </div>
+  <div class="rc">
+    <div class="n">队友 A</div>
+    <div class="r">系统线</div>
+    <div class="l">
+      <span>法规资料收集与核对</span>
+      <span>知识库分块入库</span>
+      <span>五个 Agent 提示词配置</span>
+      <span>工作流与工单逻辑接入</span>
+      <span>发布链接与多设备测试</span>
+      <span>演示案例准备（3 组提示词）</span>
+    </div>
+  </div>
+  <div class="rc">
+    <div class="n">队友 B</div>
+    <div class="r">材料线</div>
+    <div class="l">
+      <span>PPT 20 页排版成稿</span>
+      <span>图表与截图整理</span>
+      <span>6 分钟视频录制与剪辑</span>
+      <span>素材库管理</span>
+      <span>格式与打包检查</span>
+      <span>答辩 PPT 备份</span>
+    </div>
+  </div>
+</div>
+
+<div class="callout c-blue">
+<b>为什么这么分：</b>按「交付物」分，不按「环节」分。每个人从头到尾负责一类东西，交接点少，责任清楚。<br>
+<b>最怕的分法是</b>「你做模型我做PPT最后拼起来」——中间没有交接标准，最后一定对不上。
+</div>
+
+<h2>三、完整任务清单</h2>
+
+<h3>A. 启动与统筹（队长主责）</h3>
+<table>
+  <tr><th style="width:6%">#</th><th style="width:34%">任务</th><th style="width:12%">主责</th><th style="width:10%">截止</th><th>验收标准</th></tr>
+  <tr><td>A1</td><td>官网报名、缴费、建队（3 人 + 1 指导老师）</td><td>队长</td><td>10/31</td><td>队伍状态显示「已提交」，缴费成功，记下队伍编号</td></tr>
+  <tr><td>A2</td><td>找学院确认校赛组织安排</td><td>队长</td><td>11/01</td><td>拿到负责人姓名、校内截止时间、评审形式</td></tr>
+  <tr><td>A3</td><td>建共享目录 + 定文件命名规则</td><td>队长</td><td>10/31</td><td>三人能互相看到文件，命名统一</td></tr>
+  <tr><td>A4</td><td>每日 10 分钟站会（固定时间）</td><td>全员</td><td>每日</td><td>昨天做完什么、今天做什么、卡在哪</td></tr>
+  <tr><td>A5</td><td>最终打包与官网提交</td><td>队长</td><td>11/08</td><td>提交成功截图，压缩包 ≤200MB，命名合规</td></tr>
+</table>
+
+<h3>B. 数据（第 1–2 天，全队一起）</h3>
+<table>
+  <tr><th style="width:6%">#</th><th style="width:34%">任务</th><th style="width:12%">主责</th><th style="width:10%">截止</th><th>验收标准</th></tr>
+  <tr><td>B1</td><td>确定公开数据集（安全帽/PPE），下载并检查标注格式</td><td>队长</td><td>11/01</td><td>能读出类别名，与 person/helmet/vest 对齐</td></tr>
+  <tr><td>B2</td><td>设计采集脚本：拍哪些动作、哪些角度、几个人</td><td>队长</td><td>11/01</td><td>一页纸脚本，队友照着能拍</td></tr>
+  <tr><td>B3</td><td>实拍素材（戴/不戴安全帽、正/侧/背、明/暗光）</td><td>全员</td><td>11/01</td><td>≥300 张可用原图</td></tr>
+  <tr><td>B4</td><td>数据清洗：去重、去模糊、剔除废片</td><td>队友 A</td><td>11/02</td><td>清单里没有重复帧和糊图</td></tr>
+  <tr><td>B5</td><td>标注（YOLO 格式，4 类）</td><td>队友 A + B</td><td>11/02</td><td>每张图标注完整，类别顺序与 ppe.yaml 一致</td></tr>
+  <tr><td>B6</td><td>划分 train/val（<b>按视频划分</b>，不按帧）</td><td>队长</td><td>11/02</td><td>8:2，无同一视频跨集</td></tr>
+  <tr><td>B7</td><td>数据统计（类别分布、样本量）</td><td>队友 B</td><td>11/02</td><td>一张统计表，直接进 PPT 第 4–5 页</td></tr>
+</table>
+
+<h3>C. 模型（第 2–4 天）</h3>
+<table>
+  <tr><th style="width:6%">#</th><th style="width:34%">任务</th><th style="width:12%">主责</th><th style="width:10%">截止</th><th>验收标准</th></tr>
+  <tr><td>C1</td><td>跑通 baseline（yolo11n + 480，小显存先出结果）</td><td>队长</td><td>11/02</td><td>能训完一轮并出 mAP</td></tr>
+  <tr><td>C2</td><td>正式训练（yolo11s + 640，双卡）</td><td>队长</td><td>11/03</td><td>best.pt 可加载</td></tr>
+  <tr><td>C3</td><td>指标评测：mAP、P、R、单帧耗时</td><td>队长</td><td>11/04</td><td>四个数有实测值</td></tr>
+  <tr><td>C4</td><td><b>误报率专项测试</b>（负样本集）</td><td>队长</td><td>11/04</td><td>误报率 ≤10%，并记录误差来源</td></tr>
+  <tr><td>C5</td><td>漏报率测试</td><td>队长</td><td>11/04</td><td>漏报率有数，能解释原因</td></tr>
+  <tr><td>C6</td><td>导出混淆矩阵、PR 曲线</td><td>队友 B</td><td>11/04</td><td>图片可直接插入 PPT</td></tr>
+</table>
+
+<h3>D. 系统（第 3–5 天）</h3>
+<table>
+  <tr><th style="width:6%">#</th><th style="width:34%">任务</th><th style="width:12%">主责</th><th style="width:10%">截止</th><th>验收标准</th></tr>
+  <tr><td>D1</td><td>推理 API 本地启动，用真图跑通</td><td>队长</td><td>11/03</td><td><code>/detect</code> 返回正确框</td></tr>
+  <tr><td>D2</td><td>内网穿透或云部署（让 Agent 能调到）</td><td>队长</td><td>11/04</td><td>手机 4G 网络能访问</td></tr>
+  <tr><td>D3</td><td>法规资料收集（安全生产法、GB 2811、GB 39800）</td><td>队友 A</td><td>11/03</td><td>PDF 原文 + 条款清单</td></tr>
+  <tr><td>D4</td><td><b>条款核对</b>：版本、文号、现行有效性</td><td>队友 A</td><td>11/04</td><td>每条能指到原文出处</td></tr>
+  <tr><td>D5</td><td>知识库分块入库（按条款切分，保留条款号）</td><td>队友 A</td><td>11/04</td><td>检索能返回完整条款</td></tr>
+  <tr><td>D6</td><td>五 Agent 提示词配置（用提示词库）</td><td>队友 A</td><td>11/04</td><td>五个角色都能正常回复</td></tr>
+  <tr><td>D7</td><td>工作流搭建：风险矩阵节点 + 工单生成</td><td>队友 A</td><td>11/05</td><td>同一输入连跑三次等级一致</td></tr>
+  <tr><td>D8</td><td>发布获取公开链接，多设备测试</td><td>队友 A</td><td>11/05</td><td>换手机/换浏览器都能打开</td></tr>
+  <tr><td>D9</td><td>3 组演示提示词的输入输出固化</td><td>队友 A</td><td>11/06</td><td>重跑结果不变，可截图</td></tr>
+</table>
+
+<h3>E. 物料（第 4–6 天）</h3>
+<table>
+  <tr><th style="width:6%">#</th><th style="width:34%">任务</th><th style="width:12%">主责</th><th style="width:10%">截止</th><th>验收标准</th></tr>
+  <tr><td>E1</td><td>巡检报告页面美化（<code>report.html</code> 已有）</td><td>队友 B</td><td>11/05</td><td>截图清晰，可直接进 PPT</td></tr>
+  <tr><td>E2</td><td>Agent 对话界面截图（≥6 张）</td><td>队友 B</td><td>11/06</td><td>真实界面，不是设计稿</td></tr>
+  <tr><td>E3</td><td>风险矩阵三场景对比表可视化</td><td>队友 B</td><td>11/05</td><td>一张图看懂等级差异</td></tr>
+  <tr><td>E4</td><td>思维导图形式分析流程（官方要求）</td><td>队友 B</td><td>11/05</td><td>是思维导图，不是普通流程图</td></tr>
+</table>
+
+<h3>F. 材料（第 5–8 天）</h3>
+<table>
+  <tr><th style="width:6%">#</th><th style="width:34%">任务</th><th style="width:12%">主责</th><th style="width:10%">截止</th><th>验收标准</th></tr>
+  <tr><td>F1</td><td>PPT 框架搭好（20 页占位）</td><td>队友 B</td><td>11/05</td><td>页面结构对齐官方六章</td></tr>
+  <tr><td>F2</td><td>PPT 内容填充（技术页队长写，其余队友 B）</td><td>分工</td><td>11/06</td><td>每页有实质内容，无占位符</td></tr>
+  <tr><td>F3</td><td>PPT 定稿（≤20 页、16:9、≤50MB）</td><td>队友 B</td><td>11/07</td><td>格式检查通过</td></tr>
+  <tr><td>F4</td><td>录屏素材（真机操作全程）</td><td>队友 A</td><td>11/06</td><td>连续录制，不剪碎</td></tr>
+  <tr><td>F5</td><td>视频录制 + 配音（≤6 分钟）</td><td>队长</td><td>11/07</td><td>画面清晰、声音清楚、不念稿</td></tr>
+  <tr><td>F6</td><td>剪辑成片（MP4，≤300MB）</td><td>队友 B</td><td>11/08</td><td>时长合规，转场自然</td></tr>
+  <tr><td>F7</td><td>打包（PPT+视频+链接说明）</td><td>队长</td><td>11/08</td><td>单个压缩包 ≤200MB</td></tr>
+</table>
+
+<h3>G. 答辩预备（第 8–10 天）</h3>
+<table>
+  <tr><th style="width:6%">#</th><th style="width:34%">任务</th><th style="width:12%">主责</th><th style="width:10%">截止</th><th>验收标准</th></tr>
+  <tr><td>G1</td><td>预设问题答案（6 个必答）</td><td>队长</td><td>11/09</td><td>每个答案 ≤3 句，能脱稿</td></tr>
+  <tr><td>G2</td><td>三人彩排（轮流讲一遍）</td><td>全员</td><td>11/09</td><td>每人都能把故事讲完整</td></tr>
+  <tr><td>G3</td><td>应急备份（断网演示版、录屏备用）</td><td>队友 A</td><td>11/09</td><td>没网也能演示</td></tr>
+</table>
+
+<h2>四、10 天日程</h2>
+
+<div class="day">
+  <div class="day-d"><b>10/31</b>D0 今晚</div>
+  <div class="day-b">报名缴费建队（A1）· 建共享目录（A3）· 拉群定站会时间（A4）<br>
+  <span class="who">全员 30 分钟，只做这三件，不展开别的</span></div>
+</div>
+<div class="day">
+  <div class="day-d"><b>11/01</b>D1</div>
+  <div class="day-b"><b>数据日，全员上</b><br>
+  队长：下载公开数据集（B1）+ 写采集脚本（B2）<br>
+  全员：实拍 300 张（B3）<br>
+  队友 A：联系学院确认校赛（A2 可代跑）<br>
+  <span class="who">这一天拍不完，后面全崩。场地和"演员"今天就约好。</span></div>
+</div>
+<div class="day">
+  <div class="day-d"><b>11/02</b>D2</div>
+  <div class="day-b">清洗（B4）· 标注（B5）· 划分（B6）· 统计（B7）<br>
+  队长：跑通 baseline（C1），哪怕只有 10 轮，先确认流程通<br>
+  <span class="who">标注枯燥但必须今天完。用标注工具，别手写 txt。</span></div>
+</div>
+<div class="day">
+  <div class="day-d"><b>11/03</b>D3</div>
+  <div class="day-b">队长：正式训练开跑（C2）· 推理 API 本地跑通（D1）<br>
+  队友 A：法规资料收集（D3）<br>
+  队友 B：开始搭 PPT 框架（F1）<br>
+  <span class="who">训练跑起来后机器不空转，人可以并行做别的。</span></div>
+</div>
+<div class="day">
+  <div class="day-d"><b>11/04</b>D4</div>
+  <div class="day-b">队长：指标评测（C3）· <b>误报率测试（C4）</b>· 漏报（C5）<br>
+  队友 A：条款核对（D4）· 知识库入库（D5）· 五 Agent 配置（D6）<br>
+  队友 B：混淆矩阵出图（C6）<br>
+  <span class="who">C4 是这天最重要的一项，决定答辩时敢不敢报指标。</span></div>
+</div>
+<div class="day">
+  <div class="day-d"><b>11/05</b>D5</div>
+  <div class="day-b">队长：服务公网部署（D2）<br>
+  队友 A：工作流与工单逻辑（D7）· 发布链接（D8）<br>
+  队友 B：报告美化（E1）· 矩阵可视化（E3）· 思维导图（E4）· PPT 框架完成<br>
+  <span class="who">D8 出链接后，全队立刻上各自手机测一遍。</span></div>
+</div>
+<div class="day">
+  <div class="day-d"><b>11/06</b>D6</div>
+  <div class="day-b">队友 A：3 组演示案例固化（D9）· 录屏素材（F4）<br>
+  队友 B：PPT 内容填充（F2）· 界面截图（E2）<br>
+  队长：写技术页（PPT 第 10–13 页）<br>
+  <span class="who">技术页是整个 PPT 最难写的四页，必须本人写，不能外包。</span></div>
+</div>
+<div class="day">
+  <div class="day-d"><b>11/07</b>D7</div>
+  <div class="day-b">PPT 定稿（F3）· 视频录制配音（F5）<br>
+  <span class="who">录音找安静的地方，一次录不完就分段录，别边录边改稿。</span></div>
+</div>
+<div class="day">
+  <div class="day-d"><b>11/08</b>D8</div>
+  <div class="day-b">视频剪辑（F6）· <b>打包提交（F7 / A5）</b><br>
+  <span class="who">今天必须交上去。留两天缓冲，因为系统可能拥堵、可能要返工。</span></div>
+</div>
+<div class="day">
+  <div class="day-d"><b>11/09–11/10</b></div>
+  <div class="day-b">答辩预设问题（G1）· 三人彩排（G2）· 应急备份（G3）<br>
+  如需修改，11/10 24:00 前可重新上传覆盖<br>
+  <span class="who">不要拖到 10 号晚上改，那是给自己挖坑。</span></div>
+</div>
+
+<h2>五、协作规则</h2>
+
+<h3>5.1 文件规范</h3>
+<table>
+  <tr><th style="width:26%">类型</th><th style="width:36%">命名</th><th>示例</th></tr>
+  <tr><td>代码</td><td>按目录，不改名</td><td><code>anxun/train_yolo.py</code></td></tr>
+  <tr><td>数据</td><td><code>来源_场景_序号</code></td><td><code>self_workshop-a_0031.jpg</code></td></tr>
+  <tr><td>图表</td><td><code>图_用途_版本</code></td><td><code>chart_混淆矩阵_v2.png</code></td></tr>
+  <tr><td>文档</td><td><code>类型_版本_日期</code></td><td><code>PPT_v3_1107.pptx</code></td></tr>
+</table>
+<p><b>铁律：不要出现「最终版」「最终版2」「真的最终版」。</b>用版本号，最新的一版永远是最新日期。</p>
+
+<h3>5.2 每日站会（10 分钟，固定时间）</h3>
+<p>每人回答三句，不许展开：</p>
+<ul>
+  <li>昨天交付了什么（对着任务编号说）</li>
+  <li>今天交付什么（任务编号 + 截止时间）</li>
+  <li>卡在哪（卡住就说，不要自己硬扛一天）</li>
+</ul>
+
+<h3>5.3 交接点（只有三个，必须按标准交）</h3>
+<table>
+  <tr><th style="width:16%">交接</th><th style="width:20%">从 → 到</th><th>对方拿到后必须能做什么</th></tr>
+  <tr><td>数据 → 模型</td><td>全队 → 队长</td><td>执行一条命令就能开训</td></tr>
+  <tr><td>模型指标 → PPT</td><td>队长 → 队友 B</td><td>四个数字 + 两张图，直接填进第 11 页</td></tr>
+  <tr><td>Agent 链接 → 视频</td><td>队友 A → 队长</td><td>打开就能演示完整链路</td></tr>
+</table>
+
+<h2>六、风险与备份</h2>
+
+<table>
+  <tr><th style="width:26%">风险</th><th style="width:36%">触发条件</th><th>预案</th></tr>
+  <tr><td>数据拍不到 300 张</td><td>11/01 晚不足 150 张</td><td>公开数据集撑主干，自采降到 100 张也能训；PPT 如实写数据规模</td></tr>
+  <tr><td>模型训不出来</td><td>11/03 晚 mAP 仍 &lt;0.5</td><td>降级：只做 helmet 单类；再不行用公开预训练模型直接推理，规则引擎不变</td></tr>
+  <tr><td>服务公网连不上</td><td>11/05 仍无法外网访问</td><td>视频改成"本地录屏 + 讲解"，链接放本地演示的说明；不影响规则引擎展示</td></tr>
+  <tr><td>某个队友掉链子</td><td>连续两天无交付</td><td>队长接手关键项（技术页、打包），非关键项（美化）直接砍</td></tr>
+  <tr><td>校内评审环节缺失</td><td>11/05 仍无学院安排</td><td>联系上海赛区留底，申请兜底</td></tr>
+</table>
+
+<div class="callout c-amber">
+<b>砍功能的顺序（万一时间不够）：</b>先砍 ⑤ 合规问答 → 再砍 ① 巡检规划 → 保留 ② 感知 + ③ 研判 + ④ 工单。<br>
+这三项是故事的骨架，缺了就不成立。前两项属于锦上添花，砍掉照样是完整作品。
+</div>
+
+<footer>
+  <p>任务编号与《安巡Agent_实施手册.html》《安巡Agent_提示词库.md》对应，执行时以本表为准。</p>
+</footer>
+
+</div>
+</body>
+</html>

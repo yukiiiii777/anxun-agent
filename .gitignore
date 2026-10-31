@@ -1,0 +1,110 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib60/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ---- YOLO / 训练产物 ----
+runs/
+weights/
+*.pt
+*.pth
+*.onnx
+*.engine
+*.trt
+*.ckpt
+last.pt
+best.pt
+wandb/
+*.tfevents.*
+
+# 训练日志
+train.log
+*.log
+
+# ---- 数据集 ----
+# 图片与标签体积大且含现场画面，不入库；仅保留 ppe.yaml 配置
+src/anxun/data/ppe/images/
+src/anxun/data/ppe/labels/
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.webp
+*.mp4
+*.avi
+*.mov
+# 但保留文档配图与报告模板
+!assets/img/**
+!src/anxun/report.html
+!docs/**/*.png
+
+# ---- 生成产物（demo 每次跑都会重生成）----
+src/anxun/result.json
+src/anxun/report_output.html
+
+# ---- 材料与提交包 ----
+*.pptx
+*.docx
+*.xlsx
+*.zip
+*.rar
+*.7z
+!docs/**/*.md
+# 提交包目录
+dist_submit/
+
+# ---- 编辑器 ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 密钥与配置 ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+config.local.*
+# 内网穿透 token 之类
+cpolar.yml
+ngrok.yml
+
+# ---- 临时 ----
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
+
+# ---- 工作区元数据（本地记忆与配置，不入库）----
+.workbuddy/

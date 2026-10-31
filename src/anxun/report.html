@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<title>安巡 Agent · 巡检报告</title>
+<style>
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+margin:0;padding:32px;background:#FBFAF7;color:#1A1A1A;line-height:1.7}
+.w{max-width:920px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin:0 0 6px}
+.m{color:#7A7A7A;font-size:13px;margin-bottom:24px}
+.g{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+.c{background:#fff;border:1px solid #E6E4DD;border-radius:8px;padding:14px 16px}
+.c .k{font-size:12px;color:#7A7A7A}
+.c .v{font-size:22px;font-weight:500;margin-top:2px}
+h2{font-size:15px;font-weight:600;margin:28px 0 10px}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+th{text-align:left;background:#F4F2EC;padding:9px 11px;font-weight:600;border-bottom:1px solid #E6E4DD}
+td{padding:9px 11px;border-bottom:1px solid #E6E4DD;color:#4A4A4A}
+</style></head><body><div class="w">
+<h1>安巡 Agent · 巡检报告</h1>
+<div class="m">2026-11-03 09:20 · 3 号车间东侧通道 · 设备 ANX-CAM-03</div>
+
+<svg viewBox="0 0 640 360" width="100%" xmlns="http://www.w3.org/2000/svg" style="border-radius:8px;display:block"><rect x="0" y="0" width="640" height="360" fill="#1F2421"/><rect x="0" y="300" width="640" height="60" fill="#2A302B"/><text x="12" y="20" fill="#9FBFA8" font-size="11" font-family="monospace">CAM-03 / 2026-11-03 09:20:00</text><rect x="100.0" y="100.0" width="80.0" height="206.7" fill="none" stroke="#97C459" stroke-width="1.6"/><rect x="100.0" y="85.0" width="52.8" height="14" fill="#97C459"/><text x="104.0" y="96.0" fill="#fff" font-size="10" font-family="monospace">P1 0.94</text><rect x="233.3" y="106.7" width="80.0" height="206.7" fill="none" stroke="#97C459" stroke-width="1.6"/><rect x="233.3" y="91.7" width="52.8" height="14" fill="#97C459"/><text x="237.3" y="102.7" fill="#fff" font-size="10" font-family="monospace">P2 0.88</text><rect x="366.7" y="103.3" width="80.0" height="206.7" fill="none" stroke="#E24B4A" stroke-width="1.6"/><rect x="366.7" y="88.3" width="52.8" height="14" fill="#E24B4A"/><text x="370.7" y="99.3" fill="#fff" font-size="10" font-family="monospace">P3 0.91</text><text x="406.7" y="206.7" text-anchor="middle" fill="#E24B4A" font-size="12" font-family="monospace">NO HELMET</text><rect x="550.0" y="233.3" width="20.0" height="33.3" fill="none" stroke="#97C459" stroke-width="1.6"/><rect x="550.0" y="218.3" width="52.8" height="14" fill="#97C459"/><text x="554.0" y="229.3" fill="#fff" font-size="10" font-family="monospace">P4 0.71</text><rect x="106.7" y="96.7" width="66.7" height="40.0" fill="none" stroke="#85B7EB" stroke-width="1" stroke-dasharray="3 2"/><rect x="240.0" y="103.3" width="66.7" height="40.0" fill="none" stroke="#85B7EB" stroke-width="1" stroke-dasharray="3 2"/><rect x="103.3" y="156.7" width="73.3" height="96.7" fill="none" stroke="#85B7EB" stroke-width="1" stroke-dasharray="3 2"/><rect x="236.7" y="163.3" width="73.3" height="96.7" fill="none" stroke="#85B7EB" stroke-width="1" stroke-dasharray="3 2"/><rect x="370.0" y="160.0" width="73.3" height="96.7" fill="none" stroke="#85B7EB" stroke-width="1" stroke-dasharray="3 2"/></svg>
+
+<div class="g">
+<div class="c"><div class="k">识别人员</div><div class="v">4</div></div>
+<div class="c"><div class="k">定论判定</div><div class="v">5</div></div>
+<div class="c"><div class="k">违规项</div><div class="v" style="color:#A32D2D">1</div></div>
+<div class="c"><div class="k">待复核</div><div class="v" style="color:#854F0B">1</div></div>
+</div>
+
+<h2>判定明细</h2>
+<table><tr><th>人员</th><th>装备</th><th>结论</th><th>置信度</th><th>判定依据</th></tr>
+<tr><td>P1</td><td>安全帽</td><td><span style="background:#EAF3DE;color:#3B6D11;padding:1px 7px;border-radius:3px;font-size:12px">已佩戴</span></td><td>0.93</td><td style="color:#7A7A7A;font-size:12px">连续 3 帧一致：装备框与头部区域 IoU=0.47，置信度 0.93</td></tr><tr><td>P1</td><td>反光背心</td><td><span style="background:#EAF3DE;color:#3B6D11;padding:1px 7px;border-radius:3px;font-size:12px">已佩戴</span></td><td>0.89</td><td style="color:#7A7A7A;font-size:12px">连续 3 帧一致：装备框与上身区域 IoU=0.72，置信度 0.89</td></tr><tr><td>P2</td><td>安全帽</td><td><span style="background:#FAEEDA;color:#854F0B;padding:1px 7px;border-radius:3px;font-size:12px">待复核</span></td><td>0.52</td><td style="color:#7A7A7A;font-size:12px">装备框与头部区域 IoU=0.47 成立，但置信度 0.52 落在复核区间</td></tr><tr><td>P2</td><td>反光背心</td><td><span style="background:#EAF3DE;color:#3B6D11;padding:1px 7px;border-radius:3px;font-size:12px">已佩戴</span></td><td>0.87</td><td style="color:#7A7A7A;font-size:12px">连续 3 帧一致：装备框与上身区域 IoU=0.72，置信度 0.87</td></tr><tr><td>P3</td><td>安全帽</td><td><span style="background:#FCEBEB;color:#A32D2D;padding:1px 7px;border-radius:3px;font-size:12px">未佩戴</span></td><td>0.91</td><td style="color:#7A7A7A;font-size:12px">连续 3 帧一致：头部区域内未检出装备框（最高 IoU=0.00 < 0.3），判定为未佩戴</td></tr><tr><td>P3</td><td>反光背心</td><td><span style="background:#EAF3DE;color:#3B6D11;padding:1px 7px;border-radius:3px;font-size:12px">已佩戴</span></td><td>0.86</td><td style="color:#7A7A7A;font-size:12px">连续 3 帧一致：装备框与上身区域 IoU=0.72，置信度 0.86</td></tr><tr><td>P4</td><td>安全帽</td><td><span style="background:#F1EFE8;color:#5F5E5A;padding:1px 7px;border-radius:3px;font-size:12px">无法判定</span></td><td>0.71</td><td style="color:#7A7A7A;font-size:12px">人员框面积 6000px² 小于下限 8000px²，目标过小</td></tr><tr><td>P4</td><td>反光背心</td><td><span style="background:#F1EFE8;color:#5F5E5A;padding:1px 7px;border-radius:3px;font-size:12px">无法判定</span></td><td>0.71</td><td style="color:#7A7A7A;font-size:12px">人员框面积 6000px² 小于下限 8000px²，目标过小</td></tr>
+</table>
+
+<h2>风险定级</h2>
+<table><tr><th>区域</th><th>场景</th><th>L</th><th>S</th><th>R</th><th>等级</th><th>整改时限</th></tr>
+<tr><td>3 号车间东侧通道</td><td>普通</td><td>3</td><td>3</td><td><b>9</b></td><td>橙色</td><td>11-04 09:20</td></tr><tr><td>2 号车间高处作业平台</td><td>高处</td><td>4</td><td>4</td><td><b>16</b></td><td>红色</td><td>11-03 11:20</td></tr><tr><td>原料库装卸区</td><td>车辆</td><td>1</td><td>3</td><td><b>3</b></td><td>蓝色</td><td>12-03 09:20</td></tr>
+</table>
+
+<h2>整改工单</h2>
+<table><tr><th>工单号</th><th>违规</th><th>整改要求</th><th>责任人</th><th>时限</th></tr>
+<tr><td>TK-20261103092000-B-01</td><td>未佩戴安全帽</td>
+<td>补发安全帽 1 顶至 2 号车间高处作业平台，登记发放签收记录，次日复查佩戴率</td><td>王志强</td><td>2026-11-03T11:20</td></tr>
+</table>
+</div></body></html>
