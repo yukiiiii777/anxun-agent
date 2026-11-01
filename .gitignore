@@ -109,19 +109,21 @@ temp/
 # ---- 工作区元数据（本地记忆与配置，不入库）----
 .workbuddy/
 
-# ---- 例外：交付目录里的运行时权重必须入库（v1.1.0 起）----
-# 没有权重，clone 下来的仓库跑不动：verify_all 掉到 23/35、HTTP 服务起不来。
-# 体积约 101MB，单文件最大 42.6MB，在 GitHub 100MB 硬限制内。
-!techline-v1.1.0/models/*.pt
-!techline-v1.1.0/models/*.json
-!techline-v1.1.0/models/onnx/*.onnx
-!techline-v1.1.0/models/onnx/*.json
+# ---- 例外：交付目录里的运行时权重必须入库（v1.2.0 起）----
+# 没有权重，clone 下来的仓库跑不动：verify_all 掉一截、HTTP 服务起不来、指标无法复现。
+# 体积约 114MB，单文件最大 42.6MB，在 GitHub 100MB 硬限制内。
+!techline-v1.2.0/models/*.pt
+!techline-v1.2.0/models/*.json
+!techline-v1.2.0/models/onnx/*.onnx
+!techline-v1.2.0/models/onnx/*.json
 # 演示场景素材随仓库走（300KB，控制台没有它会空白）
-!techline-v1.1.0/datasets/scenes/
-!techline-v1.1.0/datasets/scenes/*.jpg
-!techline-v1.1.0/datasets/scenes/*.json
+!techline-v1.2.0/datasets/scenes/
+!techline-v1.2.0/datasets/scenes/*.jpg
+!techline-v1.2.0/datasets/scenes/*.json
 # 评测集随仓库走（14MB）—— 四个指标就测在这 100 张上，不带它指标无法复现
-!techline-v1.1.0/datasets/ppe_test/
-!techline-v1.1.0/datasets/ppe_test/**/*.jpg
-!techline-v1.1.0/datasets/ppe_test/**/*.txt
-!techline-v1.1.0/datasets/ppe_test/*.yaml
+!techline-v1.2.0/datasets/ppe_test/
+!techline-v1.2.0/datasets/ppe_test/**/*.jpg
+!techline-v1.2.0/datasets/ppe_test/**/*.txt
+!techline-v1.2.0/datasets/ppe_test/*.yaml
+# 指标图（PPT 第 11/13 页直接用）：根级 !docs/**/*.png 是锚定路径，管不到子目录
+!techline-v1.2.0/docs/figs/*.png
