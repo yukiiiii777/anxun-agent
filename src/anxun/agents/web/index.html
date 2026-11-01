@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>安巡 Agent · 多智能体链路</title>
+<style>
+  :root{
+    --bg:#FBFAF7; --card:#FFFFFF; --line:#E6E4DD; --ink:#1A1A1A; --sub:#6B6A66;
+    --red:#A32D2D; --redbg:#FCEBEB; --amber:#854F0B; --amberbg:#FAEEDA;
+    --green:#3B6D11; --greenbg:#EAF3DE; --gray:#5F5E5A; --graybg:#F1EFE8;
+    --blue:#185FA5; --bluebg:#E6F1FB;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.65;
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+    font-size:14px}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+  h1{font-size:22px;margin:0;font-weight:650;letter-spacing:.2px}
+  .sub{color:var(--sub);font-size:13px;margin-top:4px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;
+    border:1px solid var(--line);background:#fff;color:var(--sub)}
+  .tabs{display:flex;gap:8px;margin:18px 0 8px;flex-wrap:wrap}
+  .tab{appearance:none;border:1px solid var(--line);background:#fff;border-radius:8px;
+    padding:8px 14px;font-size:13px;cursor:pointer;color:var(--ink);text-align:left;
+    transition:.15s;min-width:210px}
+  .tab:hover{border-color:#C9C6BC}
+  .tab.on{border-color:#1A1A1A;box-shadow:0 0 0 1px #1A1A1A inset}
+  .tab b{display:block;font-weight:600;font-size:13px}
+  .tab span{color:var(--sub);font-size:12px}
+  h2{font-size:15px;margin:30px 0 10px;font-weight:650;display:flex;
+    align-items:center;gap:8px}
+  h2 .n{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--sub);
+    border:1px solid var(--line);border-radius:4px;padding:0 5px;background:#fff}
+  .scene{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:16px 18px;display:flex;gap:28px;flex-wrap:wrap;justify-content:space-between}
+  .scene .k{font-size:12px;color:var(--sub)}
+  .scene .v{font-size:15px;font-weight:550}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi .k{font-size:12px;color:var(--sub)}
+  .kpi .v{font-size:24px;font-weight:600;line-height:1.2;margin-top:2px}
+  .chain{display:grid;grid-template-columns:1fr 26px 1fr 26px 1fr;gap:0;align-items:stretch;margin-top:6px}
+  .agent{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .agent.hot{border-color:#D9B9B9;background:linear-gradient(#fff,#FFFCFC)}
+  .agent .t{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .agent .t b{font-size:14px}
+  .agent .role{font-size:12px;color:var(--sub)}
+  .agent .out{font-size:12px;color:var(--sub);margin-top:8px;border-top:1px dashed var(--line);
+    padding-top:8px}
+  .arrow{display:flex;align-items:center;justify-content:center;color:#B5B2A8;font-size:18px}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th{text-align:left;background:#F4F2EC;padding:9px 11px;font-weight:600;
+    border-bottom:1px solid var(--line);white-space:nowrap;font-size:12px;color:#4A4A46}
+  td{padding:9px 11px;border-bottom:1px solid #F0EEE8;color:#3A3A36;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .chip{display:inline-block;padding:1px 8px;border-radius:4px;font-size:12px;font-weight:500;
+    white-space:nowrap}
+  .已佩戴{color:var(--green);background:var(--greenbg)}
+  .未佩戴{color:var(--red);background:var(--redbg)}
+  .待复核{color:var(--amber);background:var(--amberbg)}
+  .无法判定{color:var(--gray);background:var(--graybg)}
+  .grade{display:inline-block;padding:1px 9px;border-radius:4px;font-size:12px;font-weight:600}
+  .g红色{color:#fff;background:#A32D2D}.g橙色{color:#fff;background:#C4701A}
+  .g黄色{color:#6A4B00;background:#F5D77A}.g蓝色{color:#fff;background:#3C6E9E}
+  .dots{display:inline-flex;gap:3px;vertical-align:middle}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.06)}
+  .d已佩戴{background:#97C459}.d未佩戴{background:#E24B4A}.d待复核{background:#E8B04B}
+  .d无法判定{background:#B9B7AE}
+  .mono{font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:12px}
+  .muted{color:var(--sub);font-size:12px}
+  .tickets{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:12px}
+  .ticket{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    overflow:hidden}
+  .ticket .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:11px 14px;border-bottom:1px solid var(--line);background:#FCFBF8}
+  .ticket .bd{padding:12px 14px}
+  .row{display:grid;grid-template-columns:76px 1fr;gap:10px;padding:3px 0}
+  .row .k{color:var(--sub);font-size:12px}
+  .steps{display:flex;gap:6px;margin-top:8px}
+  .step{flex:1;border:1px solid var(--line);border-radius:6px;padding:5px 6px;font-size:11px;
+    background:#fff;text-align:center;color:var(--sub)}
+  .step.done{border-color:#BBD7A2;background:#F3F9EC;color:var(--green)}
+  .step.now{border-color:#E0B27A;background:#FDF6EC;color:var(--amber)}
+  .ok{color:var(--green)}.bad{color:var(--red)}
+  blockquote{margin:6px 0 0;padding:8px 12px;background:#FCFBF8;border-left:3px solid #D9D5C9;
+    font-size:12.5px;color:#4A4A46;border-radius:0 6px 6px 0}
+  .trace{display:grid;gap:0}
+  .tstep{display:grid;grid-template-columns:26px 130px 1fr;gap:10px;padding:6px 0;
+    border-bottom:1px dashed var(--line);font-size:12.5px}
+  .tstep:last-child{border-bottom:none}
+  .tstep .i{color:var(--sub);font-family:ui-monospace,monospace;text-align:right}
+  .tstep .a{font-weight:550}
+  .legal{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .legal .c{padding:8px 0;border-bottom:1px dashed var(--line)}
+  .legal .c:last-child{border-bottom:none;padding-bottom:0}
+  .legal .ct{font-weight:600;font-size:13px}
+  .legal .src{font-size:11.5px;color:var(--sub);margin-top:2px}
+  .warn{background:#FDF6EC;border:1px solid #EAD3B3;color:#854F0B;border-radius:8px;
+    padding:10px 12px;font-size:12.5px}
+  footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);
+    color:var(--sub);font-size:12px}
+  @media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}
+    .chain{grid-template-columns:1fr}.arrow{transform:rotate(90deg);height:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>安巡 Agent · 多智能体链路</h1>
+      <div class="sub">② 视觉感知 → ③ 隐患研判 → ④ 工单闭环　｜　把摄像头画面变成可执行、可验收的整改工单</div>
+    </div>
+    <div style="text-align:right">
+      <span class="pill">本地离线运行 · 规则引擎确定性输出</span>
+      <div class="sub" style="margin-top:6px">同一输入永远同一输出，可当场重算</div>
+    </div>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="app"></div>
+
+  <footer>
+    安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域 · 本科生组　｜　
+    页面数据来自 <span class="mono">GET /api/run?scene=all</span>，刷新即重算
+  </footer>
+</div>
+
+<script>
+const state = {data: null, scene: "A"};
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const gradeCls = g => "grade g" + g;
+
+function statusChip(s){ return `<span class="chip ${esc(s)}">${esc(s)}</span>`; }
+
+function dotsFor(perFrame, idx){
+  return `<span class="dots">` + perFrame.map(f => {
+    const st = f.statuses[idx] ?? "无法判定";
+    return `<span class="dot d${esc(st)}" title="第 ${f.frame} 帧：${esc(st)}"></span>`;
+  }).join("") + `</span>`;
+}
+
+function render(run){
+  const p = run.perception, rk = run.risk, wo = run.workorders, s = run.summary, sc = run.scene;
+  const c = p.counts;
+
+  const tabs = document.getElementById("tabs");
+  tabs.innerHTML = Object.keys(state.data.scenes).map(k => {
+    const s2 = state.data.scenes[k], sm = s2.summary;
+    const g = sm.top_grade === "无" ? "" : `<span class="${gradeCls(sm.top_grade)}">${esc(sm.top_grade)}</span>`;
+    return `<button class="tab ${k===state.scene?"on":""}" data-k="${k}">
+      <b>场景 ${k} ${g}</b><span>${esc(s2.scene.title)}</span></button>`;
+  }).join("");
+  tabs.querySelectorAll("button").forEach(b => b.onclick = () => { state.scene = b.dataset.k; render(state.data.scenes[state.scene]); });
+
+  const verdictRows = p.verdicts.map((v, i) => `
+    <tr>
+      <td>${esc(v.person)}</td>
+      <td>${esc(v.equip_cn)}</td>
+      <td>${statusChip(v.status)}</td>
+      <td class="mono">${v.conf.toFixed(2)}</td>
+      <td>${dotsFor(p.per_frame, i)}</td>
+      <td class="muted">${esc(v.reason)}</td>
+    </tr>`).join("");
+
+  const eventRows = rk.events.map(e => `
+    <tr>
+      <td class="mono">${esc(e.event_id)}</td>
+      <td>${esc(e.person)} · ${esc(e.equip_cn)}</td>
+      <td>${esc(e.scene)}</td>
+      <td class="mono">${e.L}</td><td class="mono">${e.S}</td>
+      <td class="mono"><b>${e.R}</b></td>
+      <td><span class="${gradeCls(e.grade)}">${esc(e.grade)}</span></td>
+      <td>${esc(e.due_text)}</td>
+    </tr>`).join("");
+
+  const explains = rk.events.map(e => `
+    <div style="margin-top:10px">
+      <div class="mono muted">${esc(e.event_id)}</div>
+      <div>${esc(e.explain.L)}</div>
+      <div>${esc(e.explain.S)}</div>
+      <div><b>${esc(e.explain.R)}</b> → ${esc(e.explain.grade)}</div>
+    </div>`).join("");
+
+  const tickets = wo.tickets.map(t => `
+    <div class="ticket">
+      <div class="hd">
+        <div><span class="mono">${esc(t.ticket_id)}</span>
+          <span class="${gradeCls(t.grade)}" style="margin-left:8px">${esc(t.grade)} · R=${t.risk}</span></div>
+        <div class="muted">${esc(t.status)}</div>
+      </div>
+      <div class="bd">
+        <div class="row"><div class="k">整改要求</div><div>${esc(t.requirement)}</div></div>
+        <div class="row"><div class="k">责任人</div><div>${esc(t.assignee)}${t.cc?`　<span class="muted">抄送 ${esc(t.cc)}</span>`:""}</div></div>
+        <div class="row"><div class="k">时限</div><div class="mono">${esc(t.due_at)}　<span class="muted">${esc(t.remain_text)}｜SLA ${t.sla_hours}h</span></div></div>
+        <div class="row"><div class="k">复查</div><div>${esc(t.review_at)}　<span class="muted">复查人 ${esc(t.reviewer)}（≠ 整改人）</span></div></div>
+        <div class="row"><div class="k">升级</div><div class="muted">50% ${esc(t.escalation.at_50pct)} → ${esc(t.escalation.to_50pct)}；100% ${esc(t.escalation.at_100pct)} → ${esc(t.escalation.to_100pct)}</div></div>
+        <div class="row"><div class="k">验收</div><div>${t.checks.map(x=>`<span class="${x.ok?'ok':'bad'}">${x.ok?'✓':'✗'} ${esc(x.item)}</span>`).join("　")}</div></div>
+        <div class="steps">${t.closure.map(x=>`<div class="step ${x.status==='已完成'?'done':(x.status==='进行中'?'now':'')}">
+          <div>${esc(x.phase)}</div><div class="mono" style="font-size:10px">${esc(x.plan.slice(5,16))}</div></div>`).join("")}</div>
+      </div>
+    </div>`).join("");
+
+  const clauses = [];
+  rk.events.forEach(e => { if(e.legal.found) e.legal.clauses.slice(0,2).forEach(c2=>{
+     if(!clauses.find(x=>x.key===c2.key)) clauses.push(c2);
+  }); });
+  const standards = [];
+  rk.events.forEach(e => { if(e.legal.found) e.legal.standards.forEach(s2=>{
+     if(!standards.find(x=>x.code===s2.code)) standards.push(s2);
+  }); });
+
+  const legalHtml = clauses.map(c2 => `
+    <div class="c"><div class="ct">${esc(c2.citation)} · ${esc(c2.title)}</div>
+      <blockquote>${esc(c2.quote)}</blockquote>
+      <div class="src">解读：${esc(c2.meaning)}　｜　来源：${esc(c2.source_label)}</div>
+    </div>`).join("") + standards.map(x => `
+    <div class="c"><div class="ct">${esc(x.citation)}</div>
+      <div class="src">${esc(x.note)}</div></div>`).join("");
+
+  const trace = run.trace.map(t => `
+    <div class="tstep"><div class="i">${t.seq}</div><div class="a">${esc(t.agent)}</div>
+      <div class="muted">${esc(t.action)}${t.payload && t.payload.rule ? "　·　"+esc(t.payload.rule) : ""}</div></div>`).join("");
+
+  document.getElementById("app").innerHTML = `
+    <div class="scene">
+      <div><div class="k">机位 / 区域</div><div class="v">${esc(sc.camera)}　${esc(sc.region)}（${esc(sc.region_id)}）</div></div>
+      <div><div class="k">作业场景 · 责任人</div><div class="v">${esc(sc.scene_type)}　${esc(sc.owner)}</div></div>
+      <div><div class="k">近 30 天违规</div><div class="v">${sc.violation_30d} 次</div></div>
+      <div><div class="k">连续帧</div><div class="v">${sc.frames} 帧 · ${sc.resolution}</div></div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="k">识别人员</div><div class="v">${sc.frames ? (p.verdicts.length/p.equips.length).toFixed(0) : 0}</div></div>
+      <div class="kpi"><div class="k">定论判定</div><div class="v">${c.定论}<span class="muted" style="font-size:13px"> / ${c.项数}</span></div></div>
+      <div class="kpi"><div class="k">确认违规</div><div class="v" style="color:var(--red)">${p.violations.length}</div></div>
+      <div class="kpi"><div class="k">待复核 + 无法判定</div><div class="v" style="color:var(--amber)">${c.待复核 + c.无法判定}</div></div>
+    </div>
+
+    <h2><span class="n">链路</span>三个 Agent 的交接</h2>
+    <div class="chain">
+      <div class="agent"><div class="t"><b>${esc(p.agent)}</b><span class="role">${esc(p.role)}</span></div>
+        <div class="out">四态输出：定论 ${c.定论} · 待复核 ${c.待复核} · 无法判定 ${c.无法判定}</div>
+        <div class="out">${esc(p.handoff_note)}</div></div>
+      <div class="arrow">→</div>
+      <div class="agent"><div class="t"><b>${esc(rk.agent)}</b><span class="role">${esc(rk.role)}</span></div>
+        <div class="out">R = L × S：${rk.events.map(e=>`${esc(e.equip_cn)} ${e.R}`).join(" · ") || "无"}</div>
+        <div class="out">${esc(rk.handoff_note)}</div></div>
+      <div class="arrow">→</div>
+      <div class="agent hot"><div class="t"><b>${esc(wo.agent)}</b><span class="role">${esc(wo.role)}</span></div>
+        <div class="out">派单 ${wo.tickets.length} 张 · SLA 按等级写死</div>
+        <div class="out">${esc(wo.handoff_note)}</div></div>
+    </div>
+
+    <h2><span class="n">②</span>判定明细（圆点为连续 4 帧的逐帧结论）</h2>
+    <table>
+      <tr><th>人员</th><th>装备</th><th>结论</th><th>置信度</th><th>时序</th><th>判定依据</th></tr>
+      ${verdictRows}
+    </table>
+
+    <h2><span class="n">③</span>风险定级（同一违规，换场景换等级）</h2>
+    ${rk.events.length ? `<table>
+      <tr><th>事件号</th><th>违规</th><th>场景</th><th>L</th><th>S</th><th>R</th><th>等级</th><th>时限</th></tr>
+      ${eventRows}
+    </table>` : `<div class="warn">本机位无定论违规，链路终止于人工复核，不向下游派单。</div>`}
+    ${explains ? `<div style="margin-top:12px">${explains}</div>` : ""}
+
+    <h2><span class="n">④</span>整改工单</h2>
+    <div class="tickets">${tickets || '<div class="warn">无工单</div>'}</div>
+
+    <h2><span class="n">法规</span>依据（逐字引用，查不到就写查不到）</h2>
+    <div class="legal">
+      ${legalHtml || '<div class="warn">知识库未检索到直接对应条款。</div>'}
+      <div class="src" style="margin-top:8px">标准类文件只登记标准号与适用范围，不伪造条文原文。</div>
+    </div>
+
+    <h2><span class="n">留痕</span>链路轨迹</h2>
+    <div class="trace">${trace}</div>
+
+    <div class="warn" style="margin-top:22px">
+      <b>结论：</b>${esc(s.headline)}
+    </div>`;
+}
+
+async function boot(){
+  const res = await fetch("/api/run?scene=all");
+  state.data = await res.json();
+  const want = (new URLSearchParams(location.search).get("scene") || "A").toUpperCase();
+  state.scene = state.data.scenes[want] ? want : "A";
+  render(state.data.scenes[state.scene]);
+}
+
+boot().catch(err => {
+  document.getElementById("app").innerHTML =
+    `<div class="warn">加载失败：${esc(err.message)}。请确认服务已启动：python run_agents.py --serve</div>`;
+});
+</script>
+</body>
+</html>

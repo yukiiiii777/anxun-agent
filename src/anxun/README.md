@@ -24,6 +24,8 @@
 |---|---|---|
 | `rules_engine.py` | PPE 判定 + 风险矩阵 + 工单生成 | 纯标准库 |
 | `demo.py` | 端到端演示，输出控制台报告 / json / html | 纯标准库 |
+| `agents/` | ②③④ 三个 Agent 的本地实现（感知 / 研判 / 工单） | 纯标准库 |
+| `run_agents.py` | 多智能体入口：`python run_agents.py --serve` | 纯标准库 |
 | `infer_api.py` | 检测模型 HTTP 封装 | fastapi + ultralytics |
 | `train_yolo.py` | 模型训练与验证 | ultralytics |
 | `data/ppe.yaml` | 数据集配置模板 | — |
@@ -38,6 +40,18 @@ python demo.py
 - 控制台完整报告
 - `result.json` — 结构化结果，可直接喂给 Agent
 - `report.html` — 带画面标注的巡检报告，**可直接截图进 PPT**
+
+## 跑三个 Agent（本地，不依赖扣子）
+
+`demo.py` 是把链路跑给你看，`run_agents.py` 是把链路**拆成三个能对话的 Agent**：
+
+```bash
+python run_agents.py            # A/B/C 三场景，终端看完整交接
+python run_agents.py --scene B  # 单场景
+python run_agents.py --serve    # 本地网页，127.0.0.1:8611
+```
+
+细节与设计取舍见 [`agents/README.md`](agents/README.md)。
 
 ## 训练模型
 

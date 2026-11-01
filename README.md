@@ -141,6 +141,19 @@ python demo.py
 
 这就是「同样一条告警，不是同一个责任」的实证。同样是没戴帽子，在高处作业平台是立即停工的红色风险，在原料库装卸区只是加强关注的蓝色。
 
+### 跑三个 Agent（本地，不需要扣子）
+
+`demo.py` 把链路跑给你看，`run_agents.py` 把链路拆成三个能对话的 Agent：
+
+```bash
+cd src/anxun
+python run_agents.py            # A/B/C 三个场景，终端看 ②→③→④ 的交接
+python run_agents.py --scene B  # 只看高处作业场景
+python run_agents.py --serve    # 本地网页 127.0.0.1:8611，可直接截图进 PPT
+```
+
+纯标准库、离线、同一输入同一输出。设计取舍见 [`src/anxun/agents/README.md`](src/anxun/agents/README.md)。
+
 ### 训练自己的模型
 
 ```bash
@@ -180,7 +193,7 @@ uvicorn infer_api:app --host 0.0.0.0 --port 8000
 | **数据集** | 🔴 未开始 | 公开集选型 + 自采 300 张 |
 | **模型训练** | 🔴 未开始 | 有 `train_yolo.py`，无 `best.pt` |
 | **指标实测** | 🔴 待实测 | mAP / 误报率 / 漏报率 / 单帧耗时全部为空 |
-| Agent 平台搭建 | 🔴 未开始 | 提示词库已备好，待配置进扣子 |
+| Agent 平台搭建 | 🟡 本地版已跑通 | `run_agents.py` 三 Agent 离线可跑（含网页）；扣子侧仍待配置 |
 | PPT 20 页 | 🟡 大纲完成 | 逐页大纲在 `docs/05-PPT与视频.md` |
 | 6 分钟视频 | 🟡 脚本完成 | 分镜脚本已写 |
 | 报名 | 🔴 待办 | 本校在报名系统下拉中，走三级赛制 |
