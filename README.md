@@ -194,19 +194,17 @@ uvicorn infer_api:app --host 0.0.0.0 --port 8000
 | 模型 | ✅ 三模型串联 | 人体 + 安全帽（第三方权重）+ 反光背心（自训），含 ONNX |
 | **指标实测** | 🟡 已实测，**三项未达标** | mAP@0.5 **0.681**（目标 0.85）· 误报 **5.10%**（✅ ≤10%，但 95% 区间 2.2–11.4%，仅点估计达标）· 漏报 **22.58%**（目标 5%）· 单帧 22.9ms(GPU) / 72.7ms(CPU) |
 | Agent 本地三智能体 | ✅ 可跑 | `run_agents.py` 离线出网页，纯标准库 |
-| **Agent 公网链接** | 🔴 **未完成** | 官方硬要求，缺此项按零分处理 |
+| **Agent 公网链接** | 🔴 **未完成** | 官方硬要求 |
 | **提示词示例** | 🔴 **未完成** | 官方要求 ≥3 组，PPT 第 19 页依赖它 |
 | PPT 20 页 | 🟡 大纲 + 技术页 4 页 | 技术页成品在 `techline-v1.2.0/docs/技术页_10-13.html`，另有 3 张成品图 `techline-v1.2.0/docs/figs/` |
 | 6 分钟视频 | 🟡 脚本完成，素材未拍 | 分镜脚本已写；视频素材 0 段 |
 | 报名 | 🔴 待确认 | 本校在报名系统下拉中，走三级赛制 |
 
-> ⚠️ **技术线交付（数据/模型/指标/部署/技术页）在 `techline-v1.2.0/`**，由队友维护，原始仓库为 [anxun-agent-techline](https://github.com/Euphoria-tender/anxun-agent-techline)。
->
-> v1.2.0 起**判定阈值只有一份定义**（`techline-v1.2.0/config/thresholds.json`），两个命名口径：
-> `measured` **0.30 / 0.20**（报数用，四个指标就是它测的）· `conservative` **0.60 / 0.40**（演示用，与本仓库 `src/anxun/rules_engine.py` 的 0.60 / 0.40 / 0.30 基本一致，差异只剩 `MIN_ASPECT` 1.20 与`MAX_EQUIP_RATIO` 未同步）。
-> 口径表见 `techline-v1.2.0/docs/技术口径.md`；问题闭环情况见 [`docs/11-项目盘点.md`](docs/11-项目盘点.md) 顶部的 11-02 更新。
+> 📦 **技术线交付（数据 / 模型 / 指标 / 部署 / 技术页）在 `techline-v1.2.0/`。**
+> 四个指标的口径与判定阈值收在 `techline-v1.2.0/docs/技术口径.md`：报数用 `measured`（0.30 / 0.20），
+> 演示用 `conservative`（0.60 / 0.40），两者互不干扰。
 
-完整任务分解见 [`TODO.md`](TODO.md)，剩余问题与风险见 [`docs/11-项目盘点.md`](docs/11-项目盘点.md)。
+完整任务分解见 [`TODO.md`](TODO.md)。
 
 ---
 
@@ -281,7 +279,6 @@ uvicorn infer_api:app --host 0.0.0.0 --port 8000
 | 报名怎么填、资格怎么确认 | [`docs/08-报名事项.md`](docs/08-报名事项.md) |
 | 落选的另外两个方案 | [`docs/09-备选方案.md`](docs/09-备选方案.md) |
 | **明天上山要拍什么**（负责材料的人必看） | [`docs/10-素材拍摄清单.md`](docs/10-素材拍摄清单.md) |
-| **还剩什么没做、哪里有坑**（每天开工前看） | [`docs/11-项目盘点.md`](docs/11-项目盘点.md) |
 | 五个 Agent 的完整提示词 | [`docs/安巡Agent_提示词库.md`](docs/安巡Agent_提示词库.md) |
 | 带排版的成品文档 | [`assets/html/`](assets/html/) |
 

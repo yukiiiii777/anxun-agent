@@ -10,12 +10,9 @@
 
 ### 技术线交付升级到 v1.2.0（2026-11-02）
 
-- 交付目录 `techline-v1.1.0/` → **`techline-v1.2.0/`**（478 个文件，内容与源仓库
-  `Euphoria-tender/anxun-agent-techline` 的 `ed6298a` 字节一致）。
+- 交付目录 `techline-v1.1.0/` → **`techline-v1.2.0/`**（478 个文件，含权重、评测集与指标图）。
 - **判定阈值收进 `config/thresholds.json`**，两个命名口径：`measured`（0.30 / 0.20，报数用）、
-  `conservative`（0.60 / 0.40，演示用）。这解决了盘点 P4-1「两套判定逻辑」——
-  本仓库 `src/anxun/rules_engine.py` 的 0.60 / 0.40 / 0.30 与 `conservative` 基本一致，
-  差异只剩 `MIN_ASPECT`（1.20 vs 0.90）与 `MAX_EQUIP_RATIO`（本仓库无此参数）。
+  `conservative`（0.60 / 0.40，演示用）。演示与报数各走一条，不再互相打架。
 - 单帧耗时统一为 **22.9 ms（GPU）/ 72.7 ms（ONNX-CPU）**，旧数 53.5 ms 作废（未锁 onnxruntime 版本）。
 - 新增指标置信区间（`docs/指标置信区间.md`）、技术口径表（`docs/技术口径.md`）、
   三张成品图（`docs/figs/`：混淆矩阵 / PR 曲线 / 风险矩阵，PPT P11、P13 可直接用）。
@@ -23,7 +20,7 @@
 
 ### 待补
 - 自采数据（0 张；采集工具已备 `techline-v1.2.0/tools/collect_selfdata.py`）
-- Agent 平台搭建与公开链接（官方硬要求，缺此项按零分）
+- Agent 平台搭建与公开链接（官方硬要求）
 - ≥3 组提示词示例（官方硬要求）
 - PPT 20 页成稿（技术页 4 页已交付）
 - 6 分钟演示视频（素材未拍）
