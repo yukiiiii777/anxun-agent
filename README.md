@@ -196,11 +196,11 @@ uvicorn infer_api:app --host 0.0.0.0 --port 8000
 | Agent 本地三智能体 | ✅ 可跑 | `run_agents.py` 离线出网页，纯标准库 |
 | **Agent 公网链接** | 🔴 **未完成** | 官方硬要求，缺此项按零分处理 |
 | **提示词示例** | 🔴 **未完成** | 官方要求 ≥3 组，PPT 第 19 页依赖它 |
-| PPT 20 页 | 🟡 大纲 + 技术页 4 页 | 技术页成品在 `techline-v1.2.0/docs/技术页_10-13.html` |
+| PPT 20 页 | 🟡 大纲 + 技术页 4 页 | 技术页成品在 `techline-v1.1.0/docs/技术页_10-13.html` |
 | 6 分钟视频 | 🟡 脚本完成，素材未拍 | 分镜脚本已写；视频素材 0 段 |
 | 报名 | 🔴 待确认 | 本校在报名系统下拉中，走三级赛制 |
 
-> ⚠️ **技术线交付（数据/模型/指标/部署/技术页）在 `techline-v1.2.0/`，由队友维护，原始仓库为 [anxun-agent-techline](https://github.com/Euphoria-tender/anxun-agent-techline)。该目录的判定阈值与本仓库 `src/anxun/rules_engine.py` 不同，详见 [`docs/11-项目盘点.md`](docs/11-项目盘点.md) P4-1。**
+> ⚠️ **技术线交付（数据/模型/指标/部署/技术页）在 `techline-v1.1.0/`，由队友维护，原始仓库为 [anxun-agent-techline](https://github.com/Euphoria-tender/anxun-agent-techline)。该目录的判定阈值与本仓库 `src/anxun/rules_engine.py` 不同，详见 [`docs/11-项目盘点.md`](docs/11-项目盘点.md) P4-1。**
 
 完整任务分解见 [`TODO.md`](TODO.md)，剩余问题与风险见 [`docs/11-项目盘点.md`](docs/11-项目盘点.md)。
 
