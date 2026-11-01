@@ -453,7 +453,7 @@ batch=4 为当前 GPU 的最优点；瓶颈在 CPU 侧的预处理与后处理�
 
 ```bash
 python src/anxun/verify_all.py                     # 47 项交付物验收
-python -m unittest discover -s tests               # 16 条回归测试
+python -m unittest discover -s tests               # 19 条回归测试
 python src/anxun/evaluate_real.py                  # 重跑四个指标（GPU）
 python src/anxun/evaluate_real.py --backend onnx --out data/metrics_onnx.json
 python tools/metric_ci.py                          # 重算置信区间
@@ -471,9 +471,9 @@ python tools/metric_ci.py                          # 重算置信区间
 
 ### 8.3 回归测试
 
-`tests/test_techline.py`（16 条，纯标准库）：判定择优单调性、装备清单与模型能力交集、
+`tests/test_techline.py`（19 条，纯标准库）：判定择优单调性、装备清单与模型能力交集、
 单图不做伪时序聚合、多图聚合、逐轨迹对齐、帧间项数不一致转人工、误报漏报双口径、
-letterbox 快路径与坐标映射。
+letterbox 快路径与坐标映射、交付文件写保护与请求体上限。
 
 ---
 
@@ -511,7 +511,7 @@ techline-v1.2.0/
 │   ├── data_card.py        数据卡片
 │   └── verify_all.py       交付物验收（47 项）
 ├── tools/                  数据拉取 · 训练准备 · 架构基准 · 触发层复验 · 出图 · 置信区间
-├── tests/test_techline.py  回归测试（16 条）
+├── tests/test_techline.py  回归测试（19 条）
 ├── config/thresholds.json  判定阈值唯一来源（measured / conservative）
 ├── models/                 六份权重（.pt ×3 / .onnx ×3）+ manifest.json
 ├── datasets/               评测集 100 张 + 演示素材
