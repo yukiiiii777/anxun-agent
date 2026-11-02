@@ -1,0 +1,43 @@
+# 模型权重**入库**（v1.1.0 起）
+#   没有权重的仓库 clone 下来跑不动：验收掉一大截、HTTP 服务起不来、指标 JSON 从「实测」降级成「声明」。
+#   体积：3 个 .pt（33.7MB）+ 3 个 .onnx（66.5MB）+ manifest ≈ 101 MiB，单文件最大 42.6MB，在 GitHub 100MB 限制内。
+#   仍不入库：hardhat_m.pt（49.6MB，只被 sweep.py 的架构对比表引用）、训练产物 runs/
+models/hardhat_m.pt
+models/*.engine
+models/*.trt
+
+# 数据集：评测集与演示素材随仓库走，训练用大集合不入库
+#   ppe_test/test（100 张）+ train（100 张）+ data.yaml ≈ 14MB —— 四个指标就测在这 100 张上
+#   scenes（4 张，300KB）—— 控制台「开始巡查」用的场景图
+#   许可证：Chapian/PPE_detection · CC BY 4.0（署名见 docs/数据集卡片.md）
+datasets/*
+!datasets/scenes/
+!datasets/ppe_test/
+# 演示视频随仓库走（8.8MB）：价值指标要能被评委从头跑一遍。
+# real1080.mp4（59MB）仍不入库，用 tools/make_1080_stream.py 重建。
+!datasets/site_demo.mp4
+# site_pan.mp4：v2.1.0 的评测素材（整图平移），体积小、指标靠它复现
+!datasets/site_pan.mp4
+# 体积原因仍不入库，用 tools/ 里的脚本重拉
+datasets/ppe_test/test1080/
+datasets/helmet_p2/
+datasets/helmet_p2_dil1.2/
+datasets/vest_all/
+
+# 训练产物（runs/finetune、runs/ft_mix、runs/vest_* 等），可由 finetune.py 重现
+runs/
+
+# 上传载荷（推送用的中间产物，内容与源文件重复）
+.upload/
+
+# 本地推送助手（含个人账号，不入库）
+push-to-github.bat
+
+# sweep_stream.py 的中间产物（每次重跑覆盖）
+.sweep_tmp/
+
+# 缓存与临时文件
+__pycache__/
+*.pyc
+*.tmp
+.DS_Store
