@@ -84,6 +84,7 @@ def pick_scenes(min_persons: int = 1, max_persons: int = 4) -> list[dict]:
         boxes = read_yolo(POOL_LBL / (img_path.stem + ".txt"), w, h)
         persons = [b for b in boxes if b[0] == CLS["person"]]
         hats = [b for b in boxes if b[0] in (CLS["hardhat"], CLS["no_hardhat"])]
+        vests = [b for b in boxes if b[0] in (CLS["vest"], CLS["no_vest"])]
         if not (min_persons <= len(persons) <= max_persons):
             continue
         recs = []
@@ -94,20 +95,34 @@ def pick_scenes(min_persons: int = 1, max_persons: int = 4) -> list[dict]:
             if bh < 120:                                  # 太远的人缩放到 720 后只剩几十像素
                 ok = False
                 break
-            best, bid = 0.0, None
-            for hb in hats:
-                v = iou(pb[1:5], hb[1:5])
-                if v > best:
-                    best, bid = v, hb[0]
-            if best < 0.05:
+
+            def nearest(cands):
+                best, bid = 0.0, None
+                for cb in cands:
+                    v = iou(pb[1:5], cb[1:5])
+                    if v > best:
+                        best, bid = v, cb[0]
+                return (bid, best) if best >= 0.05 else (None, best)
+
+            hat_id, _ = nearest(hats)
+            if hat_id is None:
                 ok = False
-                break                                     # 佩戴状态不可知，真值写不出来
+                break                                     # 帽子状态不可知，真值写不出来
+            vest_id, _ = nearest(vests)
             recs.append({
                 "box": [round(v / d, 4) for v, d in zip(pb[1:5], (w, h, w, h))],
-                "equip": "已佩戴" if bid == CLS["hardhat"] else "未佩戴",
+                "equip": "已佩戴" if hat_id == CLS["hardhat"] else "未佩戴",
+                # 背心状态：None = 没标注。数据集 vest 只有 51 个框 / 295 个人，
+                # 绝大多数人没背心，所以「合规」的人必须两样都有。
+                "vest": None if vest_id is None else (vest_id == CLS["vest"]),
             })
         if ok and recs:
-            out.append({"img": img_path.name, "persons": recs})
+            # 场景分级：全合规（每人帽+衣都有）/ 部分合规 / 无合规
+            n = len(recs)
+            good = sum(1 for r in recs if r["equip"] == "已佩戴" and r["vest"] is True)
+            out.append({"img": img_path.name, "persons": recs,
+                        "n": n, "good": good,
+                        "tier": "all_ok" if good == n else ("some_ok" if good else "none_ok")})
     return out
 
 
@@ -148,22 +163,30 @@ def main() -> int:
                     help="段间空画面时长（秒）。必须大于 Tracker 的 max_miss÷fps，"
                          "否则上一场景的人会被下一场景继承——实测 T3 横跨 4 个场景")
     ap.add_argument("--scenes", type=int, default=6)
-    ap.add_argument("--canvas-w", type=int, default=1600)
+    ap.add_argument("--canvas-w", type=int, default=1920)
     args = ap.parse_args()
 
     scenes = pick_scenes()
-    # 强制混入"含未戴帽"的场景：按文件名顺序取前 N 张会全是合规场景，
-    # 合规率的分母就永远是满的，测不出违规判定。
-    viol = [s for s in scenes if any(p["equip"] == "未佩戴" for p in s["persons"])]
-    ok = [s for s in scenes if not any(p["equip"] == "未佩戴" for p in s["persons"])]
-    picked = []
-    while len(picked) < args.scenes and (viol or ok):
-        if viol:
-            picked.append(viol.pop(0))
-        if len(picked) < args.scenes and ok:
-            picked.append(ok.pop(0))
+    # 采样规则：**按数据集真实比例，不人为拔高**
+    #
+    # 数据集的真实分布是：120 个够大的人里只有 14 个「帽 + 背心」都合规（11.7%），
+    # 因为 vest 只有 51 个框 / 295 个人。所以合规率天然就低——这是数据集的性质，
+    # 不是模型的问题。把合规场景人为堆到一半，跑出来的数好看但经不起问。
+    #
+    # 这里保证至少 1 个全合规场景（否则合规率恒为 0，等于采样错误），
+    # 其余按文件顺序取，整体比例贴近 11.7%。
+    all_ok = [s for s in scenes if s["tier"] == "all_ok"]
+    others = [s for s in scenes if s["tier"] != "all_ok"]
+    if not all_ok:
+        raise SystemExit("数据集里没有「帽+背心」全合规的场景，无法生成含合规样本的素材")
+    picked = all_ok[:1] + others[:max(0, args.scenes - 1)]
     if len(picked) < args.scenes:
-        raise SystemExit(f"可用场景不足：{len(scenes)} < {args.scenes}")
+        raise SystemExit(f"可用场景不足：{len(picked)} < {args.scenes}")
+
+    tot = sum(s["n"] for s in picked)
+    good = sum(s["good"] for s in picked)
+    print(f"   采样 {len(picked)} 场景 · {tot} 人物 · 其中帽+衣全合规 {good} "
+          f"（数据集整体 11.7%）")
 
     W, H = args.canvas_w, SCENE_H
     seg_s = args.pan_s + args.hold_s + args.gap_s
@@ -184,6 +207,8 @@ def main() -> int:
         for j, p in enumerate(sc["persons"]):
             truth["persons"].append({
                 "id": f"S{i + 1}P{j + 1}", "img": sc["img"], "equip": p["equip"],
+                "vest": p.get("vest"),           # None = 数据集没标背心
+                "fully_ok": p["equip"] == "已佩戴" and p.get("vest") is True,
                 "box_norm": p["box"], "t_enter": round(t0, 2),
                 "t_exit": round(t0 + seg_s, 2),
             })
@@ -222,7 +247,9 @@ def main() -> int:
 
     print(f"-> {out}  {frames} 帧 / {total_s:.0f}s @ {args.fps}fps  {W}x{H}")
     print(f"   场景 {len(picked)} 段 · 每段 平移 {args.pan_px}px/{args.pan_s}s + 静止 {args.hold_s}s")
-    print(f"   人物 {len(truth['persons'])}（真值 -> {args.truth}，truth_source=generator）")
+    ok_n = sum(1 for p in truth["persons"] if p["fully_ok"])
+    print(f"   人物 {len(truth['persons'])} · 全合规 {ok_n} "
+          f"（真值 -> {args.truth}，truth_source=generator）")
     for p in truth["persons"]:
         print(f"     {p['id']:>6}  {p['equip']}  {p['t_enter']:5.1f}–{p['t_exit']:5.1f}s  {p['img'][:28]}")
     return 0

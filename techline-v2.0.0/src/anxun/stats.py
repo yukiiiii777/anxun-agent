@@ -167,15 +167,30 @@ def track_states(ledger: list[dict]) -> dict[str, dict[str, str]]:
             for t, eqs in by_track.items()}
 
 
-def compliance(ledger: list[dict]) -> dict:
+def compliance(ledger: list[dict], equips_filter: tuple[str, ...] | None = None) -> dict:
     """合规率 = 合规人次 / 可判定人次。
 
     一个人穿了两样装备，只要有一样判「未佩戴」就算违规；
     两样都「已佩戴」才算合规；含「待复核 / 无法判定」且无违规的，单列不计分。
+
+    `equips_filter` 只统计指定装备（v2.1.0 新增）
+    --------------------------------------------
+    数据集里 vest 只有 51 个框 / 295 个人——**83% 的人本来就没穿反光背心**，
+    这是标注的常态，不是违规，更不是所有人上岗都得穿。按「两样都得有」算合规率，
+    分母里几乎全是「没背心所以违规」，跑出来 0%，没有任何解释力。
+
+    安全帽才是这个作品的主线（"有人没戴安全帽"是核心场景），所以主口径只看 helmet：
+        compliance_rate          = 全装备（保留，用于看背心链路是否通）
+        compliance_rate_helmet   = 只看安全帽（**主 KPI**）
     """
     ok = bad = review = unknown = 0
     for _t, equips in track_states(ledger).items():
-        vals = list(equips.values())
+        if equips_filter:
+            vals = [v for k, v in equips.items() if k in equips_filter]
+            if not vals:
+                continue                      # 这条轨迹没评这类装备，不进分母
+        else:
+            vals = list(equips.values())
         if any(v == BAD for v in vals):
             bad += 1
         elif vals and all(v == OK for v in vals):
@@ -185,11 +200,12 @@ def compliance(ledger: list[dict]) -> dict:
         else:
             review += 1
     n = ok + bad
+    scope = "+".join(equips_filter) if equips_filter else "全部装备"
     return {
         "value": round(ok / n, 4) if n else None,
         "ok": ok, "violation": bad, "review": review, "unknown": unknown,
-        "n": n,
-        "note": "分母只含判得动的人次；待复核与无法判定单列，不藏进分母",
+        "n": n, "scope": scope,
+        "note": f"分母只含判得动的人次（{scope}）；待复核与无法判定单列，不藏进分母",
     }
 
 
@@ -383,7 +399,10 @@ def compute(bundles: list[dict], *, hours: float = 8.0,
             "verdict_coverage": verdict_coverage(
                 m["ledger"], st.get("persons_total", 0), st.get("persons_judgeable")),
             "denoise_ratio": denoise(st.get("raw_alarms", 0), len(m["events"])),
-            "compliance_rate": compliance(m["ledger"]),
+            # 主 KPI 只看安全帽：背心在数据集里只有 17% 的人有，
+            # 拿它当合规门槛会把 83% 的正常人判成违规（详见 compliance 的注释）
+            "compliance_rate": compliance(m["ledger"], ("helmet",)),
+            "compliance_rate_all": compliance(m["ledger"]),
             "violation_duration_s": durations(m["ledger"]),
         },
         "region_ranking": region_ranking(m["events"]),

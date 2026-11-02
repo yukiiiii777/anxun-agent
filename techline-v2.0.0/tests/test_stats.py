@@ -158,6 +158,34 @@ class VerdictCoverage(unittest.TestCase):
         self.assertEqual(v["eligible"], 1)
 
 
+class ComplianceScope(unittest.TestCase):
+    def test_helmet_only_excludes_vest(self):
+        """合规率可以只统计某类装备。
+
+        数据集里 vest 只有 51 个框 / 295 个人——83% 的人本来就没穿反光背心。
+        按「两样都得合规」算，分母里几乎全是「没背心所以违规」，跑出来 0% 没有解释力。
+        主口径只看 helmet，背心留在 compliance_rate_all 里看链路通不通。
+        """
+        led = [rec("T1", "helmet", "已佩戴", 0, 5),
+               rec("T1", "vest", "未佩戴", 0, 5, True),
+               rec("T2", "helmet", "未佩戴", 0, 5, True)]
+        full = stats.compliance(led)
+        helmet = stats.compliance(led, ("helmet",))
+        self.assertEqual(full["ok"], 0)          # 全装备：T1 有背心违规
+        self.assertEqual(full["violation"], 2)
+        self.assertEqual(helmet["ok"], 1)        # 只看帽子：T1 合规
+        self.assertEqual(helmet["violation"], 1)
+        self.assertAlmostEqual(helmet["value"], 0.5, places=3)
+        self.assertEqual(helmet["scope"], "helmet")
+
+    def test_track_without_that_equip_leaves_denominator(self):
+        """一条轨迹完全没评这类装备时，不该占用分母。"""
+        led = [rec("T1", "vest", "未佩戴", 0, 5, True)]
+        helmet = stats.compliance(led, ("helmet",))
+        self.assertEqual(helmet["n"], 0)
+        self.assertIsNone(helmet["value"])
+
+
 class Durations(unittest.TestCase):
     def test_only_violation_segments_counted(self):
         led = [rec("T1", "helmet", "未佩戴", 0, 4, True),      # 4s
@@ -178,8 +206,11 @@ class ComputeShape(unittest.TestCase):
                rec("T2", "helmet", "未佩戴", 0, 5, True)]
         vm = stats.compute([bundle(led, persons=2, raw=10)])
         keys = set(vm["metrics"])
-        self.assertEqual(keys, {"coverage_ratio", "verdict_coverage", "denoise_ratio",
-                                "compliance_rate", "violation_duration_s"})
+        # v2.1.0 起多了 compliance_rate_all（背心口径），所以用「至少包含」而不是「恰好等于」：
+        # 以后再加派生指标，不该让这条测试无谓地失败。
+        self.assertLessEqual({"coverage_ratio", "verdict_coverage", "denoise_ratio",
+                              "compliance_rate", "violation_duration_s"}, keys)
+        self.assertIn("compliance_rate_all", keys)
         self.assertIn("generated_at", vm)
         self.assertNotIn("error", vm)
 
