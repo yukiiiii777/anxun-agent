@@ -24,15 +24,19 @@ from typing import Sequence
 # 一、阈值配置
 # ============================================================
 
-CONF_FINAL = 0.60          # >= 此值：直接下结论
-CONF_REVIEW = 0.40         # [此值, CONF_FINAL)：转人工复核
+# 阈值口径：与实测线（techline-v2.0.0）统一，2026-11-02 由队长确认
+# 两套阈值并行的后果是「同一个 0.52 的帽子，演示判待复核、评测判已佩戴」，
+# 答辩现场两边一对照就穿帮。这里以「能当场复现的那套」为准。
+CONF_FINAL = 0.30          # >= 此值：直接下结论
+CONF_REVIEW = 0.20         # [此值, CONF_FINAL)：转人工复核
                            # <  CONF_REVIEW ：丢弃，不输出
 
-HELMET_IOU_MIN = 0.30      # 安全帽框与头部区域的 IoU 阈值
+HELMET_IOU_MIN = 0.25      # 安全帽框与头部区域的 IoU 阈值
 HEAD_REGION_RATIO = 0.30   # 头部区域 = 人员框上部 30%
 
 MIN_PERSON_AREA = 8000.0   # 人员框面积下限（像素^2），小于此值视为过远/过小
-MIN_ASPECT = 0.90          # 人员框高宽比下限，小于此值视为半身/蹲姿，无法判定（v1.2.0 与技术线 conservative 口径对齐）
+MIN_ASPECT = 0.90          # 人员框高宽比下限，小于此值视为半身/蹲姿，无法判定
+MAX_EQUIP_RATIO = 3.0      # 装备框面积 / 比对区域面积 的上限，超了多半是关联错框
 
 # 风险矩阵：30 天违规次数 -> 可能性 L
 # (次数上限, L 值)，超出最后一档取 4
@@ -176,6 +180,10 @@ def judge_equipment(person: Box, idx: int, boxes: Sequence[Box],
         v = iou(region, b)
         if v > best_iou:
             best, best_iou = b, v
+
+    # 装备框比比对区域大出数倍，基本是「把远处的帽子关联到近处的人」这类错配
+    if best is not None and region.area > 0 and best.area > region.area * MAX_EQUIP_RATIO:
+        best, best_iou = None, 0.0
 
     # --- 4. 结论 ---
     if best is not None and best_iou >= HELMET_IOU_MIN:
