@@ -565,37 +565,34 @@ def verify_value() -> None:
     check("价值", "README 价值指标与 JSON 一致", not miss,
           f"README 缺 {miss}" if miss else "降噪率 / 判定覆盖率")
 
-    # ⑥ v2.1.0 主口径：新素材一套单独放，不覆盖 v2.0 的存档份
-    vm_pan = ROOT / "data" / "value_metrics_pan.json"
-    if not vm_pan.exists():
-        skip("价值", "v2.1.0 主口径指标", "缺 data/value_metrics_pan.json，跑 stream.py + stats.py")
-    else:
-        try:
-            vp = json.loads(vm_pan.read_text(encoding="utf-8"))
-        except Exception as e:
-            check("价值", "v2.1.0 主口径指标可解析", False, f"{type(e).__name__}: {e}")
-            vp = None
-        if vp:
-            vc = (vp.get("metrics") or {}).get("verdict_coverage") or {}
-            need = {"value", "value_raw", "judged", "eligible", "persons_total"}
-            miss2 = need - set(vc)
-            check("价值", "判定覆盖率双口径字段齐全", not miss2,
-                  f"缺 {sorted(miss2)}" if miss2 else
-                  f"新 {vc.get('value'):.1%} / 旧 {vc.get('value_raw'):.1%}")
+    # ⑥ v2.1.0 双口径：value_metrics.json 是当前唯一口径，v2.0 的存档在 data/archive/
+    vc = (vm.get("metrics") or {}).get("verdict_coverage") or {}
+    need = {"value", "value_raw", "judged", "eligible", "persons_total"}
+    miss2 = need - set(vc)
+    check("价值", "判定覆盖率双口径字段齐全", not miss2,
+          f"缺 {sorted(miss2)}" if miss2 else
+          f"新 {vc.get('value') or 0:.1%} / 旧 {vc.get('value_raw') or 0:.1%}")
 
-            # 自洽：两条口径都要能从分子分母算回去，不能只对一条
-            bad_math = []
-            if vc.get("eligible") and abs(vc["judged"] / vc["eligible"] - vc["value"]) > 1e-3:
-                bad_math.append("value")
-            if vc.get("persons_total") and abs(vc["judged"] / vc["persons_total"] - vc["value_raw"]) > 1e-3:
-                bad_math.append("value_raw")
-            check("价值", "双口径自洽（分子分母算得回去）", not bad_math,
-                  f"对不上：{bad_math}" if bad_math else
-                  f"{vc.get('judged')}/{vc.get('eligible')} 与 {vc.get('judged')}/{vc.get('persons_total')}")
+    # 自洽：两条口径都要能从分子分母算回去，不能只对一条
+    bad_math = []
+    if vc.get("eligible") and abs(vc["judged"] / vc["eligible"] - vc["value"]) > 1e-3:
+        bad_math.append("value")
+    if vc.get("persons_total") and abs(vc["judged"] / vc["persons_total"] - vc["value_raw"]) > 1e-3:
+        bad_math.append("value_raw")
+    check("价值", "双口径自洽（分子分母算得回去）", not bad_math,
+          f"对不上：{bad_math}" if bad_math else
+          f"{vc.get('judged')}/{vc.get('eligible')} 与 {vc.get('judged')}/{vc.get('persons_total')}")
 
-            srcs = " ".join(vp.get("sources") or [])
-            check("价值", "主口径素材来源标注", "pan" in srcs or "site_pan" in srcs,
-                  srcs or "缺 sources")
+    # 素材来源必须是 v2.1 的评测集，不能还指着已归档的 site_demo
+    srcs = " ".join(vm.get("sources") or [])
+    check("价值", "主口径素材来源标注", "pan" in srcs, srcs or "缺 sources")
+    check("价值", "旧素材未混入主口径", "site_demo" not in srcs,
+          srcs if "site_demo" in srcs else "干净")
+
+    # 归档目录必须存在且不被当成当前账本
+    archived = sorted((ROOT / "data" / "archive").glob("*.json"))
+    check("价值", "v2.0 旧账本已归档", len(archived) >= 2,
+          f"{len(archived)} 份（{', '.join(p.stem for p in archived)}）")
 
     # ⑦ 触发层：帧差默认值必须和口径文档同源
     #    这条防的是 v1.2 那类事故——阈值改了、依据没重测，文档还写着旧理由。
