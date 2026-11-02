@@ -40,26 +40,26 @@
   <div class="top">
     <h1>安巡 Agent · 巡检价值简报</h1>
     <div class="meta">样本 <b>34.8s</b> · 1 路 ·
-      出现 <b>35</b> 人次 · 逐帧告警 <b>344</b> 次 ·
-      事件 <b>21</b> 条</div>
+      出现 <b>28</b> 人次 · 逐帧告警 <b>195</b> 次 ·
+      事件 <b>13</b> 条</div>
   </div>
   <div class="rule"></div>
 
-  <div class="kpis"><div class="kpi" style="border-top-color:#0f766e"><div class="kpi-label">巡检覆盖率</div><div class="kpi-value" style="color:#0f766e">16×</div><div class="kpi-sub">480 分钟 vs 人工 30 分钟</div><div class="kpi-note">排班推演</div></div><div class="kpi" style="border-top-color:#2563eb"><div class="kpi-label">判定覆盖率</div><div class="kpi-value" style="color:#2563eb">82.3%</div><div class="kpi-sub">14/35 人次有定论</div></div><div class="kpi" style="border-top-color:#7c3aed"><div class="kpi-label">告警降噪率</div><div class="kpi-value" style="color:#7c3aed">93.9%</div><div class="kpi-sub">344 次 → 21 条</div></div><div class="kpi" style="border-top-color:#dc2626"><div class="kpi-label">合规率</div><div class="kpi-value" style="color:#dc2626">0.0%</div><div class="kpi-sub">0 合规 / 14 违规</div><div class="kpi-note">违规演示素材</div></div><div class="kpi" style="border-top-color:#ea580c"><div class="kpi-label">违规持续时长</div><div class="kpi-value" style="color:#ea580c">3.4s</div><div class="kpi-sub">P95 3.6s · n=25</div><div class="kpi-note">非整改耗时</div></div></div>
+  <div class="kpis"><div class="kpi" style="border-top-color:#0f766e"><div class="kpi-label">巡检覆盖率</div><div class="kpi-value" style="color:#0f766e">16×</div><div class="kpi-sub">480 分钟 vs 人工 30 分钟</div><div class="kpi-note">排班推演</div></div><div class="kpi" style="border-top-color:#2563eb"><div class="kpi-label">判定覆盖率</div><div class="kpi-value" style="color:#2563eb">76.9%</div><div class="kpi-sub">10/28 人次有定论</div></div><div class="kpi" style="border-top-color:#7c3aed"><div class="kpi-label">告警降噪率</div><div class="kpi-value" style="color:#7c3aed">93.3%</div><div class="kpi-sub">195 次 → 13 条</div></div><div class="kpi" style="border-top-color:#16a34a"><div class="kpi-label">合规率</div><div class="kpi-value" style="color:#16a34a">57.1%</div><div class="kpi-sub">4 合规 / 3 违规</div><div class="kpi-note">违规演示素材</div></div><div class="kpi" style="border-top-color:#ea580c"><div class="kpi-label">违规持续时长</div><div class="kpi-value" style="color:#ea580c">3.4s</div><div class="kpi-sub">P95 3.6s · n=11</div><div class="kpi-note">非整改耗时</div></div></div>
 
   <div class="charts">
     <div class="card"><h2>合规率时段趋势</h2><div class="empty">样本时间跨度不足，无法绘制趋势。换更长的视频或多段素材合并。</div></div>
     <div class="card"><h2>告警等级分布 / 区域排行</h2>
-      <svg viewBox="0 0 520 192" width="100%" height="192" xmlns="http://www.w3.org/2000/svg" role="img"><text x="58" y="81.0" font-size="11" fill="#334155" text-anchor="end">橙色</text><rect x="66" y="66.5" width="408.0" height="22.0" rx="3" fill="#ea580c"/><text x="481.0" y="81.0" font-size="11" fill="#475569">12</text><text x="58" y="116.0" font-size="11" fill="#334155" text-anchor="end">红色</text><rect x="66" y="101.5" width="306.0" height="22.0" rx="3" fill="#dc2626"/><text x="379.0" y="116.0" font-size="11" fill="#475569">9</text></svg>
+      <svg viewBox="0 0 520 192" width="100%" height="192" xmlns="http://www.w3.org/2000/svg" role="img"><text x="58" y="81.0" font-size="11" fill="#334155" text-anchor="end">橙色</text><rect x="66" y="66.5" width="408.0" height="22.0" rx="3" fill="#ea580c"/><text x="481.0" y="81.0" font-size="11" fill="#475569">9</text><text x="58" y="116.0" font-size="11" fill="#334155" text-anchor="end">红色</text><rect x="66" y="101.5" width="181.3" height="22.0" rx="3" fill="#dc2626"/><text x="254.3" y="116.0" font-size="11" fill="#475569">4</text></svg>
       
     </div>
   </div>
 
   <div class="foot">
     <b>读图须知</b>：巡检覆盖率是<b>排班推演</b>（人工每班 2 次 × 15 分钟），非实测；
-    合规率 0.0% 来自<b>违规演示素材</b>，不代表现场水平；
+    合规率 57.1% 来自<b>违规演示素材</b>，不代表现场水平；
     违规持续时长是<b>单次告警持续</b>，素材无整改过程，故非整改耗时。
-    判定覆盖率 82.3% 低是轨迹碎片化（720p 素材 13.5% / 1080p 100%），不是模型不准。
+    判定覆盖率 76.9% 低是轨迹碎片化（720p 素材 13.5% / 1080p 100%），不是模型不准。
   </div>
 </div>
 </body>
