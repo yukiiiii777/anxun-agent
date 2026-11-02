@@ -103,11 +103,12 @@ def merge(bundles: Iterable[dict]) -> dict:
             events.append(row)
         sources.append(str(b.get("source") or b.get("sources") or "?"))
         video_s += seg_s
-        for k in ("persons_total", "raw_alarms", "events", "frames_processed",
-                  "frames_read", "frames_skipped"):
+        for k in ("persons_total", "persons_judgeable", "raw_alarms", "events",
+                  "frames_processed", "frames_read", "frames_skipped"):
             stats[k] += float(s.get(k) or 0)
 
     stats["persons_total"] = int(stats["persons_total"])
+    stats["persons_judgeable"] = int(stats["persons_judgeable"])
     stats["raw_alarms"] = int(stats["raw_alarms"])
     stats["frames_processed"] = int(stats["frames_processed"])
     stats["frames_read"] = int(stats["frames_read"])
@@ -208,19 +209,53 @@ def denoise(raw_alarms: int, events: int) -> dict:
     }
 
 
-def verdict_coverage(ledger: list[dict], persons_total: int) -> dict:
-    """判定覆盖率 = 有定论的轨迹 / 出现的人次。
+def verdict_coverage(ledger: list[dict], persons_total: int,
+                     persons_judgeable: int | None = None, min_obs: int = 3) -> dict:
+    """判定覆盖率 = 有定论的轨迹 / **有机会定论的轨迹**。
 
-    v1.x 看不见这个数：只报违规，没人管「多少人根本没被判定」。
-    它低说明轨迹碎（分辨率不够 / 人走得太快 / 三帧定论凑不齐），
-    和模型准不准是两件事 —— 模型再准，判不到的人也进不了合规率。
+    为什么有两个分母（v2.1.0）
+    -------------------------
+    v2.0 用的是「有定论 / persons_total」，而 persons_total 统计的是**所有开过的轨迹**，
+    其中大量是「开出来就死」的：检测抖动让同一帧多检出/少检出，开出存活 1–2 帧的短命轨迹。
+    它们**凑不齐三帧判定窗口，本来就不该有定论**，却被算进分母。
+    实测同一段素材：旧口径 28%，新口径 90%——差的 62 个点全是短命轨迹。
+
+    - `value`     ：新口径，分母 = `persons_judgeable`（活到三帧窗口的轨迹）
+    - `value_raw` ：旧口径，分母 = `persons_total`，保留做对照与 CHANGELOG 追溯
+
+    报出去时**两个都印**。单看 90% 会被质疑挑分母，两个一起印才说明白：
+    差的不是判定能力，是那批从未活到三帧的碎片。
+
+    `persons_judgeable` 缺失时（v2.0 的历史 JSON 没有这个字段），退回按账本
+    `observations` 估算——注意这个估算会偏高，因为能进账本的轨迹基本都活过了三帧。
     """
-    judged = len(track_states(ledger))
+    states = track_states(ledger)
+    # 「有定论」必须真的落到已佩戴/未佩戴。v2.0 这里直接用 len(states)，
+    # 把「待复核 / 无法判定」也当成了有定论——那是「有账本」，不是「有结论」。
+    judged = sum(1 for equips in states.values()
+                 if any(v in (OK, BAD) for v in equips.values()))
+
+    if persons_judgeable is None:
+        obs: dict[str, int] = defaultdict(int)
+        for r in ledger:
+            obs[str(r["track"])] += int(r.get("observations") or 1)
+        eligible = sum(1 for n in obs.values() if n >= min_obs)
+        estimated = True
+    else:
+        eligible = int(persons_judgeable)
+        estimated = False
+
     total = max(judged, int(persons_total or 0))
     return {
-        "value": round(judged / total, 4) if total else None,
-        "judged": judged, "persons_total": total,
-        "note": "有定论轨迹 / 进入画面的轨迹数；低说明轨迹碎片化，不是模型不准",
+        "value": round(judged / eligible, 4) if eligible else None,
+        "judged": judged,
+        "eligible": eligible,
+        "eligible_estimated": estimated,
+        "min_obs": min_obs,
+        "value_raw": round(judged / total, 4) if total else None,
+        "persons_total": total,
+        "note": (f"新口径 {judged}/{eligible}（活到 {min_obs} 帧窗口的轨迹）；"
+                 f"旧口径 {judged}/{total}，差额 {total - eligible} 条是来不及凑满窗口的碎片"),
     }
 
 
@@ -345,7 +380,8 @@ def compute(bundles: list[dict], *, hours: float = 8.0,
         },
         "metrics": {
             "coverage_ratio": coverage(n_streams, hours, manual_times, manual_minutes),
-            "verdict_coverage": verdict_coverage(m["ledger"], st.get("persons_total", 0)),
+            "verdict_coverage": verdict_coverage(
+                m["ledger"], st.get("persons_total", 0), st.get("persons_judgeable")),
             "denoise_ratio": denoise(st.get("raw_alarms", 0), len(m["events"])),
             "compliance_rate": compliance(m["ledger"]),
             "violation_duration_s": durations(m["ledger"]),
@@ -371,7 +407,8 @@ def format_table(vm: dict) -> str:
                  f"系统 {c['system_minutes']:g} 分钟 vs 人工 {c['manual_minutes']:g} 分钟（推演）")
     v = mt["verdict_coverage"]
     lines.append(f"{'判定覆盖率':<14}{v['value'] * 100:>9.1f}%   "
-                 f"{v['judged']}/{v['persons_total']} 人次有定论")
+                 f"{v['judged']}/{v['eligible']} 人次有定论"
+                 f"（旧口径 {v['value_raw']:.1%}，分母含 {v['persons_total']} 条轨迹）")
     d = mt["denoise_ratio"]
     lines.append(f"{'告警降噪率':<14}{(d['value'] or 0) * 100:>9.1f}%   "
                  f"{d['raw']} 次 → {d['events']} 条")

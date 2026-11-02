@@ -565,6 +565,50 @@ def verify_value() -> None:
     check("价值", "README 价值指标与 JSON 一致", not miss,
           f"README 缺 {miss}" if miss else "降噪率 / 判定覆盖率")
 
+    # ⑥ v2.1.0 主口径：新素材一套单独放，不覆盖 v2.0 的存档份
+    vm_pan = ROOT / "data" / "value_metrics_pan.json"
+    if not vm_pan.exists():
+        skip("价值", "v2.1.0 主口径指标", "缺 data/value_metrics_pan.json，跑 stream.py + stats.py")
+    else:
+        try:
+            vp = json.loads(vm_pan.read_text(encoding="utf-8"))
+        except Exception as e:
+            check("价值", "v2.1.0 主口径指标可解析", False, f"{type(e).__name__}: {e}")
+            vp = None
+        if vp:
+            vc = (vp.get("metrics") or {}).get("verdict_coverage") or {}
+            need = {"value", "value_raw", "judged", "eligible", "persons_total"}
+            miss2 = need - set(vc)
+            check("价值", "判定覆盖率双口径字段齐全", not miss2,
+                  f"缺 {sorted(miss2)}" if miss2 else
+                  f"新 {vc.get('value'):.1%} / 旧 {vc.get('value_raw'):.1%}")
+
+            # 自洽：两条口径都要能从分子分母算回去，不能只对一条
+            bad_math = []
+            if vc.get("eligible") and abs(vc["judged"] / vc["eligible"] - vc["value"]) > 1e-3:
+                bad_math.append("value")
+            if vc.get("persons_total") and abs(vc["judged"] / vc["persons_total"] - vc["value_raw"]) > 1e-3:
+                bad_math.append("value_raw")
+            check("价值", "双口径自洽（分子分母算得回去）", not bad_math,
+                  f"对不上：{bad_math}" if bad_math else
+                  f"{vc.get('judged')}/{vc.get('eligible')} 与 {vc.get('judged')}/{vc.get('persons_total')}")
+
+            srcs = " ".join(vp.get("sources") or [])
+            check("价值", "主口径素材来源标注", "pan" in srcs or "site_pan" in srcs,
+                  srcs or "缺 sources")
+
+    # ⑦ 触发层：帧差默认值必须和口径文档同源
+    #    这条防的是 v1.2 那类事故——阈值改了、依据没重测，文档还写着旧理由。
+    import re as _re
+    stream_src = (ROOT / "src" / "anxun" / "stream.py").read_text(encoding="utf-8")
+    hit = _re.search(r'--motion",\s*type=float,\s*default=([\d.]+)', stream_src)
+    motion = float(hit.group(1)) if hit else None
+    doc_path = ROOT / "docs" / "抽帧与触发口径.md"
+    doc_txt = doc_path.read_text(encoding="utf-8") if doc_path.exists() else ""
+    doc_ok = "3.0" in doc_txt and "51.9%" in doc_txt
+    check("价值", "帧差默认值与口径文档一致", motion == 3.0 and doc_ok,
+          f"代码 {motion} · 文档{'齐全' if doc_ok else '缺依据'}")
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()

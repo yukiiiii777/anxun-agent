@@ -121,12 +121,41 @@ class Denoise(unittest.TestCase):
 
 class VerdictCoverage(unittest.TestCase):
     def test_fragmented_tracks_lower_coverage(self):
+        """旧口径：10 条轨迹里只有 1 条有账本 -> 10%。
+
+        v2.1.0 起 `value` 是新口径（分母只算活到三帧窗口的轨迹），
+        旧口径挪到 `value_raw`。
+        """
         led = [rec("T1", "helmet", "已佩戴", 0, 5)]
-        self.assertEqual(stats.verdict_coverage(led, 10)["value"], 0.1)
+        self.assertEqual(stats.verdict_coverage(led, 10)["value_raw"], 0.1)
 
     def test_never_exceeds_one(self):
         led = [rec("T1", "helmet", "已佩戴", 0, 5)]
-        self.assertEqual(stats.verdict_coverage(led, 0)["value"], 1.0)
+        self.assertEqual(stats.verdict_coverage(led, 0)["value_raw"], 1.0)
+
+    def test_judgeable_denominator(self):
+        """新口径：分母用「活到三帧窗口的轨迹数」，短命碎片不计。"""
+        led = [rec("T1", "helmet", "已佩戴", 0, 5)]
+        # 32 条轨迹里 12 条活到三帧，其中 9 条有定论
+        v = stats.verdict_coverage(led, 32, persons_judgeable=12)
+        self.assertEqual(v["judged"], 1)
+        self.assertEqual(v["eligible"], 12)
+        self.assertAlmostEqual(v["value"], 1 / 12, places=3)
+        self.assertAlmostEqual(v["value_raw"], 1 / 32, places=3)
+
+    def test_review_is_not_a_verdict(self):
+        """待复核/无法判定不算有定论——v2.0 这里用 len(states)，把它们算进去了。"""
+        led = [rec("T1", "helmet", "待复核", 0, 5)]
+        v = stats.verdict_coverage(led, 4, persons_judgeable=4)
+        self.assertEqual(v["judged"], 0)
+        self.assertEqual(v["value"], 0.0)
+
+    def test_missing_judgeable_falls_back(self):
+        """v2.0 的历史 JSON 没有 persons_judgeable，退回按 observations 估算并打标。"""
+        led = [dict(rec("T1", "helmet", "已佩戴", 0, 5), observations=5)]
+        v = stats.verdict_coverage(led, 10)
+        self.assertTrue(v["eligible_estimated"])
+        self.assertEqual(v["eligible"], 1)
 
 
 class Durations(unittest.TestCase):
