@@ -120,7 +120,7 @@ tools/sweep_stream.py             抽帧 × 帧差 二维扫描，出三档表
 datasets/site_pan.mp4             348 帧 / 35s / 1920×720（3.4 MB，入库）
 data/site_pan_truth.json          15 人物出场时间与归一化框，truth_source=generator
 data/events_pan.json              v2.1.0 主口径账本
-data/value_metrics_pan.json       v2.1.0 主口径指标（不覆盖 v2.0 的存档份）
+tools/probe_frame_diff.py         帧差依据的探针（走动帧差 P50=9.88 由它测出）
 data/sweep_stream.json            三档表的机器可读出处
 docs/抽帧与触发口径.md             三档配置 + 帧差依据 + 素材局限
 ```
