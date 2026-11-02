@@ -46,6 +46,10 @@ def run_one(source: Path, fps: float, motion: float, tmpdir: Path) -> dict:
     v = vm["metrics"]["verdict_coverage"]
 
     video_s = float(st.get("video_s") or 0) or 1.0
+    # 容量折算用**固定参考耗时**，不用本次实测值：
+    # 实测每次受 GPU 状态影响（22–26 ms 都出现过），拿它算容量表会每次都不一样，
+    # 文档里的路数就没法复现、也没法被 review。参考值取 README 报的交付口径。
+    REF_INFER_MS = 22.0
     # avg_infer_ms 属于「本次运行的性能」，落盘时被 _TIMING_KEYS 剔除了
     # （为了账本可复现），只能从 stdout 抓。
     hit = re.search(r"平均推理\s+([\d.]+)\s*ms", r.stdout)
@@ -69,8 +73,12 @@ def run_one(source: Path, fps: float, motion: float, tmpdir: Path) -> dict:
         "avg_infer_ms": avg_ms,
         # 每路每小时推理次数；GPU 占用率按单次推理耗时折算
         "infer_per_hour": round(per_hour),
-        "gpu_share_1stream": round(per_hour * infer_s / 3600.0, 4),
-        "max_streams_1gpu": int(1.0 / (per_hour * infer_s / 3600.0)) if infer_s > 0 else None,
+        "ref_infer_ms": REF_INFER_MS,
+        "gpu_share_1stream": round(per_hour * (REF_INFER_MS / 1000.0) / 3600.0, 4),
+        # 分母恒正（per_hour 由上面的 `or 1.0` 保证 video_s > 0），但仍保留判断，
+        # 避免以后有人把 video_s 改成可空时踩除零。
+        "max_streams_1gpu": (int(1.0 / (per_hour * (REF_INFER_MS / 1000.0) / 3600.0))
+                             if per_hour > 0 else None),
     }
 
 
@@ -108,6 +116,7 @@ def main() -> int:
         "schema": 1,
         "source": Path(args.source).name,
         "note": ("抽帧率决定『能看到多少人』，帧差阈值决定『多少帧白跑推理』。"
+                 "容量按固定 22 ms 参考耗时折算（不随本次实测漂移）。"
                  "coverage 是新口径（分母=活到三帧窗口的轨迹），coverage_raw 是 v2.0 旧口径。"
                  "gpu_share_1stream 按单次推理耗时折算，仅用于容量估算，不是压测结果。"),
         "rows": rows,

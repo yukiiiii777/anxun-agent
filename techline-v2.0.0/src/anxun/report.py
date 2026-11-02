@@ -65,25 +65,32 @@ def line_chart(trend: list[dict], w: int = 560, h: int = 190) -> str:
 
     # x 按**真实时间**映射，不按桶索引等分 —— 最后一个桶常常只有几秒
     # （视频在桶中间结束），等分会把它画得和 30 秒的桶一样宽，视觉上撒谎。
-    t_max = max((t["t_end_s"] for t in trend), default=0) or 1
+    # 容错：trend 可能来自外部拼装的 JSON，缺字段就补 0，别让整张报告崩掉。
+    # v2.1.0 之前这里是 t["t_end_s"] 硬取，缺键直接 KeyError，整页渲染不出来。
+    def _g(row: dict, key: str, default: float = 0.0) -> float:
+        v = row.get(key, default)
+        return default if v is None else float(v)
+
+    trend = [t for t in trend if isinstance(t, dict)]
+    t_max = max((_g(t, "t_end_s") for t in trend), default=0) or 1
 
     def x(sec): return pad_l + (float(sec) / t_max) * iw
     def y(v): return pad_t + (1 - v) * ih
 
     # 人数柱（背景，浅灰）：按桶的真实时间跨度画，宽度就是那个桶的时长
-    max_p = max((t["persons"] for t in trend), default=1) or 1
+    max_p = max((int(t.get("persons") or 0) for t in trend), default=1) or 1
     bars = []
     for t in trend:
-        if not t["persons"]:
+        if not t.get("persons"):
             continue
-        bh = (t["persons"] / max_p) * ih * 0.30
-        x0, x1 = x(t["t_start_s"]), x(t["t_end_s"])
+        bh = (float(t.get("persons") or 0) / max_p) * ih * 0.30
+        x0, x1 = x(_g(t, "t_start_s")), x(_g(t, "t_end_s"))
         bw = max(1.5, x1 - x0 - 1)
         bars.append(f'<rect x="{x0:.1f}" y="{pad_t + ih - bh:.1f}" '
                     f'width="{bw:.1f}" height="{bh:.1f}" fill="#cfd8e3"/>')
 
     # 折线
-    pts_xy = [(x(t["t_start_s"] + (t["t_end_s"] - t["t_start_s"]) / 2), t["compliance"])
+    pts_xy = [(x(_g(t, "t_start_s") + (_g(t, "t_end_s") - _g(t, "t_start_s")) / 2), t.get("compliance"))
               for _, t in pts]
     d = " ".join(f"{'M' if k == 0 else 'L'}{px:.1f},{y(v):.1f}"
                  for k, (px, v) in enumerate(pts_xy))
@@ -100,8 +107,8 @@ def line_chart(trend: list[dict], w: int = 560, h: int = 190) -> str:
         f'<text x="{pad_l - 6}" y="{y(v) + 3.5:.1f}" font-size="10" fill="#64748b" '
         f'text-anchor="end">{int(v * 100)}</text>' for v in (0, 0.5, 1.0))
 
-    first = trend[0]["t_start_s"]
-    last = trend[-1]["t_end_s"]
+    first = _g(trend[0], "t_start_s")
+    last = _g(trend[-1], "t_end_s")
     axis = (f'<text x="{pad_l}" y="{h - 6}" font-size="10" fill="#64748b">{first:g}s</text>'
             f'<text x="{w - 12}" y="{h - 6}" font-size="10" fill="#64748b" '
             f'text-anchor="end">{last:g}s</text>')

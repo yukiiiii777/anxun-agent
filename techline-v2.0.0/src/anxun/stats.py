@@ -87,11 +87,20 @@ def merge(bundles: Iterable[dict]) -> dict:
         s = b.get("stats") or {}
         offset = video_s                                  # 这份素材在总时间轴上的起点
         seg_s = float(s.get("video_s") or 0.0)
-        for r in b["ledger"]:
+        # 硬取 b["ledger"] 会在传入手工拼的 dict 时抛 KeyError，看不出缺的是什么。
+        # 统一在这里给出可执行的提示（v2.1.0 加固）。
+        rows = b.get("ledger")
+        if rows is None:
+            raise ValueError(
+                f"第 {i + 1} 份账本缺 ledger 字段（source={b.get('source', '?')}）。"
+                f"用 stats.load() 读文件会提前拦住，或确认它是 stream.py 的产物。")
+        for r in rows:
+            if "track" not in r or "t_video_s" not in r:
+                continue                       # 缺关键字段的记录无法归入轨迹，跳过
             row = dict(r)                      # 不改调用方传进来的对象
             row["track"] = f"{tag}:{r['track']}"
             row["t_video_s"] = round(float(r["t_video_s"]) + offset, 1)
-            row["t_last"] = round(float(r["t_last"]) + offset, 1)
+            row["t_last"] = round(float(r.get("t_last", r["t_video_s"])) + offset, 1)
             row["source_index"] = i
             ledger.append(row)
             streams.add(r.get("stream") or "main")
