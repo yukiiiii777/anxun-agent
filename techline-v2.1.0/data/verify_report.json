@@ -1,7 +1,7 @@
 {
   "version": "techline-v2.1.0",
-  "total": 58,
-  "passed": 55,
+  "total": 59,
+  "passed": 56,
   "skipped": 3,
   "results": [
     {
@@ -104,7 +104,7 @@
       "line": "模型",
       "item": "三模型推理可跑",
       "ok": true,
-      "detail": "4 个框，2785.5 ms，标签 ['helmet', 'novest', 'person']"
+      "detail": "4 个框，3238.5 ms，标签 ['helmet', 'novest', 'person']"
     },
     {
       "line": "模型",
@@ -206,7 +206,13 @@
       "line": "部署",
       "item": "HTTP 服务启动并响应 /health",
       "ok": true,
-      "detail": "（--no-serve 跳过）"
+      "detail": ""
+    },
+    {
+      "line": "部署",
+      "item": "/api/inspect 返回判定与事件",
+      "ok": true,
+      "detail": "人 1 · 违规 1 · 事件 1"
     },
     {
       "line": "技术页",
