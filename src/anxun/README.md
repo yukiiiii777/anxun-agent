@@ -65,7 +65,7 @@ data/ppe/
   labels/val/    *.txt
 ```
 
-类别顺序固定为 `person / helmet / vest / goggles`，见 `data/ppe.yaml`。
+类别顺序固定为 `person / helmet / vest`（`goggles` 为预留类别，当前无数据、未启用），见 `data/ppe.yaml`。
 
 **划分要点**：同一视频抽出的帧不要跨 train/val，否则验证集指标虚高。按视频划分，不按帧划分。
 

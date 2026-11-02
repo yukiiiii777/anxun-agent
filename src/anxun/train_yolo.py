@@ -3,7 +3,8 @@
 安巡 Agent · PPE 检测模型训练脚本
 ================================
 
-四类目标：person / helmet / vest / goggles
+三类目标：person / helmet / vest
+（goggles 为预留类别，见 `data/ppe.yaml` 注释——无数据、无权重，未启用）
 
 用法
 ----

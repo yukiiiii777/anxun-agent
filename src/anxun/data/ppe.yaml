@@ -11,4 +11,5 @@ names:
   0: person
   1: helmet
   2: vest
-  3: goggles
+# goggles（护目镜）是预留类别：目标小、标注成本高，当前无数据、无权重，未启用。
+# 要启用就补 `3: goggles` 并重训，同时确认 infer_api.LABEL_MAP 已覆盖该类别。
