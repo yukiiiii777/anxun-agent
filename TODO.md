@@ -71,7 +71,7 @@
 - [x] **C1** 跑通 baseline（yolo11n + 480，小显存先出结果）
   - 主责：队长 ｜ 截止：11/02
   - 验收：能训完一轮并出 mAP
-  - ✅ 实际用 **yolov8n @640** 跑通（v8 权重生态更全，见 `techline-v2.2.0/README.md` 4.1 架构选型实测）
+  - ✅ 实际用 **yolov8n @640** 跑通（v8 权重生态更全，见 `techline-v3.0.0/README.md` 4.1 架构选型实测）
 - [x] **C2** 正式训练（yolo11s + 640，双卡）
   - 主责：队长 ｜ 截止：11/03
   - 验收：`best.pt` 可加载
@@ -79,7 +79,7 @@
 - [x] **C3** 指标评测：mAP、P、R、单帧耗时
   - 主责：队长 ｜ 截止：11/04
   - 验收：四个数有实测值
-  - ✅ **0.681 / 6.12% / 17.20% / ≈22 ms(GPU) · 46 ms(CPU)**，出处 `techline-v2.2.0/data/metrics_real.json`
+  - ✅ **0.681 / 6.12% / 17.20% / ≈22 ms(GPU) · 46 ms(CPU)**，出处 `techline-v3.0.0/data/metrics_real.json`
 - [x] **C4** **误报率专项测试**（负样本集）
   - 主责：队长 ｜ 截止：11/04
   - 验收：误报率 ≤10%，并记录误差来源
@@ -91,7 +91,7 @@
 - [x] **C6** 导出混淆矩阵、PR 曲线
   - 主责：队友 B ｜ 截止：11/04
   - 验收：图片可直接插入 PPT
-  - ✅ `python tools/plot_metrics.py` 产出 `techline-v2.2.0/docs/figs/` 三张 1280×720 图
+  - ✅ `python tools/plot_metrics.py` 产出 `techline-v3.0.0/docs/figs/` 三张 1280×720 图
 
 ---
 
@@ -100,7 +100,7 @@
 - [x] **D1** 推理 API 本地启动，用真图跑通
   - 主责：队长 ｜ 截止：11/03
   - 验收：`/detect` 返回正确框
-  - ✅ `techline-v2.2.0/src/anxun/app.py`，`/health` + `/api/inspect` + `/detect_b64`；验收脚本真起服务真跑推理
+  - ✅ `techline-v3.0.0/src/anxun/app.py`，`/health` + `/api/inspect` + `/detect_b64`；验收脚本真起服务真跑推理
 - [ ] **D2** 内网穿透或云部署（让 Agent 能调到）
   - 主责：队长 ｜ 截止：11/04
   - 验收：手机 4G 网络能访问
