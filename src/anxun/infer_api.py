@@ -22,6 +22,20 @@ GET  /health        健康检查
 返回格式与 rules_engine.Box 严格对齐，可直接喂给规则引擎：
     {"width":1920,"height":1080,
      "boxes":[{"label":"person","conf":0.94,"x1":300,"y1":300,"x2":540,"y2":920}, ...]}
+
+标签契约（重要）
+----------------
+模型和数据集的类别名不统一：数据集是 9 类 `person / hardhat / no_hardhat / vest /
+no_vest / boots / no_boots / gloves / no_gloves`，而规则引擎只认
+`person / helmet / vest / goggles`（见 `rules_engine.Box`）。
+
+**不做映射，接上真模型后所有人都会被判成「未佩戴」**——因为 `helmet` 永远对不上。
+所以这里有一层 `LABEL_MAP`：
+
+- 正类（hardhat/helmet → helmet，vest → vest）直接归一
+- 负类（no_hardhat / no_vest）**丢弃**：规则引擎的判据是「头部区域里有没有装备框」，
+  没有就是违规，负类框塞进去反而会被当成「有装备」
+- 映射不上的类别丢弃，并在返回里记 `dropped_labels`，方便上线时一眼看出契约没对齐
 """
 
 from __future__ import annotations
@@ -38,6 +52,29 @@ from pydantic import BaseModel
 
 MODEL_PATH = os.getenv("MODEL_PATH", "runs/ppe/weights/best.pt")
 CONF_THRESHOLD = float(os.getenv("CONF_THRESHOLD", "0.25"))
+
+# 模型类别 -> 规则引擎类别。None = 该类别不产生装备框（负类）
+LABEL_MAP: dict[str, str | None] = {
+    "person": "person",
+    "hardhat": "helmet",
+    "helmet": "helmet",
+    "safety_helmet": "helmet",
+    "no_hardhat": None,
+    "nohardhat": None,
+    "no-helmet": None,
+    "vest": "vest",
+    "safety_vest": "vest",
+    "no_vest": None,
+    "novest": None,
+    "goggles": "goggles",
+    "glasses": "goggles",
+}
+
+
+def normalize_label(raw: str) -> str | None:
+    """把模型类别名归一成规则引擎认的三种。未知类别返回 None（丢弃）。"""
+    return LABEL_MAP.get(raw.strip().lower())
+
 
 state: dict = {"model": None, "loaded_at": None, "error": None}
 
@@ -73,17 +110,26 @@ def _infer(image) -> dict:
 
     names = r.names
     boxes = []
+    dropped: dict[str, int] = {}
     for b in r.boxes:
+        raw_label = str(names[int(b.cls)])
+        label = normalize_label(raw_label)
+        if label is None:                 # 负类或未知类别：不进设备框
+            dropped[raw_label] = dropped.get(raw_label, 0) + 1
+            continue
         x1, y1, x2, y2 = (float(v) for v in b.xyxy[0].tolist())
         boxes.append({
-            "label": names[int(b.cls)],
+            "label": label,
             "conf": round(float(b.conf), 4),
             "x1": round(x1, 1), "y1": round(y1, 1),
             "x2": round(x2, 1), "y2": round(y2, 1),
         })
 
     h, w = r.orig_shape
-    return {"width": int(w), "height": int(h), "infer_ms": round(ms, 1), "boxes": boxes}
+    out = {"width": int(w), "height": int(h), "infer_ms": round(ms, 1), "boxes": boxes}
+    if dropped:
+        out["dropped_labels"] = dropped   # 出现即说明标签契约没对齐，上线时先看这里
+    return out
 
 
 def _to_image(raw: bytes):
