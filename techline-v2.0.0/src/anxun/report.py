@@ -179,7 +179,8 @@ def render(vm: dict, events: list[dict] | None = None) -> str:
                  f"系统 {cov['system_minutes']:g} 分钟 vs 人工 {cov['manual_minutes']:g} 分钟",
                  "#0f766e", note="排班推演，非实测"),
         kpi_card("判定覆盖率", _pct(ver["value"]),
-                 f"{ver['judged']}/{ver['persons_total']} 人次有定论", "#2563eb"),
+                 f"{ver['judged']}/{ver.get('eligible') or ver['persons_total']} 人次有定论"
+                 f"（旧口径 {_pct(ver.get('value_raw'))}）", "#2563eb"),
         kpi_card("告警降噪率", _pct(den["value"]),
                  f"{den['raw']} 次逐帧告警 → {den['events']} 条事件", "#7c3aed"),
         kpi_card("合规率", _pct(comp["value"]),
@@ -342,7 +343,8 @@ def render_slide(vm: dict, events: list[dict] | None = None) -> str:
                  f"{cov['system_minutes']:g} 分钟 vs 人工 {cov['manual_minutes']:g} 分钟",
                  "#0f766e", note="排班推演"),
         kpi_card("判定覆盖率", _pct(ver["value"]),
-                 f"{ver['judged']}/{ver['persons_total']} 人次有定论", "#2563eb"),
+                 f"{ver['judged']}/{ver.get('eligible') or ver['persons_total']} 人次有定论"
+                 f"（旧口径 {_pct(ver.get('value_raw'))}）", "#2563eb"),
         kpi_card("告警降噪率", _pct(den["value"]),
                  f"{den['raw']} 次 → {den['events']} 条", "#7c3aed"),
         kpi_card("合规率", _pct(comp["value"]),
@@ -428,7 +430,6 @@ def render_slide(vm: dict, events: list[dict] | None = None) -> str:
     <b>读图须知</b>：巡检覆盖率是<b>排班推演</b>（人工每班 2 次 × 15 分钟），非实测；
     合规率 {_pct(comp['value'])} 来自<b>违规演示素材</b>，不代表现场水平；
     违规持续时长是<b>单次告警持续</b>，素材无整改过程，故非整改耗时。
-    判定覆盖率 {_pct(ver['value'])} 低是轨迹碎片化（720p 素材 13.5% / 1080p 100%），不是模型不准。
   </div>
 </div>
 </body>

@@ -369,7 +369,7 @@ def trend(ledger: list[dict], bucket_s: float = 30.0) -> list[dict]:
 
 def compute(bundles: list[dict], *, hours: float = 8.0,
             manual_times: float = 2, manual_minutes: float = 15,
-            bucket_s: float = 30.0, streams: int | None = None) -> dict:
+            bucket_s: float = 0.0, streams: int | None = None) -> dict:
     """把 N 份事件文件算成一份价值指标。
 
     `streams` 不传时按账本里的 stream 名去重计数：单路 stream.py 跑几段都是
@@ -378,6 +378,11 @@ def compute(bundles: list[dict], *, hours: float = 8.0,
     """
     m = merge(bundles)
     st = m["stats"]
+    # 分桶宽度自适应：固定 30 秒会让短片只有 1–2 个桶，趋势图画不出来（v2.1.0 修）
+    # 目标 5–7 个桶，夹在 8–60 秒之间——太细噪声大，太粗看不出走势。
+    if not bucket_s:
+        video_s = float(st.get("video_s") or 60.0)
+        bucket_s = max(8.0, min(60.0, round(video_s / 6)))
     n_streams = int(streams) if streams else max(1, int(st.get("streams") or 1))
     return {
         "schema": SCHEMA,
