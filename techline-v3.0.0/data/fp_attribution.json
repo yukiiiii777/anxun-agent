@@ -1,6 +1,6 @@
 {
   "kind": "fp-attribution",
-  "generated_at": "2026-11-03T00:36:47",
+  "generated_at": "2026-11-03T00:41:38",
   "config": {
     "imgsz": 640,
     "conf": 0.25,
@@ -30,7 +30,7 @@
   "cases": [
     {
       "image_id": "000187_jpg.rf.38a1967760986ebd237fc00709b46603",
-      "image": "D:\\buddy\\2026-10-31-18-19-33\\push-upstream\\techline-v3.0.0\\datasets\\ppe_test\\test\\images\\000187_jpg.rf.38a1967760986ebd237fc00709b46603.jpg",
+      "image": "datasets/ppe_test/test/images/000187_jpg.rf.38a1967760986ebd237fc00709b46603.jpg",
       "person": {
         "x1": 484.1,
         "y1": 277.0,
@@ -85,11 +85,11 @@
           "dy": 0.0
         }
       ],
-      "fig": "runs\\_review_fp\\fp_00_000187_jpg.rf.38a1967760986ebd237fc00709b46603.jpg"
+      "fig": "runs/_review_fp/fp_00_000187_jpg.rf.38a1967760986ebd237fc00709b46603.jpg"
     },
     {
       "image_id": "000946_jpg.rf.ce108909598efc5054b9475928922801",
-      "image": "D:\\buddy\\2026-10-31-18-19-33\\push-upstream\\techline-v3.0.0\\datasets\\ppe_test\\test\\images\\000946_jpg.rf.ce108909598efc5054b9475928922801.jpg",
+      "image": "datasets/ppe_test/test/images/000946_jpg.rf.ce108909598efc5054b9475928922801.jpg",
       "person": {
         "x1": 174.9,
         "y1": 4.9,
@@ -117,11 +117,11 @@
       "best_conf_in_region": 0.581,
       "best_conf_out_region": null,
       "max_area_ratio": 1.13,
-      "fig": "runs\\_review_fp\\fp_01_000946_jpg.rf.ce108909598efc5054b9475928922801.jpg"
+      "fig": "runs/_review_fp/fp_01_000946_jpg.rf.ce108909598efc5054b9475928922801.jpg"
     },
     {
       "image_id": "001626_jpg.rf.c558c00ac7da125dca8bb9c1982b3ab7",
-      "image": "D:\\buddy\\2026-10-31-18-19-33\\push-upstream\\techline-v3.0.0\\datasets\\ppe_test\\test\\images\\001626_jpg.rf.c558c00ac7da125dca8bb9c1982b3ab7.jpg",
+      "image": "datasets/ppe_test/test/images/001626_jpg.rf.c558c00ac7da125dca8bb9c1982b3ab7.jpg",
       "person": {
         "x1": 285.2,
         "y1": 172.2,
@@ -166,11 +166,11 @@
           "dy": 0.0
         }
       ],
-      "fig": "runs\\_review_fp\\fp_02_001626_jpg.rf.c558c00ac7da125dca8bb9c1982b3ab7.jpg"
+      "fig": "runs/_review_fp/fp_02_001626_jpg.rf.c558c00ac7da125dca8bb9c1982b3ab7.jpg"
     },
     {
       "image_id": "001823_jpg.rf.3d21e91a673d9307bfa6fbf13420e6d9",
-      "image": "D:\\buddy\\2026-10-31-18-19-33\\push-upstream\\techline-v3.0.0\\datasets\\ppe_test\\test\\images\\001823_jpg.rf.3d21e91a673d9307bfa6fbf13420e6d9.jpg",
+      "image": "datasets/ppe_test/test/images/001823_jpg.rf.3d21e91a673d9307bfa6fbf13420e6d9.jpg",
       "person": {
         "x1": 169.1,
         "y1": 2.9,
@@ -198,11 +198,11 @@
       "best_conf_in_region": null,
       "best_conf_out_region": null,
       "max_area_ratio": null,
-      "fig": "runs\\_review_fp\\fp_03_001823_jpg.rf.3d21e91a673d9307bfa6fbf13420e6d9.jpg"
+      "fig": "runs/_review_fp/fp_03_001823_jpg.rf.3d21e91a673d9307bfa6fbf13420e6d9.jpg"
     },
     {
       "image_id": "001883_jpg.rf.b69aa48988c3ebf9169311ad17f578b3",
-      "image": "D:\\buddy\\2026-10-31-18-19-33\\push-upstream\\techline-v3.0.0\\datasets\\ppe_test\\test\\images\\001883_jpg.rf.b69aa48988c3ebf9169311ad17f578b3.jpg",
+      "image": "datasets/ppe_test/test/images/001883_jpg.rf.b69aa48988c3ebf9169311ad17f578b3.jpg",
       "person": {
         "x1": 218.5,
         "y1": 170.1,
@@ -262,11 +262,11 @@
           "dy": 0.0
         }
       ],
-      "fig": "runs\\_review_fp\\fp_04_001883_jpg.rf.b69aa48988c3ebf9169311ad17f578b3.jpg"
+      "fig": "runs/_review_fp/fp_04_001883_jpg.rf.b69aa48988c3ebf9169311ad17f578b3.jpg"
     },
     {
       "image_id": "00593_jpg.rf.1b7cb5d0d8fd18734b409e4a65f19074",
-      "image": "D:\\buddy\\2026-10-31-18-19-33\\push-upstream\\techline-v3.0.0\\datasets\\ppe_test\\test\\images\\00593_jpg.rf.1b7cb5d0d8fd18734b409e4a65f19074.jpg",
+      "image": "datasets/ppe_test/test/images/00593_jpg.rf.1b7cb5d0d8fd18734b409e4a65f19074.jpg",
       "person": {
         "x1": 173.3,
         "y1": 209.0,
@@ -306,11 +306,11 @@
           "dy": 0.0
         }
       ],
-      "fig": "runs\\_review_fp\\fp_05_00593_jpg.rf.1b7cb5d0d8fd18734b409e4a65f19074.jpg"
+      "fig": "runs/_review_fp/fp_05_00593_jpg.rf.1b7cb5d0d8fd18734b409e4a65f19074.jpg"
     },
     {
       "image_id": "47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2",
-      "image": "D:\\buddy\\2026-10-31-18-19-33\\push-upstream\\techline-v3.0.0\\datasets\\ppe_test\\test\\images\\47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg",
+      "image": "datasets/ppe_test/test/images/47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg",
       "person": {
         "x1": 123.5,
         "y1": 172.7,
@@ -365,11 +365,11 @@
           "dy": 0.56
         }
       ],
-      "fig": "runs\\_review_fp\\fp_06_47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg"
+      "fig": "runs/_review_fp/fp_06_47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg"
     },
     {
       "image_id": "47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2",
-      "image": "D:\\buddy\\2026-10-31-18-19-33\\push-upstream\\techline-v3.0.0\\datasets\\ppe_test\\test\\images\\47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg",
+      "image": "datasets/ppe_test/test/images/47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg",
       "person": {
         "x1": 288.9,
         "y1": 109.0,
@@ -419,11 +419,11 @@
           "dy": 0.0
         }
       ],
-      "fig": "runs\\_review_fp\\fp_07_47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg"
+      "fig": "runs/_review_fp/fp_07_47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg"
     },
     {
       "image_id": "47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2",
-      "image": "D:\\buddy\\2026-10-31-18-19-33\\push-upstream\\techline-v3.0.0\\datasets\\ppe_test\\test\\images\\47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg",
+      "image": "datasets/ppe_test/test/images/47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg",
       "person": {
         "x1": 262.1,
         "y1": 194.1,
@@ -483,11 +483,11 @@
           "dy": 0.17
         }
       ],
-      "fig": "runs\\_review_fp\\fp_08_47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg"
+      "fig": "runs/_review_fp/fp_08_47_jpg.rf.3fe7f5b94b72373e0d7bfc0603f3b3e2.jpg"
     },
     {
       "image_id": "5d18d072f4468a583914096f07a455f8_jpg.rf.c3cd92ae7df4944e30f31209abe0dfc2",
-      "image": "D:\\buddy\\2026-10-31-18-19-33\\push-upstream\\techline-v3.0.0\\datasets\\ppe_test\\test\\images\\5d18d072f4468a583914096f07a455f8_jpg.rf.c3cd92ae7df4944e30f31209abe0dfc2.jpg",
+      "image": "datasets/ppe_test/test/images/5d18d072f4468a583914096f07a455f8_jpg.rf.c3cd92ae7df4944e30f31209abe0dfc2.jpg",
       "person": {
         "x1": 313.0,
         "y1": 361.0,
@@ -515,7 +515,7 @@
       "best_conf_in_region": null,
       "best_conf_out_region": null,
       "max_area_ratio": null,
-      "fig": "runs\\_review_fp\\fp_09_5d18d072f4468a583914096f07a455f8_jpg.rf.c3cd92ae7df4944e30f31209abe0dfc2.jpg"
+      "fig": "runs/_review_fp/fp_09_5d18d072f4468a583914096f07a455f8_jpg.rf.c3cd92ae7df4944e30f31209abe0dfc2.jpg"
     }
   ]
 }

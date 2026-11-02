@@ -218,7 +218,7 @@ def main() -> int:
 
             case = {
                 "image_id": fp.stem,
-                "image": str(fp),
+                "image": str(fp.relative_to(ROOT)).replace("\\", "/"),
                 "person": {k: round(getattr(pbox, k), 1)
                            for k in ("x1", "y1", "x2", "y2", "w", "h")},
                 "person_conf": round(pbox.conf, 3),
@@ -232,7 +232,7 @@ def main() -> int:
             }
             if not args.no_fig:
                 fig = OUT_FIG / f"fp_{len(cases):02d}_{fp.stem}.jpg"
-                case["fig"] = str(fig.relative_to(ROOT))
+                case["fig"] = str(fig.relative_to(ROOT)).replace("\\", "/")
                 draw_case(fp, pbox, region, gt_h,
                           [b for b in helmets
                            if b.x2 > pbox.x1 and b.x1 < pbox.x2
