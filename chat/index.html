@@ -818,7 +818,7 @@ function renderPanel(){
        '<div class="meter ' + g.tone + '"><i style="width:0" data-w="' + Math.min(100, g.R/25*100) + '"></i></div>' +
        '<div class="kv"><span>可能性 L</span><b>' + g.L + ' · ' + esc(g.Lwhy) + '</b></div>' +
        '<div class="kv"><span>严重性 S</span><b>' + g.S + ' · ' + esc(g.Swhy) + '</b></div>' +
-       '<div class="kv"><span>分级依据</span><b>R=L×S（MIL-STD-882 矩阵）· L/S 取值见《安巡风险分级标准 v1.0》第 2 节</b></div>' +
+       '<div class="kv"><span>分级依据</span><b>R=L×S（MIL-STD-882 矩阵）· L/S 取值见 <a href="https://github.com/yukiiiii777/anxun-agent/blob/main/docs/%E5%AE%89%E5%B7%A1%E9%A3%8E%E9%99%A9%E5%88%86%E7%BA%A7%E6%A0%87%E5%87%86.md" target="_blank" rel="noopener noreferrer">《安巡风险分级标准 v1.0》</a> 第 2 节</b></div>' +
        '</div>';
 
   h += '<div class="pcard info"><div class="ph">整改工单<span class="r tno">' + esc(ticketNoFor(S.scene)) + '</span></div>' +
