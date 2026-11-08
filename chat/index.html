@@ -145,6 +145,8 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;backgrou
 .tchip{font-size:10.5px;color:#4A4843;background:#F4F2EC;border:1px solid var(--line);
   border-radius:7px;padding:2px 7px;line-height:1.5}
 .tchip b{font-weight:600;color:var(--blue)}
+.tchip.demochip{color:#8A6A1F;background:#FBF3E2;border-color:#EFDDBB}
+.tchip.demochip b{color:#8A6A1F}
 .msg:hover .acts{opacity:1}
 .acts button{font-size:11.5px;color:var(--faint);padding:3px 7px;border-radius:6px}
 .acts button:hover{background:#EFEDE6;color:var(--sub)}
@@ -355,7 +357,7 @@ var SCENES = {
     verdicts:[
       {p:'P1', state:'已佩戴', tone:'ok',   note:'安全帽置信度 0.93，中心点落在头部区域内'},
       {p:'P2', state:'待复核', tone:'warn', note:'置信度 0.25，落在 0.20–0.30 灰区，转人工'},
-      {p:'P3', state:'未佩戴', tone:'bad',  note:'无安全帽框，连续 4 帧结论一致'},
+      {p:'P3', state:'未佩戴', tone:'bad',  note:'无安全帽框'},
       {p:'P4', state:'无法判定', tone:'mute', note:'人员框 6000 px²，低于 8000 px² 门槛'}
     ],
     count:{ n:4, why:'近 30 天该通道同类违规 4 次' },
@@ -370,7 +372,7 @@ var SCENES = {
     id:'B', name:'2 号车间高处作业平台', short:'高处', tag:'高处作业',
     verdicts:[
       {p:'P1', state:'已佩戴', tone:'ok',   note:'安全帽置信度 0.96'},
-      {p:'P2', state:'未佩戴', tone:'bad',  note:'无安全帽框，距坠落面 6.2 m，连续 4 帧一致'},
+      {p:'P2', state:'未佩戴', tone:'bad',  note:'无安全帽框，距坠落面 6.2 m'},
       {p:'P3', state:'未佩戴', tone:'bad',  note:'同框第二人，未系安全带（仅记录，不单独定级）'},
       {p:'P4', state:'待复核', tone:'warn', note:'置信度 0.31，刚过定论线，建议人工确认'}
     ],
@@ -389,7 +391,7 @@ var SCENES = {
     verdicts:[
       {p:'P1', state:'已佩戴', tone:'ok',   note:'安全帽置信度 0.91'},
       {p:'P2', state:'已佩戴', tone:'ok',   note:'安全帽置信度 0.87'},
-      {p:'P3', state:'未佩戴', tone:'bad',  note:'无安全帽框，连续 4 帧一致'},
+      {p:'P3', state:'未佩戴', tone:'bad',  note:'无安全帽框'},
       {p:'P4', state:'无法判定', tone:'mute', note:'侧身遮挡，头部区域被货箱挡住'}
     ],
     count:{ n:1, why:'近 30 天该区域同类违规 1 次' },
@@ -505,7 +507,7 @@ function save(){
       scene: S.scene, active: S.active,
       convos: S.convos.map(function(c){
         return { id:c.id, title:c.title, ts:c.ts, msgs:c.msgs.map(function(m){
-          return { role:m.role, content:m.content, ts:m.ts, scene:m.scene };
+          return { role:m.role, content:m.content, ts:m.ts, scene:m.scene, demo:m.demo };
         })};
       })
     }));
@@ -624,11 +626,11 @@ function stripCard(text){
 
 /* ---------------- 规则引擎：唯一算数的地方 ---------------- */
 var LAW_DB = [
-  { code:'安全生产法 第四十五条', text:'生产经营单位必须为从业人员提供符合国家标准或者行业标准的劳动防护用品，并监督、教育从业人员按照使用规则佩戴、使用。' },
-  { code:'安全生产法 第四十三条', text:'生产经营单位进行爆破、吊装、动火、临时用电以及国务院应急管理部门会同国务院有关部门规定的其他危险作业，应当安排专门人员进行现场安全管理，确保操作规程的遵守和安全措施的落实。' },
-  { code:'GB 2811-2019 安全帽', text:'头部防护装备的技术要求与使用规范；高处作业应全程佩戴并系紧下颏带。' },
-  { code:'GB 30871-2022 特殊作业安全规范', text:'动火、受限空间等特殊作业应办理作业票，由审批人现场核查并签字批准。' },
-  { code:'GB 39800.1-2020 个体防护装备配备规范', text:'用人单位应按作业风险为从业人员配备个体防护装备，并监督其正确佩戴、使用。' }
+  { code:'安全生产法 第四十五条', verbatim:true, text:'生产经营单位必须为从业人员提供符合国家标准或者行业标准的劳动防护用品，并监督、教育从业人员按照使用规则佩戴、使用。' },
+  { code:'安全生产法 第四十三条', verbatim:true, text:'生产经营单位进行爆破、吊装、动火、临时用电以及国务院应急管理部门会同国务院有关部门规定的其他危险作业，应当安排专门人员进行现场安全管理，确保操作规程的遵守和安全措施的落实。' },
+  { code:'GB 2811-2019 安全帽', verbatim:false, text:'头部防护装备的技术要求与使用规范；高处作业应全程佩戴并系紧下颏带。' },
+  { code:'GB 30871-2022 特殊作业安全规范', verbatim:false, text:'动火、受限空间等特殊作业应办理作业票，由审批人现场核查并签字批准。' },
+  { code:'GB 39800.1-2020 个体防护装备配备规范', verbatim:false, text:'用人单位应按作业风险为从业人员配备个体防护装备，并监督其正确佩戴、使用。' }
 ];
 
 function normLaw(s){ return String(s || '').replace(/\s+/g,'').replace(/[（）()]/g,''); }
@@ -693,8 +695,8 @@ function normalizeCard(card, sceneId, idx){
   if(card.law && card.law.length){
     card.law = card.law.map(function(l){
       var hit = matchLaw(l && l.code);
-      if(hit) return { code: hit.code, text: hit.text, ok:true };
-      return { code: (l && (l.code || l.name)) || '未标注条款', text:'（该条款不在本项目条文库内，需人工核对原文后再对外引用）', ok:false };
+      if(hit) return { code: hit.code, text: hit.text, ok:true, verbatim: !!hit.verbatim };
+      return { code: (l && (l.code || l.name)) || '未标注条款', text:'（该条款不在本项目条文库内，需人工核对原文后再对外引用）', ok:false, verbatim:false };
     });
   }
   return card;
@@ -803,7 +805,7 @@ function renderPanel(){
        '<span class="pill t-mute">无法判定 ' + counts.mute + '</span>' +
        '</div></div>';
 
-  h += '<div class="pcard ' + g.tone + '"><div class="ph">四态判定<span class="r">4 人 · 连续 4 帧</span></div>';
+  h += '<div class="pcard ' + g.tone + '"><div class="ph">四态判定<span class="r">4 人 · 示例数据</span></div>';
   s.verdicts.forEach(function(v){
     var p = pillOf(v.tone);
     h += '<div class="vrow"><span class="p">' + esc(v.p) + '</span>' +
@@ -827,7 +829,14 @@ function renderPanel(){
        '<ul class="checks">' + s.checks.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
 
   h += '<div class="pcard"><div class="ph">法规依据</div><div class="law">' +
-       s.law.map(function(l){ return '<b>' + esc(l.code) + '</b><q>' + esc(l.text) + '</q>'; }).join('') +
+       s.law.map(function(l){
+         var hit = matchLaw(l.code);
+         var summary = hit && !hit.verbatim;
+         return '<b>' + esc(l.code) + '</b>' +
+           (summary ? ' <span class="pill t-warn" style="font-size:9.5px">摘要</span>' : '') +
+           '<q>' + esc(l.text) + '</q>';
+       }).join('') +
+       '<div style="margin-top:8px;color:var(--faint);font-size:10.5px">带「摘要」标记的是条文要点摘录，非逐字原文；对外引用前请核对标准正文。</div>' +
        '</div></div>';
 
   h += '<div class="pfoot"><b>统计口径</b>：有效样本 = 已佩戴 + 未佩戴；待复核与无法判定单列、不进分子分母，只进人工复核队列。<br>' +
@@ -927,6 +936,7 @@ function msgHTML(m, i){
     var acts = m.streaming ? '' :
       '<div class="acts"><button data-copy="' + i + '">复制</button><button data-regen="1">重新生成</button></div>';
     inner = '<div class="body"><div class="name">安巡 Agent</div>' + traceHTML(m.trace) +
+      (m.demo ? '<div class="trace"><span class="tchip demochip">演示模式 · 预置回答，非模型实时生成</span></div>' : '') +
       '<div class="bubble">' + md(text) + (card ? compactCard(card) : '') + caret + '</div>' + acts + '</div>';
   }
   return '<div class="msg ' + (isMe?'me':'ai') + '"><div class="av">' + (isMe?'我':'A') + '</div>' + inner + '</div>';
@@ -1021,7 +1031,7 @@ async function reply(q){
 
   S.busy = true; setBusy(true);
 
-  var m = { role:'assistant', content:'', ts:Date.now(), streaming:true, scene:S.scene };
+  var m = { role:'assistant', content:'', ts:Date.now(), streaming:true, scene:S.scene, demo:(S.mode !== 'live') };
   c.msgs.push(m);
 
   var acc = '';
