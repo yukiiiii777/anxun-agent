@@ -903,7 +903,8 @@ function traceHTML(trace){
     var a = t.args || {}, o = t.out || {};
     var argStr = Object.keys(a).map(function(k){ return k + '=' + a[k]; }).join(', ');
     var res;
-    if(t.name === 'grade_risk') res = o.error ? '参数不合法' : ('R=' + o.R + ' · ' + o.level);
+    if(t.name === 'risk_factors') res = o.error ? '错误' : ('L=' + o.L + ' · S=' + o.S);
+    else if(t.name === 'grade_risk') res = o.error ? '参数不合法' : ('R=' + o.R + ' · ' + o.level);
     else if(t.name === 'law_lookup') res = o.found ? ('命中 ' + o.code) : '未收录';
     else if(t.name === 'create_ticket') res = (o.no || '已生成');
     else res = '完成';
