@@ -159,7 +159,7 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;backgrou
 .cline{display:flex;align-items:baseline;gap:9px;font-size:12px;color:var(--sub);margin:2px 0 9px}
 .cline .n{font-size:27px;line-height:1;font-weight:750;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
 .cline .n.bad{color:var(--red)}.cline .n.warn{color:var(--orange)}
-.cline .n.info{color:var(--blue)}.cline .n.ok{color:var(--green)}
+.cline .n.info{color:var(--blue)}.cline .n.ok{color:var(--green)}.cline .n.gold{color:var(--gold)}
 
 /* 输入区 */
 .composer{padding:10px 26px 20px;background:linear-gradient(180deg,rgba(247,246,242,0),var(--paper) 32%)}
@@ -196,6 +196,9 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
 .pcard.bad:before{background:var(--red)}
 .pcard.ok:before{background:var(--green)}
 .pcard.info:before{background:var(--blue)}
+.pcard.gold:before{background:var(--gold)}
+.eng{display:inline-flex;align-items:center;font-size:9.5px;color:var(--green);background:var(--green-soft);
+  border-radius:999px;padding:1px 6px;margin-left:6px;letter-spacing:0}
 .ph{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--faint);letter-spacing:.4px;margin-bottom:10px}
 .ph .r{margin-left:auto;font-size:10px;letter-spacing:0}
 
@@ -220,6 +223,7 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
 .meter{height:5px;border-radius:99px;background:#F0EEE7;margin:11px 0 9px;overflow:hidden}
 .meter i{display:block;height:100%;border-radius:99px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
 .meter.warn i{background:linear-gradient(90deg,#E0A24D,#B2691A)}
+.meter.gold i{background:linear-gradient(90deg,#D8B451,#8A6A1F)}
 .meter.bad i{background:linear-gradient(90deg,#D2706A,#A32D2D)}
 .meter.info i{background:linear-gradient(90deg,#7FA9D4,#185FA5)}
 .kv{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:5px 0;border-top:1px dashed #F0EEE7}
@@ -410,6 +414,8 @@ var SYS = [
   '4) 回答用中文，先结论后依据；能用表格就别用长段落；不要客套话。',
   '5) 与厂区安全无关的问题：不要拒答，也不要长篇大论——先用一两句话说清，再顺一句「如果这是厂区场景，我可以按安巡口径出一份研判」。你具备通用常识，可以正常聊天。',
   '6) 但只要问题落在工厂安全、法规、判定、工单上，就必须严格按上面的口径和条款来，不许含糊、不许编造。',
+  '7) 出卡片时，risk 里只写 L 和 S（1–4 的整数，并说明取值理由）；**不要输出 R、等级、时限、工单号**——这些由系统规则引擎计算，你写什么都会被覆盖。',
+  '8) 引用条文时，code 写成「法规名 第X条」或「GB 编号-年份」。系统会拿条文库校验，库外条款会被标成「未收录」，所以只引你确定存在的条款。',
   '',
   '当你要给出一次完整研判（四态判定 + 定级 + 工单）时，在正文末尾输出一个 anxun 代码块，内容是一行 JSON：',
   '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"GD-B-0932","owner":"作业负责人","reviewer":"安全总监","action":"立即停止作业并撤离"},"checks":["叫停并撤离"],"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
@@ -456,7 +462,7 @@ function save(){
       scene: S.scene, active: S.active,
       convos: S.convos.map(function(c){
         return { id:c.id, title:c.title, ts:c.ts, msgs:c.msgs.map(function(m){
-          return { role:m.role, content:m.content, ts:m.ts };
+          return { role:m.role, content:m.content, ts:m.ts, scene:m.scene };
         })};
       })
     }));
@@ -572,6 +578,81 @@ function findCard(text){
 function stripCard(text){
   return String(text).replace(/```anxun\s*\n[\s\S]*?```/g, '').trim();
 }
+
+/* ---------------- 规则引擎：唯一算数的地方 ---------------- */
+var LAW_DB = [
+  { code:'安全生产法 第四十五条', text:'生产经营单位必须为从业人员提供符合国家标准或者行业标准的劳动防护用品，并监督、教育从业人员按照使用规则佩戴、使用。' },
+  { code:'安全生产法 第四十三条', text:'生产经营单位进行爆破、吊装、动火、临时用电以及国务院应急管理部门会同国务院有关部门规定的其他危险作业，应当安排专门人员进行现场安全管理，确保操作规程的遵守和安全措施的落实。' },
+  { code:'GB 2811-2019 安全帽', text:'头部防护装备的技术要求与使用规范；高处作业应全程佩戴并系紧下颏带。' },
+  { code:'GB 30871-2022 特殊作业安全规范', text:'动火、受限空间等特殊作业应办理作业票，由审批人现场核查并签字批准。' },
+  { code:'GB 39800.1-2020 个体防护装备配备规范', text:'用人单位应按作业风险为从业人员配备个体防护装备，并监督其正确佩戴、使用。' }
+];
+
+function normLaw(s){ return String(s || '').replace(/\s+/g,'').replace(/[（）()]/g,''); }
+function matchLaw(code){
+  var k = normLaw(code);
+  if(!k) return null;
+  for(var i=0;i<LAW_DB.length;i++){
+    var n = normLaw(LAW_DB[i].code);
+    if(k === n || k.indexOf(n) >= 0 || n.indexOf(k) >= 0) return LAW_DB[i];
+  }
+  return null;
+}
+
+function clampInt(v, lo, hi){
+  var n = Math.round(Number(v));
+  if(!isFinite(n)) return null;
+  return Math.max(lo, Math.min(hi, n));
+}
+
+/* R = L × S；等级与时限由 R 唯一决定，模型无权给 */
+function grade(L, S){
+  L = clampInt(L, 1, 4); S = clampInt(S, 1, 4);
+  if(L === null || S === null) return null;
+  var R = L * S;
+  if(R >= 13) return { R:R, L:L, S:S, level:'红色', deadline:'2 小时内',  tone:'bad'  };
+  if(R >= 9)  return { R:R, L:L, S:S, level:'橙色', deadline:'24 小时内', tone:'warn' };
+  if(R >= 5)  return { R:R, L:L, S:S, level:'黄色', deadline:'7 天内',    tone:'gold' };
+  return            { R:R, L:L, S:S, level:'蓝色', deadline:'30 天内',    tone:'info' };
+}
+
+function pad3(n){ n = String(n); while(n.length < 3){ n = '0' + n; } return n; }
+function dateCode(){ var d = new Date(); return ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2); }
+
+/* 工单号：命中当前场景的既定风险就沿用右栏编号，否则按场景+日期+序号生成，不给模型编 */
+function ticketNoFor(sceneId, idx, computedR){
+  var s = SCENES[sceneId] || SCENES.B;
+  if(computedR === s.R) return s.ticket.no;
+  return 'GD-' + sceneId + '-' + dateCode() + '-' + pad3((idx || 0) + 1);
+}
+
+/* 把模型给的卡片"过一遍引擎"：能算的全算，能校验的全校验 */
+function normalizeCard(card, sceneId, idx){
+  if(!card || typeof card !== 'object') return card;
+  var s = SCENES[sceneId] || SCENES.B;
+
+  var r = card.risk || {};
+  var L = r.L, S = r.S;
+  if(L == null || S == null){ L = s.L.v; S = s.S.v; card._fallback = true; }
+  var g = grade(L, S);
+  if(g){
+    card.risk = { R:g.R, L:g.L, S:g.S, level:g.level, deadline:g.deadline };
+    card.tone = g.tone;
+  }else{
+    card._fallback = true;
+  }
+
+  if(card.ticket) card.ticket.no = ticketNoFor(sceneId, idx, card.risk ? card.risk.R : null);
+
+  if(card.law && card.law.length){
+    card.law = card.law.map(function(l){
+      var hit = matchLaw(l && l.code);
+      if(hit) return { code: hit.code, text: hit.text, ok:true };
+      return { code: (l && (l.code || l.name)) || '未标注条款', text:'（该条款不在本项目条文库内，需人工核对原文后再对外引用）', ok:false };
+    });
+  }
+  return card;
+}
 function pillOf(tone){
   var map = { ok:['已佩戴','t-ok'], bad:['未佩戴','t-bad'], warn:['待复核','t-warn'], mute:['无法判定','t-mute'] };
   return map[tone] || [tone, 't-mute'];
@@ -579,7 +660,7 @@ function pillOf(tone){
 function compactCard(c){
   if(!c) return '';
   var h = '<div class="pcard ' + (c.tone||'info') + ' chatcard">';
-  h += '<div class="ph">研判结果<span class="r">规则引擎 · R = L × S</span></div>';
+  h += '<div class="ph">研判结果<span class="eng">规则引擎计算</span><span class="r">R = L × S</span></div>';
   if(c.verdicts && c.verdicts.length){
     h += '<div class="crow">';
     c.verdicts.forEach(function(v){
@@ -606,7 +687,7 @@ function compactCard(c){
 function cardHTML(c){
   if(!c) return '';
   var h = '<div class="pcard ' + (c.tone||'info') + '" style="margin:10px 0 2px">';
-  h += '<div class="ph">研判结果<span class="r">规则引擎 · R=L×S</span></div>';
+  h += '<div class="ph">研判结果<span class="eng">规则引擎计算</span><span class="r">R = L × S</span></div>';
 
   if(c.verdicts && c.verdicts.length){
     c.verdicts.forEach(function(v){
@@ -684,10 +765,12 @@ function renderPanel(){
   });
   h += '</div>';
 
-  h += '<div class="pcard ' + s.tone + '"><div class="ph">风险定级<span class="r">R = L × S</span></div>' +
-       '<div class="risk ' + s.tone + '"><div class="R" data-count="' + s.R + '">0</div>' +
-       '<div class="f"><b>' + esc(s.level) + ' · ' + esc(s.deadline) + '</b>L=' + s.L.v + ' · S=' + s.S.v + '</div></div>' +
-       '<div class="meter ' + s.tone + '"><i style="width:0" data-w="' + Math.min(100, s.R/25*100) + '"></i></div>' +
+  var g = grade(s.L.v, s.S.v) || { R:s.R, level:s.level, deadline:s.deadline, tone:s.tone, L:s.L.v, S:s.S.v };
+
+  h += '<div class="pcard ' + g.tone + '"><div class="ph">风险定级<span class="eng">引擎计算</span><span class="r">R = L × S</span></div>' +
+       '<div class="risk ' + g.tone + '"><div class="R" data-count="' + g.R + '">0</div>' +
+       '<div class="f"><b>' + esc(g.level) + ' · ' + esc(g.deadline) + '</b>L=' + g.L + ' · S=' + g.S + '</div></div>' +
+       '<div class="meter ' + g.tone + '"><i style="width:0" data-w="' + Math.min(100, g.R/25*100) + '"></i></div>' +
        '<div class="kv"><span>可能性 L</span><b>' + s.L.v + ' · ' + esc(s.L.why) + '</b></div>' +
        '<div class="kv"><span>严重性 S</span><b>' + s.S.v + ' · ' + esc(s.S.why) + '</b></div>' +
        '</div>';
@@ -774,6 +857,7 @@ function msgHTML(m, i){
       esc(m.content).replace(/\n/g,'<br>') + '</div></div>';
   }else{
     var card = findCard(m.content);
+    if(card) card = normalizeCard(card, m.scene || S.scene, i);
     var text = stripCard(m.content);
     var caret = m.streaming ? '<span class="caret"></span>' : '';
     var acts = m.streaming ? '' :
@@ -847,7 +931,7 @@ function demoKind(q){
 /* ---------------- 发送 / 流式 ---------------- */
 function addMsg(role, content){
   var c = ensureConvo();
-  var m = { role: role, content: content, ts: Date.now() };
+  var m = { role: role, content: content, ts: Date.now(), scene: S.scene };
   c.msgs.push(m);
   if(role === 'user' && (c.title === '新对话' || !c.title)){
     c.title = content.slice(0, 18) + (content.length > 18 ? '…' : '');
@@ -873,7 +957,7 @@ async function reply(q){
 
   S.busy = true; setBusy(true);
 
-  var m = { role:'assistant', content:'', ts:Date.now(), streaming:true };
+  var m = { role:'assistant', content:'', ts:Date.now(), streaming:true, scene:S.scene };
   c.msgs.push(m);
 
   var acc = '';
