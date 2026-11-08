@@ -141,6 +141,10 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;backgrou
 .bubble strong{font-weight:650}
 .bubble a{color:var(--blue)}
 .acts{display:flex;gap:2px;margin-top:5px;opacity:0;transition:.15s}
+.trace{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 7px}
+.tchip{font-size:10.5px;color:#4A4843;background:#F4F2EC;border:1px solid var(--line);
+  border-radius:7px;padding:2px 7px;line-height:1.5}
+.tchip b{font-weight:600;color:var(--blue)}
 .msg:hover .acts{opacity:1}
 .acts button{font-size:11.5px;color:var(--faint);padding:3px 7px;border-radius:6px}
 .acts button:hover{background:#EFEDE6;color:var(--sub)}
@@ -414,8 +418,9 @@ var SYS = [
   '4) 回答用中文，先结论后依据；能用表格就别用长段落；不要客套话。',
   '5) 与厂区安全无关的问题：不要拒答，也不要长篇大论——先用一两句话说清，再顺一句「如果这是厂区场景，我可以按安巡口径出一份研判」。你具备通用常识，可以正常聊天。',
   '6) 但只要问题落在工厂安全、法规、判定、工单上，就必须严格按上面的口径和条款来，不许含糊、不许编造。',
-  '7) 出卡片时，risk 里只写 L 和 S（1–4 的整数，并说明取值理由）；**不要输出 R、等级、时限、工单号**——这些由系统规则引擎计算，你写什么都会被覆盖。',
-  '8) 引用条文时，code 写成「法规名 第X条」或「GB 编号-年份」。系统会拿条文库校验，库外条款会被标成「未收录」，所以只引你确定存在的条款。',
+  '7) 你有三个工具：grade_risk（按 L×S 算 R、等级、时限）、law_lookup（查条文原文）、create_ticket（开单，工单号由系统生成）。**凡涉及等级或时限，必须先调用 grade_risk；引用条文前必须先调用 law_lookup；开工单必须调用 create_ticket。** 不要跳过工具自己给数。',
+  '8) 卡片里 risk 只写 L 和 S（1–4 的整数，附理由）；正文里引用 R 和等级时，**必须用 grade_risk 返回的值**，不得自行改动。工单号也一样，用 create_ticket 返回的。',
+  '9) 引用条文时，code 写成「法规名 第X条」或「GB 编号-年份」。law_lookup 返回「未收录」的条款，一律不要引用。',
   '',
   '当你要给出一次完整研判（四态判定 + 定级 + 工单）时，在正文末尾输出一个 anxun 代码块，内容是一行 JSON：',
   '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"GD-B-0932","owner":"作业负责人","reviewer":"安全总监","action":"立即停止作业并撤离"},"checks":["叫停并撤离"],"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
@@ -849,6 +854,21 @@ function renderConvo(){
     '<button data-ask="law"><span class="n">3</span>这条违规触犯了哪条法规？原文怎么写的<span class="go">→</span></button>' +
     '</div></div>';
 }
+function traceHTML(trace){
+  if(!trace || !trace.length) return '';
+  var chips = trace.map(function(t){
+    var a = t.args || {}, o = t.out || {};
+    var argStr = Object.keys(a).map(function(k){ return k + '=' + a[k]; }).join(', ');
+    var res;
+    if(t.name === 'grade_risk') res = o.error ? '参数不合法' : ('R=' + o.R + ' · ' + o.level);
+    else if(t.name === 'law_lookup') res = o.found ? ('命中 ' + o.code) : '未收录';
+    else if(t.name === 'create_ticket') res = (o.no || '已生成');
+    else res = '完成';
+    return '<span class="tchip"><b>' + esc(t.name) + '</b>(' + esc(argStr) + ') → ' + esc(res) + '</span>';
+  }).join('');
+  return '<div class="trace">' + chips + '</div>';
+}
+
 function msgHTML(m, i){
   var isMe = m.role === 'user';
   var inner;
@@ -862,7 +882,7 @@ function msgHTML(m, i){
     var caret = m.streaming ? '<span class="caret"></span>' : '';
     var acts = m.streaming ? '' :
       '<div class="acts"><button data-copy="' + i + '">复制</button><button data-regen="1">重新生成</button></div>';
-    inner = '<div class="body"><div class="name">安巡 Agent</div>' +
+    inner = '<div class="body"><div class="name">安巡 Agent</div>' + traceHTML(m.trace) +
       '<div class="bubble">' + md(text) + (card ? compactCard(card) : '') + caret + '</div>' + acts + '</div>';
   }
   return '<div class="msg ' + (isMe?'me':'ai') + '"><div class="av">' + (isMe?'我':'A') + '</div>' + inner + '</div>';
@@ -979,7 +999,13 @@ async function reply(q){
   toBottom(false);
 
   try{
-    if(S.mode === 'live'){
+    if(S.mode === 'live' && S.transport === 'direct'){
+      await agentRun(c, ctrl.signal, function(delta){ acc += delta; paint(false); }, function(step){
+        m.trace = m.trace || [];
+        m.trace.push(step);
+        paint(true);
+      });
+    }else if(S.mode === 'live'){
       await streamLive(c, q, ctrl.signal, function(delta){ acc += delta; paint(false); });
     }else{
       var s = SCENES[S.scene];
@@ -1005,34 +1031,169 @@ async function reply(q){
   }
 }
 
-async function streamLive(c, q, signal, onDelta){
-  var res;
-  if(S.transport === 'direct'){
-    var payload = {
-      model: 'deepseek-chat',
-      messages: [{ role:'system', content: SYS }, { role:'system', content: SCENE_CTX[S.scene] || '' }],
-      temperature: 0.3,
-      stream: true
-    };
-    c.msgs.slice(0, -1).forEach(function(x){
-      if(x.role === 'user' || x.role === 'assistant'){
-        payload.messages.push({ role: x.role, content: x.content });
-      }
-    });
-    res = await fetch('https://api.deepseek.com/chat/completions', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + S.key },
-      body: JSON.stringify(payload),
-      signal: signal
-    });
-  }else{
-    var msgs = c.msgs.slice(0, -1).map(function(x){ return { role:x.role, content:x.content }; });
-    res = await fetch('/api/chat', {
-      method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ messages: msgs, scene: S.scene, stream: true }),
-      signal: signal
-    });
+/* ---------------- Agent：工具调用 ---------------- */
+var TOOLS = [
+  { type:'function', function:{
+    name:'grade_risk',
+    description:'按 R = L × S 计算风险等级与整改时限。凡涉及“什么等级/多久整改”的判断必须调用，不要自己算。',
+    parameters:{ type:'object',
+      properties:{ L:{ type:'integer', description:'可能性 L，1–4 的整数' },
+                  S:{ type:'integer', description:'严重性 S，1–4 的整数' } },
+      required:['L','S'] } } },
+  { type:'function', function:{
+    name:'law_lookup',
+    description:'在项目条文库里查法规原文。引用任何条款之前必须先查；查不到就不要引用。',
+    parameters:{ type:'object',
+      properties:{ query:{ type:'string', description:'法规名或条款号，例如「安全生产法 第四十五条」' } },
+      required:['query'] } } },
+  { type:'function', function:{
+    name:'create_ticket',
+    description:'生成整改工单（工单号由系统生成，不要自己编）。',
+    parameters:{ type:'object',
+      properties:{ scene:{ type:'string', description:'场景编号 A/B/C' },
+                  level:{ type:'string', description:'风险等级，如「红色」' },
+                  action:{ type:'string', description:'整改要求' } },
+      required:['scene','level'] } } }
+];
+
+function runTool(name, args){
+  var a = args || {};
+  if(name === 'grade_risk'){
+    var g = grade(a.L, a.S);
+    return g ? { R:g.R, level:g.level, deadline:g.deadline, L:g.L, S:g.S } : { error:'L 或 S 不是 1–4 的整数' };
   }
+  if(name === 'law_lookup'){
+    var hit = matchLaw(a.query);
+    return hit ? { found:true, code:hit.code, text:hit.text }
+               : { found:false, note:'项目条文库未收录该条款，不得引用' };
+  }
+  if(name === 'create_ticket'){
+    var sc = String(a.scene || S.scene).toUpperCase();
+    var idx = (convo(S.active) || { msgs:[] }).msgs.length;
+    var scene = SCENES[sc] || SCENES[S.scene];
+    return {
+      no: ticketNoFor(sc, idx, null),
+      scene: sc,
+      level: a.level || (grade(scene.L.v, scene.S.v) || {}).level || '',
+      owner: scene.ticket.owner,
+      reviewer: scene.ticket.reviewer,
+      action: a.action || scene.ticket.action
+    };
+  }
+  return { error:'未知工具 ' + name };
+}
+
+function buildMessages(c){
+  var msgs = [{ role:'system', content: SYS }, { role:'system', content: SCENE_CTX[S.scene] || '' }];
+  c.msgs.slice(0, -1).forEach(function(x){
+    if(x.role === 'user' || x.role === 'assistant') msgs.push({ role:x.role, content:x.content });
+  });
+  return msgs;
+}
+
+function withTimeout(signal, ms){
+  var ctrl = new AbortController();
+  var t = setTimeout(function(){ ctrl.abort(); }, ms);
+  if(signal){
+    if(signal.aborted) ctrl.abort();
+    signal.addEventListener('abort', function(){ ctrl.abort(); });
+  }
+  return { signal: ctrl.signal, done: function(){ clearTimeout(t); } };
+}
+
+async function postDeepSeek(body, signal){
+  var res = await fetch('https://api.deepseek.com/chat/completions', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + S.key },
+    body: JSON.stringify(body),
+    signal: signal
+  });
+  if(res.status === 401) throw new Error('API key 无效或已失效');
+  if(res.status === 402) throw new Error('API 余额不足');
+  if(!res.ok){
+    var t = await res.text().catch(function(){ return ''; });
+    throw new Error('上游 ' + res.status + (t ? ' · ' + t.slice(0,80) : ''));
+  }
+  return res;
+}
+
+/* 一轮非流式调用（带工具），拿 tool_calls 或最终文本 */
+async function toolRound(messages, signal){
+  var res = await postDeepSeek({
+    model:'deepseek-chat', messages: messages, temperature:0.3,
+    stream:false, tools: TOOLS, tool_choice:'auto'
+  }, signal);
+  var j = await res.json();
+  return (j.choices && j.choices[0] && j.choices[0].message) || null;
+}
+
+/* 最后一轮：流式输出 */
+async function streamFinal(messages, signal, onDelta){
+  var res = await postDeepSeek({ model:'deepseek-chat', messages: messages, temperature:0.3, stream:true }, signal);
+  var reader = res.body.getReader();
+  var dec = new TextDecoder();
+  var buf = '';
+  while(true){
+    var r = await reader.read();
+    if(r.done) break;
+    buf += dec.decode(r.value, { stream:true });
+    var parts = buf.split('\n\n');
+    buf = parts.pop();
+    for(var i=0;i<parts.length;i++){
+      var block = parts[i].trim();
+      if(!block) continue;
+      var lines = block.split('\n');
+      for(var j=0;j<lines.length;j++){
+        var ln = lines[j];
+        if(ln.indexOf('data:') !== 0) continue;
+        var payload = ln.slice(5).trim();
+        if(payload === '[DONE]') return;
+        try{
+          var o = JSON.parse(payload);
+          var d = o.choices && o.choices[0] && o.choices[0].delta;
+          if(d && d.content) onDelta(d.content);
+        }catch(e){}
+      }
+    }
+  }
+}
+
+/* Agent 主循环：模型调工具 → 本地执行 → 结果回灌 → 直到它开口说话 */
+async function agentRun(c, signal, onDelta, onTrace){
+  var messages = buildMessages(c);
+  for(var round = 0; round < 3; round++){
+    var msg = await toolRound(messages, signal);
+    if(!msg) throw new Error('空响应');
+    if(msg.tool_calls && msg.tool_calls.length){
+      messages.push({ role:'assistant', content: msg.content || '', tool_calls: msg.tool_calls });
+      for(var i=0;i<msg.tool_calls.length;i++){
+        var tc = msg.tool_calls[i];
+        var args = {};
+        try{ args = JSON.parse(tc.function.arguments || '{}'); }catch(e){}
+        var out;
+        try{ out = runTool(tc.function.name, args); }
+        catch(e){ out = { error:String(e && e.message || e) }; }
+        if(onTrace) onTrace({ name: tc.function.name, args: args, out: out });
+        messages.push({ role:'tool', tool_call_id: tc.id, content: JSON.stringify(out) });
+      }
+      continue;   // 让模型拿着工具结果继续
+    }
+    if(msg.content){ onDelta(msg.content); return; }
+    break;
+  }
+  // 兜底：还没说完就强制收尾
+  messages.push({ role:'user', content:'请基于上面的工具结果，直接给出最终结论（用中文，不要再调用工具）。' });
+  await streamFinal(messages, signal, onDelta);
+}
+
+/* 代理模式（Cloudflare 版）保留旧的流式转发 */
+async function streamLive(c, q, signal, onDelta){
+  var msgs = c.msgs.slice(0, -1).map(function(x){ return { role:x.role, content:x.content }; });
+  var res = await fetch('/api/chat', {
+    method:'POST', headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ messages: msgs, scene: S.scene, stream: true }),
+    signal: signal
+  });
   if(!res.ok || !res.body){
     var t = await res.text().catch(function(){ return ''; });
     if(res.status === 401) throw new Error('API key 无效或已失效');
