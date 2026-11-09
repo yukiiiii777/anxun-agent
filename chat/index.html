@@ -50,15 +50,6 @@ body.static *,body.static *:before,body.static *:after{animation:none!important;
 .brand i{font-style:normal;font-size:11px;color:var(--faint);border:1px solid var(--line-2);
   border-radius:5px;padding:1px 5px;margin-left:2px;vertical-align:1px}
 
-.scenes{display:flex;align-items:center;gap:4px;background:#EFEDE6;border:1px solid var(--line);
-  border-radius:11px;padding:3px;margin-left:6px}
-.scenes button{padding:6px 11px;border-radius:8px;font-size:12.5px;color:var(--sub);
-  display:flex;align-items:center;gap:6px;transition:.16s;white-space:nowrap}
-.scenes button .k{width:16px;height:16px;border-radius:5px;background:#DCD9D0;color:#4A4843;
-  font-size:10px;font-weight:700;display:grid;place-items:center}
-.scenes button:hover{color:var(--ink)}
-.scenes button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.07)}
-.scenes button.on .k{background:#22211F;color:#fff}
 
 .spacer{flex:1}
 .status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub);
@@ -302,7 +293,6 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
     <b>安巡 Agent</b><i>研判台 v3.1</i>
   </div>
 
-  <div class="scenes" id="scenes"></div>
   <div class="spacer"></div>
   <!-- 只在本地跑的时候出现：评委问「线上能看吗」时点一下就走。
        线上站点自己是「在线」，再放这个链接没有意义，boot 里会隐藏。 -->
@@ -1433,16 +1423,6 @@ function cardHTML(c){
   return h;
 }
 
-/* ---------------- 渲染：场景切换 ---------------- */
-function renderScenes(){
-  var box = $('#scenes');
-  box.innerHTML = Object.keys(SCENES).map(function(k){
-    var s = SCENES[k];
-    return '<button data-scene="' + k + '" class="' + (S.scene===k?'on':'') + '" title="' + esc(s.name) + '">' +
-      '<span class="txt">' + esc(s.short) + '</span></button>';
-  }).join('');
-}
-
 /* ---------------- 渲染：右栏 ---------------- */
 function renderPanel(){
   var s = SCENES[S.scene];
@@ -1713,9 +1693,9 @@ function emptyHTML(){
   var s = SCENES[S.scene];
   return '<div class="empty">' +
     '<h1>先把「告警」变成<span>「工单」</span></h1>' +
-    '<p>当前区域 <b>' + esc(s.name) + '</b>（' + esc(s.tag) + '）。你可以直接问判定、定级、工单或法规，右侧面板会跟着联动。</p>' +
+    '<p>右侧是内置样例区域 <b>' + esc(s.name) + '</b>（' + esc(s.tag) + '）的实测结果。你可以直接问判定、定级、工单或法规，也可以上传一张现场照片换成自己的画面。</p>' +
     '<div class="sugg">' +
-    '<button data-ask="risk"><span class="n">1</span>这个场景现在什么风险等级？凭什么？<span class="go">→</span></button>' +
+    '<button data-ask="risk"><span class="n">1</span>现在什么风险等级？凭什么？<span class="go">→</span></button>' +
     '<button data-ask="ticket"><span class="n">2</span>把没戴安全帽的这个人开一张整改工单<span class="go">→</span></button>' +
     '<button data-ask="law"><span class="n">3</span>这条违规触犯了哪条法规？原文怎么写的<span class="go">→</span></button>' +
     '</div></div>';
@@ -2179,7 +2159,7 @@ function autoGrow(el){
 }
 function setScene(k){
   S.scene = k;
-  renderScenes(); renderPanel(); save();
+  renderPanel(); save();
   if(!convo(S.active) || !convo(S.active).msgs.length) renderConvo();
   if(MODEL.ready) refreshModelScene(k, true);
 }
@@ -2215,11 +2195,6 @@ $('#input').addEventListener('input', function(e){ autoGrow(e.target); });
 $('#input').addEventListener('keydown', function(e){
   if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); send(); }
   if(e.key === 'Escape' && S.abort) S.abort.abort();
-});
-
-$('#scenes').addEventListener('click', function(e){
-  var b = e.target.closest('[data-scene]');
-  if(b) setScene(b.getAttribute('data-scene'));
 });
 
 $('#clist').addEventListener('click', function(e){
@@ -2395,7 +2370,6 @@ async function boot(){
 
   var restored = load();
   if(SCENES[qScene]) S.scene = qScene;
-  renderScenes();
   renderPanel();
   renderList();
   renderConvo();
