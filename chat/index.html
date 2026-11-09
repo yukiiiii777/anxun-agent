@@ -557,6 +557,10 @@ function sceneFromApi(d){
       reviewer: '',       // 复查由现场安排，系统不预填、也不预排时间
       action: cleanReq(t.requirement || ''),
       grade: t.grade || '',
+      // 违规类型写进上下文：之前模型按「安全帽」查法规，
+      // 实际检出的是反光背心，引用 GB 2811 就跑偏了。
+      violation: t.violation || '',
+      equip: t.equip || '',
       risk: t.risk,
       L: t.L, S: t.S,
       due_at: t.due_at || '',
@@ -590,6 +594,11 @@ function applyModelScene(k, d){
   SCENE_CTX[k] = '当前区域不写具体地名；作业类型「' + x.work.type + '」。'
     + x.verdicts.length + ' 名人员：'
     + Object.keys(st).map(function(y){ return y + ' ' + st[y] + ' 人'; }).join('、')
+    + (s.ticket && s.ticket.violation
+        ? '。本次确认的违规类型：' + s.ticket.violation
+          + (s.ticket.equip === 'vest' ? '（反光背心）' : s.ticket.equip === 'helmet' ? '（安全帽）' : '')
+          + '——查法规、写整改要求都用这一项，不要换成别的装备。'
+        : '')
     + '。近 30 天同类违规 ' + x.count.n + ' 次'
     + '；本次一次抓到 ' + (x.count.scale || 0) + ' 人未佩戴，L 取「历史次数」与「本次人数」的高者'
     + '（《安巡风险分级标准 v1.1》§2.1.1）。'
@@ -1042,9 +1051,9 @@ var SYS = [
   '7) 你有四个工具：risk_factors（按现场事实推导 L 与 S）、grade_risk（按 L×S 算 R、等级、时限）、law_lookup（查条文原文）、create_ticket（开单，工单号由系统生成）。**凡涉及等级或时限，必须先调 risk_factors 拿 L/S，再调 grade_risk 拿 R；不许自己拍 L/S。** 引用条文前先调 law_lookup；开工单必须调 create_ticket。',
   '8) 卡片里 risk 只写 L 和 S（用 risk_factors 的返回值，附理由）；正文里引用 R 和等级时，必须用 grade_risk 返回的值。工单号用 create_ticket 返回的，不要自己编。',
   '9) 引用条文时，code 写成「法规名 第X条」或「GB 编号-年份」。law_lookup 返回「未收录」的条款，一律不要引用。',
-  '10) **只写本轮上下文里明确给出的事实**：区域名、人数与四态、L/S/R 与等级、工具返回的条文原文、近 30 天违规次数。',
+  '10) **只写本轮上下文里明确给出的事实**：人数与四态、L/S/R 与等级、工具返回的条文原文、近 30 天违规次数。',
   '    没有给出的，一律不写、也不推断——不要补装备种类（安全带、手套、护目镜、口罩），',
-  '    不要补距离/高度/温度/时长等数值，不要补人名、部门、班次、时间地点。',
+  '    不要补距离/高度/温度/时长等数值，不要补人名、厂区/车间/平台等地名、部门、班次。',
   '    用户问到没有的数据，直接说「本轮判定里没有这一项」，不要用「大概」「通常」凑一个答案。',
   '11) 判定范围只有头盔与反光背心两类。不要把安全带、手套、护目镜写进结论或工单——',
   '    哪怕场景是高处作业，模型没检这两类，写了就是编的。',
@@ -1053,6 +1062,8 @@ var SYS = [
   '13) 工单只说编号、等级、时限、整改要求。整改要求**照抄工具返回值**，不要改写、不要换说法；',
   '    不要出现任何具体人名或厂区/车间/平台等地名，也不要替某个岗位署名；',
   '    用户没问就不要补充签字、盖章、经办人这类内容。',
+  '14) 追问时只回答被问的那一点。已经给过完整研判的，不要每次都重贴同一张表、',
+  '    也不要在正文里重复卡片上已有的 R/等级/工单号；一两句话说清即可。',
   '',
   '当你要给出一次完整研判（四态判定 + 定级 + 工单）时，在正文末尾输出一个 anxun 代码块，内容是一行 JSON：',
   '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"<create_ticket 返回的号，不要自己编>","action":"立即停止作业并撤离"},"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
@@ -1971,10 +1982,31 @@ async function reply(q){
     clearInterval(autosave);
     m.streaming = false;
     m.content = acc;
-    // 正文提到工单号但没给卡片，补一张，保证「导出工单」按钮在
-    if(!findCard(m.content) && /TK-\d/.test(m.content)){
+    // 卡片不重复：同一会话里已经给过一张，后面追问就只回文字。
+    // 之前每答一次都挂同一张「研判结果 / 16 / A 级」，看起来像在复读。
+    var allowCard = (function(){
+      var asked = '';
+      for(var qi = c.msgs.length - 2; qi >= 0; qi--){
+        if(c.msgs[qi].role === 'user'){ asked = c.msgs[qi].content || ''; break; }
+      }
+      var wantsTicket = /工单|开单|整改单|重新开/.test(asked);
+      // 纯法规问题不带卡片：问「触犯哪条」时，卡片上的 R/等级是答非所问
+      var lawOnly = /法规|条文|第几条|哪条|依据/.test(asked) && !wantsTicket;
+      var hadCard = c.msgs.slice(0, -1).some(function(x){
+        return x.role === 'assistant' && (x.card || findCard(x.content));
+      });
+      var ok = !((hadCard && !wantsTicket) || lawOnly);
+      if(!ok) m.content = stripCard(m.content);
+      return ok;
+    })();
+
+    // 正文提到工单号但没给卡片，补一张，保证「导出工单」按钮在。
+    // 注意：必须受 allowCard 约束，否则刚剥掉的卡会被这里重新补回来。
+    if(allowCard && !findCard(m.content) && /TK-\d/.test(m.content)){
       var gc = cardFromScene(m.scene || S.scene);
       if(gc) m.card = gc;
+    } else if(!allowCard){
+      m.card = null;
     }
     S.busy = false; S.abort = null; setBusy(false);
     renderConvo();
@@ -2043,6 +2075,20 @@ function runTool(name, args){
     return g ? { R:g.R, level:g.level, deadline:g.deadline, L:g.L, S:g.S } : { error:'L 或 S 不是 1–4 的整数' };
   }
   if(name === 'law_lookup'){
+    // 按装备直接映射到条文：模型常拿「未穿戴反光背心」去匹配，
+    // 字面上碰不到条文名，就一律回「未收录」，等于把能引的条款也说没了。
+    var q = String(a.query || '');
+    var BY_EQUIP = [
+      [/反光背心|背心|vest/i,  'GB 39800.1-2020 个体防护装备配备规范'],
+      [/安全帽|头盔|helmet/i,   '安全生产法 第四十五条'],
+      [/护目镜|眼镜|goggles/i, 'GB 39800.1-2020 个体防护装备配备规范']
+    ];
+    for(var ei = 0; ei < BY_EQUIP.length; ei++){
+      if(BY_EQUIP[ei][0].test(q)){
+        var eq = matchLaw(BY_EQUIP[ei][1]);
+        if(eq) return { found:true, code:eq.code, text:eq.text };
+      }
+    }
     var hit = matchLaw(a.query);
     return hit ? { found:true, code:hit.code, text:hit.text }
                : { found:false, note:'项目条文库未收录该条款，不得引用' };
