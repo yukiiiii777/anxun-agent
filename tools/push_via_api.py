@@ -9,8 +9,11 @@
 
 行为
 ----
-- 把 .git 索引里的**全部文件**上传为一个新 commit，追加到远程分支头部
-- 幂等：可以反复运行，每次都会把本地内容镜像上去
+- **增量**：比对本地索引 blob sha 与远程 tree，只上传有差异的文件，
+  其余靠 base_tree 继承（仓库含 43MB best.onnx / 21MB best.pt，
+  全量重传会被 GitHub Blobs API 以 422 拒绝）
+- 幂等：可以反复运行，无差异时直接跳过
+- 不删除远程独有文件，避免覆盖队友的东西
 - 不依赖第三方库，只用标准库
 
 用法
@@ -96,20 +99,31 @@ def make_caller(token: str, proxy: str | None):
 
 
 # ---------------------------------------------------------------- 文件读取
-def staged_files(root: str) -> dict[str, bytes]:
-    """读取 .git 索引中的文件内容（换行已按 .gitattributes 规范化）。"""
-    out = subprocess.check_output(["git", "ls-files", "-z"], cwd=root)
-    paths = [p for p in out.decode("utf-8").split("\0") if p]
-    files: dict[str, bytes] = {}
-    for p in paths:
-        try:
-            files[p] = subprocess.check_output(
-                ["git", "cat-file", "-p", f":{p}"], cwd=root
-            )
-        except subprocess.CalledProcessError:
-            with open(os.path.join(root, p), "rb") as f:
-                files[p] = f.read()
-    return files
+def index_blobs(root: str) -> dict[str, str]:
+    """返回 {path: blob_sha}，直接读 .git 索引，不把大权重读进内存。"""
+    out = subprocess.check_output(["git", "ls-files", "-s", "-z"], cwd=root)
+    blobs: dict[str, str] = {}
+    for rec in out.decode("utf-8").split("\0"):
+        if not rec.strip():
+            continue
+        meta, path = rec.split("\t", 1)
+        blobs[path] = meta.split()[1]
+    return blobs
+
+
+def read_blob(root: str, path: str) -> bytes:
+    """读索引里的文件内容（换行已按 .gitattributes 规范化）。"""
+    try:
+        return subprocess.check_output(["git", "cat-file", "-p", f":{path}"], cwd=root)
+    except subprocess.CalledProcessError:
+        with open(os.path.join(root, path), "rb") as f:
+            return f.read()
+
+
+def remote_blobs(call, api: str, tree_sha: str) -> dict[str, str]:
+    """远程 tree 里已有的 {path: blob_sha}。"""
+    tree = call("GET", f"{api}/git/trees/{tree_sha}?recursive=1")
+    return {t["path"]: t["sha"] for t in tree["tree"] if t["type"] == "blob"}
 
 
 # ---------------------------------------------------------------- 主流程
@@ -137,11 +151,11 @@ def main() -> int:
         except subprocess.CalledProcessError:
             message = "chore: 同步仓库"
 
-    files = staged_files(root)
-    if not files:
+    local = index_blobs(root)
+    if not local:
         sys.exit("本地索引为空，先 git add")
     print(f"仓库   {owner}/{repo}   分支 {args.branch}")
-    print(f"文件   {len(files)} 个   代理 {args.proxy or '（未使用）'}\n")
+    print(f"索引   {len(local)} 个文件   代理 {args.proxy or '（未使用）'}\n")
 
     # 1) 取远程当前头部；空仓库则先建一个种子 commit
     base_commit = base_tree = None
@@ -151,20 +165,41 @@ def main() -> int:
         base_tree = call("GET", f"{api}/git/commits/{base_commit}")["tree"]["sha"]
         print(f"基于远程头部 {base_commit[:7]} 追加\n")
     except RuntimeError:
-        seed_path = "README.md" if "README.md" in files else next(iter(files))
+        seed_path = "README.md" if "README.md" in local else next(iter(local))
         print(f"远程仓库为空，先用 {seed_path} 建立初始 commit…")
         res = call("PUT", f"{api}/contents/{seed_path}", {
             "message": "chore: 初始化仓库",
-            "content": base64.b64encode(files[seed_path]).decode("ascii"),
+            "content": base64.b64encode(read_blob(root, seed_path)).decode("ascii"),
             "branch": args.branch,
         })
         base_commit = res["commit"]["sha"]
         base_tree = res["commit"]["tree"]["sha"]
         print(f"  初始 commit {base_commit[:7]}\n")
 
-    # 2) 上传 blob
-    def upload(item):
-        path, raw = item
+    # 2) 只上传与远程 blob sha 不同的文件。
+    #    GitHub Blobs API 对超大 content 返回 422（仓库里的 43MB best.onnx
+    #    就过不去），全量重传既慢又必然失败；其余文件靠 base_tree 继承。
+    remote = remote_blobs(call, api, base_tree)
+    changed = [p for p, sha in local.items() if remote.get(p) != sha]
+    print(f"远程   {len(remote)} 个文件   差异 {len(changed)} 个")
+    if not changed:
+        print("远程已与本地索引一致，无需推送。")
+        return 0
+
+    MAX_API_BLOB = 20 * 1024 * 1024
+    too_big = []
+    for p in changed:
+        try:
+            if os.path.getsize(os.path.join(root, p.replace("/", os.sep))) > MAX_API_BLOB:
+                too_big.append(p)
+        except OSError:
+            pass
+    if too_big:
+        sys.exit("以下改动文件超过 Blobs API 单次上限，需走别的通道：\n  "
+                 + "\n  ".join(too_big))
+
+    def upload(path: str):
+        raw = read_blob(root, path)
         sha = call("POST", f"{api}/git/blobs", {
             "content": base64.b64encode(raw).decode("ascii"),
             "encoding": "base64",
@@ -173,9 +208,9 @@ def main() -> int:
 
     results = []
     with ThreadPoolExecutor(max_workers=6) as pool:
-        for i, (path, sha, size) in enumerate(pool.map(upload, files.items()), 1):
+        for i, (path, sha, size) in enumerate(pool.map(upload, changed), 1):
             results.append((path, sha))
-            print(f"  [{i:>2}/{len(files)}] {size:>8,} B  {path}")
+            print(f"  [{i:>2}/{len(changed)}] {size:>8,} B  {path}")
 
     # 3) 建 tree
     tree = call("POST", f"{api}/git/trees", {
