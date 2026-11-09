@@ -459,17 +459,32 @@ function S_from_work(type){
 }
 
 /* 场景的 L/S/R 全部由事实推导：SCENES 里只存事实（违规次数、作业类型） */
+/* 定级口径 v1.3：L 只看**本次判定的态势**，不看区域历史台账。
+   等级要回答的是「多久内必须处理」，历史次数回答不了这件事：
+   刚装系统的区域台账是 0，抓到 10 人全缺 PPE 也只给 L=1；
+   反过来历史多的区域，一个人没戴就被拉满。 */
+function likelihoodOfVerdicts(vs){
+  var bad = 0, pending = 0;
+  (vs || []).forEach(function(v){
+    if(v.state === '未佩戴') bad++;
+    else if(v.state === '待复核' || v.state === '无法判定') pending++;
+  });
+  if(bad > 0)     return { L:4, bad:bad, pending:pending,
+    why:'本次确认未佩戴 ' + bad + ' 人 → L=4' };
+  if(pending > 0) return { L:2, bad:bad, pending:pending,
+    why:'本次只有待复核/无法判定 ' + pending + ' 项，无确认违规 → L=2' };
+  return { L:1, bad:0, pending:0, why:'本次全部已佩戴 → L=1' };
+}
+
 function sceneRisk(id){
   var s = SCENES[id];
   if(!s) return null;
-  var lr = L_from_count(s.count.n, s.count.scale);
+  var lr = likelihoodOfVerdicts(s.verdicts);
   var sr = S_from_work(s.work.type);
   var g = grade(lr.L, sr.S);
   return {
     L: g.L, S: g.S, R: g.R, level: g.level, deadline: g.deadline, tone: g.tone,
-    Lwhy: s.count.why + (lr.scaleN
-      ? '（历史档 L' + lr.baseL + '；本次 ' + lr.scaleN + ' 人同发 → L' + lr.L + '，取高者）'
-      : '（' + lr.note + '）'),
+    Lwhy: lr.why,
     Swhy: s.work.why + '（' + sr.note + '）'
   };
 }
@@ -599,9 +614,8 @@ function applyModelScene(k, d){
           + (s.ticket.equip === 'vest' ? '（反光背心）' : s.ticket.equip === 'helmet' ? '（安全帽）' : '')
           + '——查法规、写整改要求都用这一项，不要换成别的装备。'
         : '')
-    + '。近 30 天同类违规 ' + x.count.n + ' 次'
-    + '；本次一次抓到 ' + (x.count.scale || 0) + ' 人未佩戴，L 取「历史次数」与「本次人数」的高者'
-    + '（《安巡风险分级标准 v1.1》§2.1.1）。'
+    + '。定级口径 v1.3：L 只看本次判定——有确认未佩戴即 L=4，只有待复核 L=2，'
+    + '全合规 L=1；区域历史违规次数（' + x.count.n + ' 次）只作背景，不参与定级。'
     + (s.ticket && /^TK-/.test(String(s.ticket.no || ''))
         ? '规则引擎已按实测开出工单 ' + s.ticket.no
           + '（' + (s.ticket.grade || '') + '' + (s.ticket.risk ? ' · R=' + s.ticket.risk : '') + '），'
@@ -696,7 +710,7 @@ async function uploadInspect(file){
     applyModelScene(S.scene, d);
     renderPanel();
 
-    var lr = L_from_count(x.count.n), sr = S_from_work(x.work.type);
+    var lr = likelihoodOfVerdicts(x.verdicts), sr = S_from_work(x.work.type);
     var g = grade(lr.L, sr.S);
     var ev = (d.events || [])[0];
     var st = {};
@@ -2025,14 +2039,12 @@ async function reply(q){
 var TOOLS = [
   { type:'function', function:{
     name:'risk_factors',
-    description:'按现场事实推导 L（可能性）与 S（严重性）：传违规次数与作业类型，返回 L、S 及判定依据。凡涉及定级，必须先调用它拿 L/S。',
+    description:'按本次判定推导 L（可能性）与 S（严重性）：L 取决于本次是否有确认未佩戴（有=4，仅待复核=2，全合规=1），S 取决于作业类型。凡涉及定级，必须先调用它拿 L/S。',
     parameters:{ type:'object',
       properties:{
-        violation_count:{ type:'integer', description:'近 30 天同类违规次数' },
-        work_type:{ type:'string', description:'作业类型：普通作业 / 车辆作业 / 高处作业 / 动火作业 / 受限空间' },
-        violation_scale:{ type:'integer', description:'本次单次违规人数（可选；不传则用当前场景实测的未佩戴人数）' }
+        work_type:{ type:'string', description:'作业类型：普通作业 / 车辆作业 / 高处作业 / 动火作业 / 受限空间' }
       },
-      required:['violation_count','work_type'] } } },
+      required:['work_type'] } } },
   { type:'function', function:{
     name:'grade_risk',
     description:'按 R = L × S 计算风险等级与整改时限。L、S 必须来自 risk_factors 的返回值。',
@@ -2059,20 +2071,15 @@ var TOOLS = [
 function runTool(name, args){
   var a = args || {};
   if(name === 'risk_factors'){
-    // 本次规模默认取当前场景的实测违规人数：模型只会传历史次数，
-    // 不补这一项的话，10 人违规它照样算 L=1、R=3 蓝色，和接口结论打架。
+    // L 只看本次判定：有确认未佩戴 → 4；只有待复核 → 2；全合规 → 1。
+    // 区域历史次数（violation_count）不再参与计算，只作为背景记录。
     var scn = SCENES[S.scene] || {};
-    var scale = (a.violation_scale != null) ? a.violation_scale
-              : ((scn.count && scn.count.scale) || 0);
-    var lr = L_from_count(a.violation_count, scale);
-    var sr = S_from_work(a.work_type);
+    var lr = likelihoodOfVerdicts(scn.verdicts || []);
+    var sr = S_from_work(a.work_type || (scn.work && scn.work.type) || '');
     return {
       L: lr.L, S: sr.S,
-      L_basis: lr.scaleN
-        ? ('历史 ' + a.violation_count + ' 次→L' + lr.baseL + '；本次 ' + lr.scaleN + ' 人同发→L' + lr.L + '，取高者')
-        : lr.note,
-      S_basis: sr.note,
-      violation_scale: scale
+      L_basis: lr.why,
+      S_basis: sr.note
     };
   }
   if(name === 'grade_risk'){

@@ -105,11 +105,15 @@ def inspect(scene: dict, region: Region, detector,
         if v.is_violation:
             grouped.setdefault(v.equip, []).append(v)
 
+    # 待复核 / 无法判定的条目数：没有确认违规、只有灰区时也会影响定级（L=2）
+    pending_n = sum(1 for v in final if (not v.is_violation)
+                    and v.status in ("待复核", "无法判定"))
+
     for equip, vs in grouped.items():
         ev = build_event(region, equip, ts, max(v.conf for v in vs),
                          f"{scene['scene_id']} · frame {requested - 1} · {len(vs)} 人",
                          event_id=f"EV-{ts:%Y%m%d%H%M%S}-{region.region_id}-{equip}-{_suffix(scene)}",
-                         scale=len(vs))
+                         scale=len(vs), pending=pending_n)
         events.append(_event_dict(ev))
         tickets.append(make_ticket(ev, affected=len(vs)))
 

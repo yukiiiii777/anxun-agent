@@ -672,32 +672,24 @@ def aggregate_temporal(frames: Sequence[Sequence[Verdict]],
 # ============================================================
 # 四、风险矩阵
 
-def likelihood(violation_count_30d: int, scale: int = 0) -> int:
-    """可能性 L：历史频次与**本次规模**取较高档。
+def likelihood(confirmed: int, pending: int = 0) -> int:
+    """可能性 L：由**本次判定的态势**决定，不看区域历史台账。
 
-    只看近 30 天台账会把「刚装系统」的区域判得过轻：原料库台账记 1 次
-    （L=1），可一次巡检就抓到 10 人未佩戴——管控失效程度显然远高于 L=1。
-    所以再加一个信号：**本次单次抓到的违规人数**，与历史同表换算后取高者。
+    口径（v1.3 起）：
+    - 已确认有人未佩戴            → L=4
+    - 只有待复核 / 无法判定        → L=2
+    - 全部已佩戴                  → L=1
 
-    这也修正了一处反直觉：7 人全缺 PPE 判蓝色（R=3，30 天内），
-    1 人少穿背心反判红色（R=16，2 小时内）。规模不进 L 时必然出现。
-
-    scale=0（默认）表示「不提供本次规模」，此时行为与旧版完全一致。
+    旧口径用「该区域近 30 天同类违规次数」，问题是它衡量的是台账，
+    不是这一单要不要马上处理：刚装系统的区域历史为 0，抓到 10 人未佩戴也只给 L=1；
+    反过来历史多的区域，一个人没戴就被拉满。等级应该回答「多久内必须处理」，
+    所以改为看本次确认的事实，历史次数只作为背景记录，不参与定级。
     """
-    L = L_MAX
-    for cap, val in L_TABLE:
-        if violation_count_30d <= cap:
-            L = val
-            break
-
-    if scale > 0:
-        for cap, val in L_TABLE:
-            if scale <= cap:
-                L = max(L, val)
-                break
-        else:
-            L = L_MAX
-    return L
+    if confirmed >= 1:
+        return 4
+    if pending >= 1:
+        return 2
+    return 1
 
 
 def severity(scene: str, risk_class: str = "") -> int:
@@ -757,13 +749,13 @@ class Event:
 
 def build_event(region: Region, equip: str, ts: datetime,
                 conf: float, evidence: str, event_id: str = "",
-                scale: int = 0) -> Event:
+                scale: int = 0, pending: int = 0) -> Event:
     """把一条违规判定转成带定级的事件。
 
-    `scale` 是本次同一违规的违规人数，会与历史频次一起决定 L——
-    见 `likelihood()` 的说明。
+    L 由本次判定决定：已确认未佩戴 → 4；只有待复核 → 2（见 likelihood()）。
+    `scale` 只用于记录本次违规人数，不再影响 L。
     """
-    L = likelihood(region.violation_30d, scale)
+    L = likelihood(confirmed=scale, pending=pending)
     S = severity(region.scene, getattr(region, "risk_class", ""))
     R = L * S
     g, act, due_delta = grade_of(R)
