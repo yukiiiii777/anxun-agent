@@ -8,8 +8,9 @@
 
 > **快速入口**
 >
-> - **在线研判台（真模型，ONNX-CPU）**：<https://anxun-desk.app.workbuddy.host/?sharecode=OLOGYZUPHO>
->   右侧四态 / L×S 定级 / 工单由 best.onnx 实跑，不是手写数据；任意图片可上传实测
+> - **在线研判台（真模型 + 云端对话，打开就能聊）**：<https://anxun-desk.app.workbuddy.host/?sharecode=OLOGYZUPHO>
+>   右侧四态 / L×S 定级 / 工单由 best.onnx 实跑；对话走云服务免密钥大模型，
+>   等级和工单号由规则引擎（function calling）给出，不是模型自己编的；任意图片可上传实测
 > - 研判台（静态托管版，预置数据）：<https://yukiiiii777.github.io/anxun-agent/chat/>
 > - 在线演示（三场景可切，无需安装）：<https://yukiiiii777.github.io/anxun-agent/demo/>
 > - 实测指标：[技术页 P10–13](techline-v3.1.0/docs/技术页_10-13.html)
