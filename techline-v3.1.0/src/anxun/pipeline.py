@@ -113,7 +113,8 @@ def inspect(scene: dict, region: Region, detector,
         ev = build_event(region, equip, ts, max(v.conf for v in vs),
                          f"{scene['scene_id']} · frame {requested - 1} · {len(vs)} 人",
                          event_id=f"EV-{ts:%Y%m%d%H%M%S}-{region.region_id}-{equip}-{_suffix(scene)}",
-                         scale=len(vs), pending=pending_n)
+                         scale=len(vs), pending=pending_n,
+                         confirmed_total=sum(1 for v in final if v.is_violation))
         events.append(_event_dict(ev))
         tickets.append(make_ticket(ev, affected=len(vs)))
 

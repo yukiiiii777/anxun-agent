@@ -767,14 +767,16 @@ class Event:
 
 def build_event(region: Region, equip: str, ts: datetime,
                 conf: float, evidence: str, event_id: str = "",
-                scale: int = 0, pending: int = 0) -> Event:
+                scale: int = 0, pending: int = 0, confirmed_total: int = 0) -> Event:
     """把一条违规判定转成带定级的事件。
 
     L 由本次判定决定：已确认未佩戴 → 4；只有待复核 → 2（见 likelihood()）。
     `scale` 只用于记录本次违规人数，不再影响 L。
     """
     # v1.4：等级按处置时限分档，不再走 L×S 矩阵；L/S/R 仅保留字段位，置 0。
-    g, act, due_delta = urgency_of(confirmed=scale, pending=pending)
+    # 分档按**本次全部确认未佩戴人数**，不按单类装备拆开算，
+    # 否则同一场景会出现「安全帽 B、背心 A」两张不同等级的单。
+    g, act, due_delta = urgency_of(confirmed=(confirmed_total or scale), pending=pending)
     L = S = R = 0
     return Event(
         event_id=event_id or f"EV-{ts:%Y%m%d%H%M%S}-{region.region_id}",
