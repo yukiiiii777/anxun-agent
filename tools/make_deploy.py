@@ -72,6 +72,9 @@ def main() -> int:
     shutil.copy2(ROOT / "serve.py", out / "serve.py")
     for page in ("chat", "demo"):
         copytree(ROOT / page, out / page, "*.html")
+        # chat/ 里还有本地化的云端 SDK（wbc-sdk.js）。只复制 *.html 的话
+        # 部署版找不到 SDK，initCloud 永远返回 false，页面会一直停在「云端未连接」。
+        copytree(ROOT / page, out / page, "*.js")
 
     tl = ROOT / TL
     copytree(tl / "src", out / TL / "src", "*.py")

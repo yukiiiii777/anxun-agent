@@ -64,6 +64,10 @@ body.static *,body.static *:before,body.static *:after{animation:none!important;
 .status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub);
   border:1px solid var(--line);border-radius:999px;padding:5px 11px 5px 9px;background:#fff;transition:.2s}
 .status:hover{border-color:var(--line-2)}
+.online-link{font-size:12px;color:var(--sub);text-decoration:none;white-space:nowrap;
+  border:1px solid var(--line);border-radius:999px;padding:5px 11px;background:#fff;transition:.16s}
+.online-link:hover{color:var(--ink);border-color:var(--line-2)}
+.online-link[hidden]{display:none}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:none}
 .status.live .dot{background:var(--green);box-shadow:0 0 0 3px rgba(47,107,79,.14);animation:breathe 2.4s infinite}
 .status.demo .dot{background:var(--gold);box-shadow:0 0 0 3px rgba(138,106,31,.12)}
@@ -258,20 +262,7 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
   pointer-events:none;transition:.24s;z-index:50;max-width:80vw}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
-/* 对话后端选择菜单 */
-.mmenu{position:fixed;right:18px;top:52px;z-index:60;width:266px;background:#fff;
-  border:1px solid var(--line);border-radius:12px;padding:8px;
-  box-shadow:0 2px 6px rgba(26,26,26,.06),0 24px 60px -24px rgba(26,26,26,.35)}
-.mmenu[hidden]{display:none}
-.mmenu .mt{font-size:11.5px;color:var(--faint);padding:5px 10px 7px;letter-spacing:.3px}
-.mmenu .mi{display:block;width:100%;text-align:left;padding:9px 10px;border-radius:8px;
-  cursor:pointer;transition:.12s}
-.mmenu .mi:hover{background:var(--paper)}
-.mmenu .mi.on{background:var(--paper)}
-.mmenu .mi b{display:block;font-size:13px;font-weight:600;color:var(--ink);line-height:1.4}
-.mmenu .mi span{display:block;font-size:11.5px;color:var(--sub);line-height:1.5;margin-top:1px}
-.mmenu .mi.on b:after{content:"当前";margin-left:6px;font-size:10.5px;font-weight:500;
-  color:var(--green);background:var(--green-soft);border-radius:4px;padding:0 5px}
+
 
 /* 响应式 */
 @media (max-width:1180px){
@@ -311,7 +302,12 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
 
   <div class="scenes" id="scenes"></div>
   <div class="spacer"></div>
-  <div class="status demo" id="status" title="点击查看模式说明">
+  <!-- 只在本地跑的时候出现：评委问「线上能看吗」时点一下就走。
+       线上站点自己是「在线」，再放这个链接没有意义，boot 里会隐藏。 -->
+  <a class="online-link" id="onlineLink" href="https://anxun-desk.app.workbuddy.host/?sharecode=OLOGYZUPHO"
+     target="_blank" rel="noopener" hidden
+     title="在线研判台：同一套页面 + best.onnx 实跑，打开就能聊">在线研判台 ↗</a>
+  <div class="status demo" id="status" title="点击切换对话后端">
     <span class="dot"></span><span id="statusText">演示模式 · anxun-demo</span>
   </div>
   <button class="iconbtn" id="btnMenu" title="会话列表" style="display:none">≡</button>
@@ -361,17 +357,14 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
 <div class="mask" id="mask"></div>
 <div class="toast" id="toast"></div>
 
-<!-- 对话后端选择：点右上角状态胶囊弹出。部署版默认走云端，
-     现场云端不通时能立刻切直连或演示，不用改代码。 -->
-<div class="mmenu" id="mmenu" hidden>
-  <div class="mt">对话后端</div>
-  <button class="mi" data-t="cloud"><b>云端模型</b><span>免密钥，需要外网</span></button>
-  <button class="mi" data-t="direct"><b>直连 DeepSeek</b><span>用自备 key，只存本机浏览器</span></button>
-  <button class="mi" data-t="demo"><b>演示模式</b><span>不连模型，用预置研判回答</span></button>
-</div>
+
 
 <!-- 云服务 SDK（免密钥大模型）。加载失败不影响页面，会退回演示数据。 -->
-<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<!-- 云端 SDK 走本地文件，不再请求 jsdelivr。
+     原来从 CDN 拉，国内网络一慢/一断，initCloud 就返回 false，
+     页面掉回「演示模式」——别人打开看到的正是这个。
+     wbc-sdk.js 与 index.html 同目录，跟着页面一起发布。 -->
+<script src="./wbc-sdk.js"></script>
 <script>
 /* ============================================================
    安巡 Agent · 研判台
@@ -1024,11 +1017,13 @@ var S = {
   active: null,
   busy: false,
   abort: null,
-  mode: 'demo',
-  model: 'anxun-demo',
+  mode: 'live',
+  model: '云端模型',
   key: '',
-  transport: 'demo',
-  verified: false        // 首次对话真的吐出正文后置 true，状态栏才敢写「已连接」
+  transport: 'cloud',
+  verified: false,
+  // 只剩云端一条路：connecting（连）/ ready（可用）/ failed（连不上，点状态条重试）
+  cloudState: 'connecting'
 };
 
 /* ---------------- 工具 ---------------- */
@@ -1734,32 +1729,17 @@ async function reply(q){
   }
 
   try{
-    if(S.mode === 'live' && S.transport === 'direct'){
-      await agentRun(c, ctrl.signal, function(delta){ acc += delta; paint(false); }, function(step){
-        m.trace = m.trace || [];
-        m.trace.push(step);
-        m.hint = '正在调用 ' + step.name + '…';
-        paint(true);
-      });
-    }else if(S.mode === 'live' && S.transport === 'cloud'){
+    if(S.transport === 'cloud' && CLOUD.ready){
       await cloudRun(c, ctrl.signal, function(delta){ acc += delta; paint(false); }, function(step){
         m.trace = m.trace || [];
         m.trace.push(step);
         m.hint = '正在调用 ' + step.name + '…';
         paint(true);
       });
-    }else if(S.mode === 'live'){
-      await streamLive(c, q, ctrl.signal, function(delta){ acc += delta; paint(false); });
     }else{
-      var s = SCENES[S.scene];
-      var text = demoAnswer(demoKind(q), s);
-      var chunks = text.match(/[\s\S]{1,2}/g) || [];
-      for(var i=0;i<chunks.length;i++){
-        if(ctrl.signal.aborted) break;
-        acc += chunks[i];
-        paint(false);
-        await sleep(8);
-      }
+      // 只剩云端一条路。连不上就明说，不再退回到预置回答——
+      // 「演示模式」四个字一旦出现在演示现场，前面的实测全部白讲。
+      acc = '云端模型还没连上。点右上角状态条重试，或刷新页面。';
     }
   }catch(e){
     if(ctrl.signal.aborted){
@@ -2153,18 +2133,16 @@ $('#jump').onclick = function(){ toBottom(true); };
 function paintStatus(){
   var st = $('#status'), txt = $('#statusText');
   st.classList.remove('demo','live');
-  if(S.transport === 'demo'){
+  if(S.cloudState === 'ready'){
+    st.classList.add('live');
+    txt.textContent = '已连接 · 云端' + (MODEL.ready ? ' · best.pt' : '');
+  }else if(S.cloudState === 'failed'){
     st.classList.add('demo');
-    txt.textContent = MODEL.ready ? '演示模式 · best.pt 实测判定' : '演示模式 · anxun-demo';
+    txt.textContent = '云端未连接 · 点此重试';
   }else{
-    // 原来只要 transport 不是 demo 就写「已连接」，可 cloud 态仅仅代表
-    // 「能列出模型」——实测对话 215 秒才回，绿点亮着但一问三不知。
-    // 现在首次对话真出正文前只写「待验证」。
-    st.classList.add(S.verified ? 'live' : 'demo');
-    var via = S.transport === 'direct' ? '直连 ' : (S.transport === 'cloud' ? '云端 ' : '');
-    txt.textContent = (S.verified ? '已连接 · ' : '待验证 · ') + via + S.model
-      + (MODEL.ready ? ' · best.pt' : '');
+    txt.textContent = '正在连接云端…';
   }
+  st.title = (S.cloudState === 'failed') ? '点击重新连接云端模型' : '云端模型（免密钥）';
 }
 function askKey(){
   var cur = S.key ? ('已配置 ' + S.key.slice(0, 10) + '…') : '未配置';
@@ -2192,64 +2170,28 @@ $('#btnUpload').onclick = function(){
   pickImage();
 };
 
-/* 点状态胶囊 = 换对话后端。部署版默认云端，现场云端不通时
-   能立刻切直连或演示，不用改代码、不用刷新。 */
-function openModeMenu(){
-  var m = $('#mmenu');
-  if(!m) return;
-  $$('#mmenu .mi').forEach(function(el){
-    var k = el.getAttribute('data-t');
-    var on = (k === 'demo' && S.transport === 'demo')
-          || (k === 'direct' && S.transport === 'direct')
-          || (k === 'cloud' && S.transport === 'cloud')
-          || (k === 'proxy' && S.transport === 'proxy');
-    el.classList.toggle('on', on);
-  });
-  m.hidden = !m.hidden;
-}
-
-async function switchTransport(kind){
-  $('#mmenu').hidden = true;
-
-  if(kind === 'demo'){
-    S.mode = 'demo'; S.transport = 'demo'; S.model = 'anxun-demo'; S.verified = false;
-    paintStatus();
-    toast('已切到演示模式：用预置回答，不连模型');
+/* 状态条点击 = 重连云端（连不上时唯一能做的事） */
+async function reconnectCloud(){
+  if(S.busy) return;
+  if(typeof CLOUD !== 'undefined' && CLOUD.ready && S.cloudState === 'ready'){
+    toast('云端模型已连接');
     return;
   }
-
-  if(kind === 'direct'){
-    if(S.transport === 'proxy'){ toast('当前密钥在服务端，页面不接触 key'); return; }
-    askKey();
-    return;
-  }
-
-  if(S.transport === 'cloud'){ toast('已经是云端模型'); return; }
-  if(!window.WorkBuddyCloud || !window.WorkBuddyCloud.createWorkBuddyCloud){
-    toast('云端 SDK 没加载（需要外网），可先用直连或演示模式');
-    return;
-  }
-  toast('正在连接云端模型…');
+  S.cloudState = 'connecting';
+  paintStatus();
   var ok = false;
   try{ ok = await initCloud(); }catch(e){ ok = false; }
   if(ok){
-    S.transport = 'cloud'; S.mode = 'live'; S.model = CLOUD.modelName; S.verified = false;
-    paintStatus();
-    toast('已切到云端模型');
+    S.transport = 'cloud'; S.mode = 'live'; S.model = CLOUD.modelName;
+    S.cloudState = 'ready';
+    toast('已连接云端模型');
   }else{
-    toast('云端不可用，可改用直连 DeepSeek 或演示模式');
+    S.cloudState = 'failed';
+    toast('还是连不上，检查一下网络后刷新页面');
   }
+  paintStatus();
 }
-
-$('#status').onclick = function(e){ e.stopPropagation(); openModeMenu(); };
-document.addEventListener('click', function(e){
-  var m = $('#mmenu');
-  if(m && !m.hidden && !m.contains(e.target)) m.hidden = true;
-});
-$('#mmenu').onclick = function(e){
-  var b = e.target.closest('[data-t]');
-  if(b) switchTransport(b.getAttribute('data-t'));
-};
+$('#status').onclick = function(){ reconnectCloud(); };
 
 $('#fab').onclick = function(){
   var p = $('#panel');
@@ -2269,6 +2211,15 @@ async function boot(){
   var qScene = (qs.get('scene') || '').toUpperCase();
   if(SCENES[qScene]) S.scene = qScene;
 
+  // 「在线研判台」入口只在本地出现：线上站点本身就是在线版，再放一个没意义
+  // 本地和 GitHub Pages 都显示；anxun-desk 那个域名本身就是在线版，不显示
+  var host = location.hostname;
+  var isLocalHost = /^(127\.0\.0\.1|localhost|0\.0\.0\.0|\[::1\])$/.test(host)
+                 || location.protocol === 'file:';
+  var isGhPages = /\.github\.io$/i.test(host);
+  var ol = $('#onlineLink');
+  if(ol && (isLocalHost || isGhPages)) ol.hidden = false;
+
   var restored = load();
   if(SCENES[qScene]) S.scene = qScene;
   renderScenes();
@@ -2276,20 +2227,6 @@ async function boot(){
   renderList();
   renderConvo();
   autoGrow($('#input'));
-
-  // 传输方式：URL 带 key → 直连；否则看同源 /api/health → 代理；都没有 → 演示
-  var qk = qs.get('key');
-  if(qk){
-    S.key = qk;
-    try{ localStorage.setItem('anxun.key', qk); }catch(e){}
-  }
-  if(!S.key){ try{ S.key = localStorage.getItem('anxun.key') || ''; }catch(e){} }
-  if(!S.key && window.ANXUN_KEY) S.key = window.ANXUN_KEY;
-
-  if(S.key){
-    S.transport = 'direct'; S.mode = 'live'; S.model = 'deepseek-chat';
-    paintStatus();
-  }
 
   // 同源服务（serve.py）：有模型就把右侧面板切成实测，与对话走哪条路无关。
   try{
@@ -2305,20 +2242,24 @@ async function boot(){
         if(bu) bu.hidden = false;
         refreshModelScene(S.scene, true);
       }
-      if(!S.key && j && j.ok && !j.mock){
-        S.transport = 'proxy'; S.mode = 'live'; S.model = j.model || 'deepseek-chat';
-        paintStatus();
-      }
     }
   }catch(e){ /* file:// 或 GitHub Pages 静态托管：保留示例数据 */ }
 
-  // 既没有用户 key、也没有同源代理时，试云服务的免密钥大模型（只在发布域名下能用）
-  if(S.mode !== 'live'){
-    if(await initCloud()){
-      S.transport = 'cloud'; S.mode = 'live'; S.model = CLOUD.modelName;
-      paintStatus();
-    }
+  // 对话只有云端一条路。连不上就显示「云端未连接 · 点此重试」，
+  // 不能退回预置回答——「演示模式」四个字出现在演示现场，前面讲的全白搭。
+  S.cloudState = 'connecting';
+  paintStatus();
+  var cloudOk = false;
+  try{ cloudOk = await initCloud(); }catch(e){ cloudOk = false; }
+  if(cloudOk){
+    S.transport = 'cloud';
+    S.mode = 'live';
+    S.model = CLOUD.modelName;
+    S.cloudState = 'ready';
+  }else{
+    S.cloudState = 'failed';
   }
+  paintStatus();
 
   if(!restored){
     newConvo();

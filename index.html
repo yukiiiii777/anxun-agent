@@ -8,10 +8,7 @@
   :root{
     --paper:#F7F6F2; --card:#FFFFFF; --line:#E6E4DD; --line2:#D9D6CC;
     --ink:#1A1A1A; --sub:#6B6A66; --faint:#9A9892;
-    --red:#A32D2D; --red-soft:#F3E4E2;
-    --blue:#185FA5; --blue-soft:#E2ECF6;
-    --green:#2F6B4F; --green-soft:#E1EDE6;
-    --orange:#B2691A; --orange-soft:#F7EBDC;
+    --red:#A32D2D;
   }
   *{box-sizing:border-box}
   body{
@@ -19,71 +16,60 @@
     font:15px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:960px;margin:0 auto;padding:56px 24px 64px}
+  .wrap{max-width:820px;margin:0 auto;padding:64px 24px 64px}
 
-  header{margin-bottom:34px}
   .eyebrow{font-size:12.5px;color:var(--faint);letter-spacing:.4px;margin-bottom:10px}
   h1{margin:0;font-size:38px;line-height:1.2;font-weight:700;letter-spacing:-.5px}
   h1 span{color:var(--red)}
   .lede{margin:14px 0 0;font-size:15.5px;color:var(--sub);max-width:640px}
 
-  .stats{display:flex;flex-wrap:wrap;gap:10px;margin:26px 0 34px}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin:28px 0 32px}
   .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;
     padding:9px 15px;font-size:13px;color:var(--sub);white-space:nowrap}
   .stat b{color:var(--ink);font-weight:650;font-variant-numeric:tabular-nums;
     font-size:15px;margin-right:5px}
 
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  a.card{
-    display:block;text-decoration:none;color:inherit;background:var(--card);
-    border:1px solid var(--line);border-radius:14px;padding:22px 22px 18px;
-    position:relative;transition:.16s ease;
-    display:flex;flex-direction:column;
+  a.enter{
+    display:flex;align-items:center;justify-content:space-between;gap:18px;
+    text-decoration:none;color:inherit;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;padding:22px 24px;
+    transition:.16s ease;position:relative;
   }
-  a.card:hover{border-color:#C9C6BC;transform:translateY(-1px);
+  a.enter:hover{border-color:#C9C6BC;transform:translateY(-1px);
     box-shadow:0 2px 6px rgba(26,26,26,.05),0 18px 40px -20px rgba(26,26,26,.28)}
-  a.card:before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;
-    border-radius:0 3px 3px 0;background:var(--line2)}
-  a.card.primary:before{background:var(--red)}
-  a.card.secondary:before{background:var(--blue)}
-  .card h2{margin:0 0 6px;font-size:18.5px;font-weight:650}
-  .card p{margin:0;font-size:13.5px;color:var(--sub);line-height:1.65}
-  .card .meta{margin-top:auto;padding-top:14px;font-size:12.5px;color:var(--faint);
-    display:flex;align-items:center;gap:6px;line-height:1.5}
-  .card .meta .dot{width:5px;height:5px;border-radius:50%;background:var(--line2)}
-  .card .meta .ok{background:var(--green)}
-  .card .meta .warn{background:var(--orange)}
+  a.enter:before{content:"";position:absolute;left:0;top:20px;bottom:20px;width:3px;
+    border-radius:0 3px 3px 0;background:var(--red)}
+  .enter .txt h2{margin:0 0 5px;font-size:19px;font-weight:650}
+  .enter .txt p{margin:0;font-size:13.5px;color:var(--sub);line-height:1.65}
+  .enter .go{font-size:22px;color:var(--faint);flex:none;transition:.16s}
+  a.enter:hover .go{color:var(--ink);transform:translateX(3px)}
 
-  .note{margin-top:26px;padding:14px 16px;border-radius:11px;
-    background:var(--orange-soft);border:1px solid #E9D7B4;color:#5C3A05;
-    font-size:13px;line-height:1.7}
-  .note b{color:#42280A}
-  .note code{background:rgba(255,255,255,.6);padding:1px 6px;border-radius:4px;
+  .local{margin-top:16px;font-size:13px;color:var(--sub);line-height:1.8}
+  .local code{background:#fff;border:1px solid var(--line);padding:1px 7px;border-radius:5px;
     font-family:ui-monospace,Consolas,monospace;font-size:12.5px}
 
-  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
+  footer{margin-top:38px;padding-top:18px;border-top:1px solid var(--line);
     font-size:12.5px;color:var(--faint);display:flex;flex-wrap:wrap;gap:8px 18px}
   footer a{color:var(--sub);text-decoration:none;border-bottom:1px solid var(--line2)}
   footer a:hover{color:var(--ink)}
 
-  @media (max-width:720px){
-    .wrap{padding:36px 18px 48px}
+  @media (max-width:640px){
+    .wrap{padding:40px 18px 48px}
     h1{font-size:30px}
-    .cards{grid-template-columns:1fr}
+    a.enter{padding:18px}
+    .enter .txt h2{font-size:17px}
   }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <header>
-    <div class="eyebrow">第二届全国人工智能应用创新大赛　·　通用赛道　·　制造领域　·　本科生组</div>
-    <h1>安巡 <span>Agent</span></h1>
-    <p class="lede">
-      把摄像头画面变成可执行、可验收的整改工单。检测 → 四态判定 → R = L × S 定级 → 派单，
-      全链路本地可跑，不做黑箱。
-    </p>
-  </header>
+  <div class="eyebrow">第二届全国人工智能应用创新大赛　·　通用赛道　·　制造领域　·　本科生组</div>
+  <h1>安巡 <span>Agent</span></h1>
+  <p class="lede">
+    把摄像头画面变成可执行、可验收的整改工单。检测 → 四态判定 → R = L × S 定级 → 派单，
+    全链路可跑，不做黑箱。
+  </p>
 
   <div class="stats">
     <div class="stat"><b>0.8654</b>mAP@0.5</div>
@@ -93,30 +79,22 @@
     <div class="stat"><b>5</b>类 PPE</div>
   </div>
 
-  <div class="cards">
-    <a class="card primary" href="./chat/">
-      <h2>研判台</h2>
-      <p>左侧提问，右侧实时看四态判定、风险等级与整改工单。带 best.pt 实测的上传入口。</p>
-      <div class="meta"><span class="dot warn"></span>静态托管版右侧为示例数据；本地跑模型即切实测</div>
-    </a>
-    <a class="card secondary" href="./demo/">
-      <h2>多智能体链路</h2>
-      <p>② 视觉感知 → ③ 隐患研判 → ④ 工单闭环，三个 Agent 的交接过程一屏看懂。</p>
-      <div class="meta"><span class="dot"></span>固定样例数据，同一输入永远同一输出</div>
-    </a>
-  </div>
+  <a class="enter" href="https://anxun-desk.app.workbuddy.host/?sharecode=OLOGYZUPHO">
+    <div class="txt">
+      <h2>进入在线研判台</h2>
+      <p>左侧提问，右侧实时看四态判定、L×S 定级与整改工单；任意图片可上传实测。
+        模型是部署好的 best.onnx，对话走云服务，打开就能用。</p>
+    </div>
+    <div class="go">→</div>
+  </a>
 
-  <div class="note">
-    <b>这一页只是静态站点。</b>
-    右侧判定要跑 <code>best.pt</code>，需要 Python 环境：clone 仓库后
-    <code>python serve.py</code>，浏览器打开 <code>127.0.0.1:8611</code>。
-    没有显卡也能跑（ONNX CPU，≈23 ms/帧）；模型加载失败时页面自动退回示例数据，不会白屏。
-  </div>
+  <p class="local">
+    也可以本地跑（自带权重，不依赖线上环境）：clone 仓库后 <code>python serve.py</code>，
+    打开 <code>127.0.0.1:8611</code>。没有显卡也能跑，ONNX CPU 约 23 ms/帧。
+  </p>
 
   <footer>
     <span>安巡 Agent v3.1.0</span>
-    <a href="./chat/">研判台</a>
-    <a href="./demo/">链路页</a>
     <a href="https://github.com/yukiiiii777/anxun-agent">GitHub 仓库</a>
     <span>样例图为公开数据集素材（Roboflow ppe-detection-9p0pu，CC BY 4.0）</span>
   </footer>
