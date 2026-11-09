@@ -323,7 +323,7 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
 
     <div class="composer">
       <div class="cbox">
-        <textarea id="input" rows="1" placeholder="问点什么：这处违规什么等级？为什么不是橙色？工单怎么开？"></textarea>
+        <textarea id="input" rows="1" placeholder="问点什么：这处违规是 A 级还是 B 级？依据是什么？工单怎么开？"></textarea>
         <div class="cbar">
           <button class="chip" data-ask="risk">判风险等级</button>
           <button class="chip" data-ask="ticket">生成整改工单</button>
@@ -376,9 +376,9 @@ var SCENES = {
       {p:'P3', state:'未佩戴', tone:'bad',  note:'无安全帽框'},
       {p:'P4', state:'无法判定', tone:'mute', note:'人员框 6000 px²，低于 8000 px² 门槛'}
     ],
-    count:{ n:4, why:'近 30 天该通道同类违规 4 次' },
+    count:{ n:4, why:'背景记录，不参与定级' },
     work:{ type:'普通作业', why:'普通作业 · 安全帽缺失' },
-    ticket:{ no:'TK-A-0931', owner:'', reviewer:'当班安全员',
+    ticket:{ no:'TK-A-0931', owner:'', reviewer:'',
       action:'现场补发安全帽，核验同班组其余 6 人佩戴情况，回传整改照片' },
     checks:['补齐 6 顶安全帽并签字确认','当日 17:00 前回传整改照片','班前会重讲佩戴要求'],
     law:[{code:'安全生产法 第四十五条',
@@ -392,9 +392,9 @@ var SCENES = {
       {p:'P3', state:'未佩戴', tone:'bad',  note:'头部区域内未检出安全帽框'},
       {p:'P4', state:'待复核', tone:'warn', note:'置信度 0.31，刚过定论线，建议人工确认'}
     ],
-    count:{ n:7, why:'近 30 天该平台同类违规 7 次' },
-    work:{ type:'高处作业', why:'高处作业 · 按作业类型取 S' },
-    ticket:{ no:'TK-B-0932', owner:'', reviewer:'安全总监',
+    count:{ n:7, why:'背景记录，不参与定级' },
+    work:{ type:'高处作业', why:'作业类型仅作背景记录' },
+    ticket:{ no:'TK-B-0932', owner:'', reviewer:'',
       action:'立即停止高处作业，人员撤离至地面，补发并正确佩戴安全帽后方可复工' },
     checks:['即时叫停并撤离平台人员','补发安全帽并复查佩戴','复工前安全交底签字'],
     law:[{code:'安全生产法 第四十五条',
@@ -410,9 +410,9 @@ var SCENES = {
       {p:'P3', state:'未佩戴', tone:'bad',  note:'无安全帽框'},
       {p:'P4', state:'无法判定', tone:'mute', note:'侧身遮挡，头部区域被货箱挡住'}
     ],
-    count:{ n:1, why:'近 30 天该区域同类违规 1 次' },
+    count:{ n:1, why:'背景记录，不参与定级' },
     work:{ type:'车辆作业', why:'车辆作业 · 安全帽缺失' },
-    ticket:{ no:'TK-C-0933', owner:'', reviewer:'区域安全员',
+    ticket:{ no:'TK-C-0933', owner:'', reviewer:'',
       action:'纳入本周安全提醒，装卸作业前增加佩戴确认环节' },
     checks:['班前会提醒并签到','装卸区入口加贴提示牌'],
     law:[{code:'安全生产法 第四十五条',
@@ -425,40 +425,6 @@ var CATALOG_LAW = {
   text:'生产经营单位必须为从业人员提供符合国家标准或者行业标准的劳动防护用品，并监督、教育从业人员按照使用规则佩戴、使用。'
 };
 
-/* ---------------- L / S 的来源：写在代码里，不写在 prompt 里 ---------------- */
-var L_RULES = [
-  { max:1,        L:1, note:'0–1 次 → L1' },
-  { max:3,        L:2, note:'2–3 次 → L2' },
-  { max:6,        L:3, note:'4–6 次 → L3' },
-  { max:Infinity, L:4, note:'≥7 次 → L4' }
-];
-var S_RULES = {
-  '普通作业':   { S:3, note:'普通作业 → S3' },
-  '车辆作业':   { S:3, note:'车辆作业 → S3' },
-  '高处作业':   { S:4, note:'高处作业 → S4' },
-  '动火作业':   { S:4, note:'动火作业 → S4' },
-  '受限空间':   { S:4, note:'受限空间 → S4' }
-};
-
-function L_from_count(n, scale){
-  n = Number(n) || 0;
-  var base = L_RULES[L_RULES.length-1];
-  for(var i=0;i<L_RULES.length;i++){ if(n <= L_RULES[i].max){ base = L_RULES[i]; break; } }
-
-  // v1.1：本次单次违规人数也参与 L 取值（docs/安巡风险分级标准.md §2.1.1）。
-  // 只看历史台账会把「刚装系统」的区域判得过轻：台账 1 次（L1）但一次抓到 10 人。
-  var sc = Number(scale) || 0;
-  if(sc <= 0 || sc <= n) return base;
-  var top = L_RULES[L_RULES.length-1];
-  for(var j=0;j<L_RULES.length;j++){ if(sc <= L_RULES[j].max){ top = L_RULES[j]; break; } }
-  if(top.L <= base.L) return base;
-  return { L:top.L, note:top.note, baseL:base.L, scaleN:sc };
-}
-function S_from_work(type){
-  return S_RULES[type] || { S:2, note:'未登记的作业类型，按较低严重性处理' };
-}
-
-/* 场景的 L/S/R 全部由事实推导：SCENES 里只存事实（违规次数、作业类型） */
 /* 处置等级（v1.4）：只看**要不要马上处理**，按处理时限分档，不看作业类型。
    - 确认未佩戴 ≥3 人 → A｜立即（2 小时内）
    - 确认未佩戴 1–2 人 → B｜当日（24 小时内）
@@ -495,6 +461,23 @@ function sceneRisk(id){
   return urgencyOfVerdicts(s.verdicts);
 }
 
+/* 后端 /api/inspect 的 events[].grade 是 v1.4 的 A/B/C。
+   把它摊成页面卡片用的对象，前端不再自己算等级。 */
+var GRADE_V14 = {
+  A: { code:'A', name:'立即处置', deadline:'2 小时内', tone:'bad'  },
+  B: { code:'B', name:'当日处置', deadline:'24 小时内', tone:'warn' },
+  C: { code:'C', name:'限期核实', deadline:'7 天内',   tone:'gold' }
+};
+function urgencyFromEvent(ev){
+  var b = GRADE_V14[ev && ev.grade];
+  if(!b) return null;
+  return {
+    code:b.code, name:b.name, deadline:b.deadline, tone:b.tone,
+    why:(ev.rule && ev.rule.level_why) ||
+       ('本次确认未佩戴 ' + (ev.scale || 0) + ' 人，按处置时限分档')
+  };
+}
+
 /* ---------------- 真模型：POST /api/inspect ----------------
    同源起 serve.py 时，右侧面板改成 best.pt 实测：
    现场照片 -> 检测 -> 四态 -> 定级 -> 工单，全部来自模型链路。
@@ -523,13 +506,6 @@ function reasonOf(items, worst){
   }).join('；').slice(0, 90);
 }
 
-function toneOfLevel(lv){
-  if(lv === '红色') return 'bad';
-  if(lv === '橙色') return 'warn';
-  if(lv === '黄色') return 'gold';
-  return 'info';
-}
-
 /* 把 /api/inspect 的返回摊成页面认得的场景结构（不改 SCENES） */
 function sceneFromApi(d){
   var persons = d.persons || [];
@@ -545,7 +521,7 @@ function sceneFromApi(d){
     work = WORK_TYPES.indexOf(rc) >= 0 ? rc : work;
   }
   // 一个场景可能开出两张单（安全帽 / 背心），各自的人数不同、等级也不同。
-  // 原来取 tickets[0]，R-03 会显示成黄色（helmet 3 人），而本次最重的是橙色。
+  // 原来取 tickets[0]，会漏掉人数更多、等级更重的那张单。
   // 右栏只摆一张卡，就摆最重的那张。
   // v1.4 起按处置等级排序（A > B > C），R 已不参与定级
   var RANK = { A:3, B:2, C:1 };
@@ -556,8 +532,8 @@ function sceneFromApi(d){
     verdicts: persons.map(function(p, i){
       return { p:'P' + (i + 1), state:p.worst || '-', tone:toneOfState(p.worst), note:reasonOf(p.items, p.worst) };
     }),
-    count: { n:n, scale:violN, why:'近 30 天同类违规 ' + n + ' 次' },
-    work: { type:work + '作业', why:work + '作业 · 按作业类型取 S' },
+    count: { n:n, scale:violN, why:'背景记录，不参与定级' },
+    work: { type:work + '作业', why:'作业类型仅作背景记录' },
     ticket: null, checks: [], law: [],
     _model: true,
     _clean: !(d.events && d.events.length),
@@ -718,9 +694,11 @@ async function uploadInspect(file){
     applyModelScene(S.scene, d);
     renderPanel();
 
-    var lr = likelihoodOfVerdicts(x.verdicts), sr = S_from_work(x.work.type);
-    var g = grade(lr.L, sr.S);
+    // v1.4：等级只由本次确认未佩戴人数决定。后端 /api/inspect 返回的
+    // events[0].grade 已是 A/B/C，前端不能再按旧的 L×S 重算红橙黄蓝，
+    // 否则「上传实测」的卡片和云端对话会给出两套互相矛盾的结论。
     var ev = (d.events || [])[0];
+    var g = ev ? urgencyFromEvent(ev) : urgencyOfVerdicts(x.verdicts);
     var st = {};
     x.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
     var head = '**上传图片实测**（' + modelName() + ' · ' + x.verdicts.length + ' 人）\n\n'
@@ -729,11 +707,13 @@ async function uploadInspect(file){
       head += '> 注意：' + (d.scene_check.reason || '该图疑似非作业全景')
         + '，本次判定仅供参考；换一张包含完整作业面的照片更准。\n\n';
     }
-    var body = ev
-      ? '定级：R = ' + ev.L + ' × ' + ev.S + ' = **' + ev.R + '**，' + ev.grade + '，' + ev.action + '。\n'
+    var body = (ev && g)
+      ? '定级：**' + g.code + ' 级 · ' + g.name + '**，' + g.deadline + '。\n\n'
+        + '依据：' + g.why + '。\n\n'
+        + '整改要求：' + (ev.action || '现场核实并整改') + '。\n'
       : '**没有确认违规，直接放行**，不开工单。\n';
     var card = {
-      tone: toneOfLevel(g.level), verdicts: x.verdicts,
+      tone: g ? g.tone : 'ok', verdicts: x.verdicts,
       risk: g,
       ticket: x.ticket, checks: x.checks, law: x.law,
       _clean: x._clean
@@ -1119,9 +1099,9 @@ function applyThresholds(thr){
 /* 还没拿到实测结果时的兜底文案。措辞必须写明「示例」，
    否则模型会把 4 人假数据当成 best.pt 的判定结果说出去。 */
 var SCENE_CTX = {
-  A: '当前区域：3 号车间东侧通道，作业类型「普通作业」。以下为示例数据（非实测）：4 名人员：1 人未佩戴安全帽、1 人待复核、1 人无法判定、1 人已佩戴。近 30 天该通道同类违规 4 次。',
-  B: '当前区域：2 号车间高处作业平台，作业类型「高处作业」。以下为示例数据（非实测）：4 名人员：2 人未佩戴安全帽、1 人待复核、1 人已佩戴。近 30 天该平台同类违规 7 次。',
-  C: '当前区域：原料库装卸区，作业类型「车辆作业」。以下为示例数据（非实测）：4 名人员：1 人未佩戴安全帽、1 人无法判定（被货箱遮挡）、2 人已佩戴。近 30 天该区域同类违规 1 次。'
+  A: '当前区域：3 号车间东侧通道，作业类型「普通作业」。以下为示例数据（非实测）：4 名人员：1 人未佩戴安全帽、1 人待复核、1 人无法判定、1 人已佩戴。',
+  B: '当前区域：2 号车间高处作业平台，作业类型「高处作业」。以下为示例数据（非实测）：4 名人员：2 人未佩戴安全帽、1 人待复核、1 人已佩戴。',
+  C: '当前区域：原料库装卸区，作业类型「车辆作业」。以下为示例数据（非实测）：4 名人员：1 人未佩戴安全帽、1 人无法判定（被货箱遮挡）、2 人已佩戴。'
 };
 
 /* ---------------- 状态 ---------------- */
@@ -1156,7 +1136,7 @@ function toast(msg){
   clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('on'); }, 2200);
 }
 /* 聊天记录放在 localStorage：
-   - 连 trace（工具调用轨迹）一起存，刷新后还能看到「risk_factors → L=4 · S=4」；
+   - 连 trace（工具调用轨迹）一起存，刷新后还能看到「grade_risk → A 级 · 2 小时内」；
    - localStorage 只有 5 MB 左右，超了先丢最老的会话，保证当前这条存得下；
    - 生成过程中每 3 秒存一次（见 reply），刷新/切走不至于只剩半句。 */
 var STORE_LIMIT = 3.2 * 1024 * 1024;     // 留出余量，别把配额打满
@@ -1359,26 +1339,6 @@ function clampInt(v, lo, hi){
   return Math.max(lo, Math.min(hi, n));
 }
 
-/* R = L × S；等级与时限由 R 唯一决定，模型无权给 */
-function grade(L, S){
-  L = clampInt(L, 1, 4); S = clampInt(S, 1, 4);
-  if(L === null || S === null) return null;
-  var R = L * S;
-  if(R >= 13) return { R:R, L:L, S:S, level:'红色', deadline:'2 小时内',  tone:'bad'  };
-  if(R >= 9)  return { R:R, L:L, S:S, level:'橙色', deadline:'24 小时内', tone:'warn' };
-  if(R >= 5)  return { R:R, L:L, S:S, level:'黄色', deadline:'7 天内',    tone:'gold' };
-  return            { R:R, L:L, S:S, level:'蓝色', deadline:'30 天内',    tone:'info' };
-}
-
-/* 紧急程度 A/B/C —— 对外只讲这一套，比红橙黄蓝好记，
-   也不再把 A/B/C 当场景名：A 立即、B 当日、C 限期。由 R 唯一决定。 */
-function urgencyOf(R){
-  if(R == null) return null;
-  if(R >= 13) return { code:'A', name:'紧急', note:'立即处置', tone:'bad'  };
-  if(R >= 9)  return { code:'B', name:'较急', note:'当日处置', tone:'warn' };
-  return            { code:'C', name:'一般', note:'限期处置', tone:'gold' };
-}
-
 /* 模型文件名按后端返回：本地 GPU 是 best.pt，线上 ONNX 是 best.onnx。
    以前文案里写死 best.pt，部署版会标错文件名。 */
 function modelName(){
@@ -1528,13 +1488,13 @@ function renderPanel(){
   var counts = { ok:0, warn:0, bad:0, mute:0 };
   s.verdicts.forEach(function(v){ counts[v.tone] = (counts[v.tone]||0) + 1; });
 
-  // 本次零违规就别把卡片染成风险色：A 场景放行时 R 仍是 9（那是"假如违规"），
-  // 用橙色边框会让人以为这一单有风险。
+  // 本次零违规就别把卡片染成风险色：没有确认未佩戴就不出等级，
+  // 用风险色边框会让人以为这一单有事。
   var tone = s._clean ? 'ok' : g.tone;
 
   var h = '';
   h += '<div class="pcard ' + tone + '">' +
-       // 只写作业类型（它决定 S），不写厂区/平台这种样例地名
+       // 不写厂区/平台这种样例地名；作业类型只是背景，不参与定级
        '<div class="ph">实时研判<span class="r">规则引擎</span></div>' +
        '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
        '<span class="pill t-ok">已佩戴 ' + counts.ok + '</span>' +
@@ -1676,18 +1636,18 @@ function renderPanelCard(card, sceneKey){
   }
 
   h += '<div class="pfoot"><b>来源</b>：对话记录里的这条研判，不是右栏当前场景的实时实测。'
-     + '点左侧 A/B/C 可切回实时结果；重新提问会生成新的卡片。</div>';
+     + '上传现场照片可刷新右栏实时结果；重新提问会生成新的卡片。</div>';
 
   $('#pbody').innerHTML = h;
 }
 
-var _lastShownR = null;      // 上一次已经滚过的 R 值
+var _lastShownR = null;      // 上一次已经滚过的等级数（防重复播放动画）
 function animateNumbers(){
   var st = document.body.classList.contains('static');
   var el0 = document.querySelector('#pbody .R[data-count]');
   var target0 = el0 ? +el0.getAttribute('data-count') : null;
-  // R 没变就别重播：renderPanel 会因为 refreshModelScene / 切场景被调多次，
-  // 每次都从 0 滚一遍，投屏时能看到 0→13→0→16 乱跳，中间那帧是错的数。
+  // 数值没变就别重播：renderPanel 会因为上传实测 / 刷新被调多次，
+  // 每次都从 0 滚一遍，投屏时能看到数字乱跳，中间那帧是错的。
   if(st || target0 === _lastShownR){
     $$('#pbody .R[data-count]').forEach(function(el){
       el.textContent = el.getAttribute('data-count');
@@ -1812,7 +1772,7 @@ function traceHTML(trace){
     var a = t.args || {}, o = t.out || {};
     var argStr = Object.keys(a).map(function(k){ return k + '=' + a[k]; }).join(', ');
     var res;
-    if(t.name === 'risk_factors') res = o.error ? '错误' : (o.L_basis || '本次判定概况');
+    if(t.name === 'risk_factors') res = o.error ? '错误' : (o.basis || '本次判定概况');
     else if(t.name === 'grade_risk') res = o.error ? '参数不合法' : ((o.code || '—') + ' 级 · ' + (o.deadline || '不出单'));
     else if(t.name === 'law_lookup') res = o.found ? ('命中 ' + o.code) : '未收录';
     else if(t.name === 'create_ticket') res = (o.no || '已生成');
@@ -1855,66 +1815,6 @@ function toBottom(smooth){
 }
 
 /* ---------------- 演示模式回答 ---------------- */
-function demoAnswer(kind, s){
-  var head = '';
-  var rk = sceneRisk(s.id);
-
-  if(s._clean){
-    var st = {};
-    s.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
-    return '场景 **' + s.id + ' · ' + s.name + '**：' + (s._model ? modelName() + ' 实测 ' : '示例数据 ') + s.verdicts.length + ' 人，' +
-      Object.keys(st).map(function(k){ return k + ' ' + st[k]; }).join('、') + '。\n\n' +
-      '**没有确认违规，直接放行**——不生成事件、不开工单。这是误报率的现场体现：' +
-      '合规的人不该被拦下来复核；拦错了，班组很快就会把系统关掉。\n\n' +
-      '作为对照，如果这里真发生违规：L=' + rk.L + '（' + rk.Lwhy + '）× S=' + rk.S + '（' + rk.Swhy + '）= **' + rk.R + '**，' + rk.level + '，' + rk.deadline + '。\n';
-  }
-
-  var card = {
-    tone: rk.tone, verdicts: s.verdicts,
-    risk: { R:rk.R, L:rk.L, S:rk.S, level:rk.level, deadline:rk.deadline },
-    ticket: s.ticket, checks: s.checks, law: s.law
-  };
-
-  if(kind === 'law'){
-    var lawTxt = (s.law || []).map(function(l){
-      return '**' + l.code + '**\n\n> ' + l.text;
-    }).join('\n\n');
-    return '场景 ' + s.id + '（' + s.name + '）适用条文：\n\n' + lawTxt +
-      '\n\n条文里两个动作是分开的：**提供**（单位义务）和**佩戴**（个人义务）。' +
-      '我们判的是"没戴"，落在个人义务这一侧，所以工单的责任人写班组、不写采购。\n\n' +
-      '判定不是靠模型猜的：头盔框中心点落在头部区域内才算"戴了"，落不进去就是"没戴"；' +
-      '置信度 ' + THR.conf_review + ' 以下直接丢弃，' + THR.conf_review + '–' + THR.conf_final + ' 转人工复核，不进统计。\n';
-  }
-
-  if(kind === 'ticket'){
-    return '按 R = L × S 定级后自动开单：\n\n' +
-      '| 项 | 值 |\n|---|---|\n' +
-      '| 工单号 | ' + ticketNoFor(s.id) + ' |\n' +
-      '| 等级 | ' + rk.level + '（R=' + rk.R + '） |\n' +
-      '| 责任人 | ' + s.ticket.owner + ' |\n' +
-      '| 时限 | ' + rk.deadline + ' |\n' +
-      '| 复查人 | ' + s.ticket.reviewer + ' |\n\n' +
-      '整改要求：' + s.ticket.action + '。\n\n' +
-      '```anxun\n' + JSON.stringify(card) + '\n```\n';
-  }
-
-  // risk / 默认
-  return '场景 **' + s.id + ' · ' + s.name + '**：R = ' + rk.L + ' × ' + rk.S + ' = **' + rk.R + '**，' +
-    rk.level + '，整改时限 **' + rk.deadline + '**。\n\n' +
-    '- **L = ' + rk.L + '**：' + rk.Lwhy + '\n' +
-    '- **S = ' + rk.S + '**：' + rk.Swhy + '\n' +
-    '- 判定：共 ' + s.verdicts.length + ' 人，未佩戴 ' + s.verdicts.filter(function(v){return v.tone==='bad';}).length + ' 人，其余按四态分流\n\n' +
-    '为什么要分开写 L 和 S：同一顶没戴的安全帽，在通道里是 24 小时的橙色，在高处平台是 2 小时的红色——' +
-    '**告警相同，责任不同**，差别全在 L 和 S 上；而 L 和 S 都不是模型拍的，是照规则表推出来的。\n\n' +
-    '```anxun\n' + JSON.stringify(card) + '\n```\n';
-}
-
-function demoKind(q){
-  if(/工单|整改|开单|派单/.test(q)) return 'ticket';
-  if(/法规|条款|第几条|原文|法律|GB/.test(q)) return 'law';
-  return 'risk';
-}
-
 /* ---------------- 发送 / 流式 ---------------- */
 function addMsg(role, content, img){
   var c = ensureConvo();
@@ -2044,12 +1944,12 @@ async function reply(q){
 var TOOLS = [
   { type:'function', function:{
     name:'risk_factors',
-    description:'按本次判定推导 L（可能性）与 S（严重性）：L 取决于本次是否有确认未佩戴（有=4，仅待复核=2，全合规=1），S 取决于作业类型。凡涉及定级，必须先调用它拿 L/S。',
+    description:'返回本次判定概况：确认未佩戴人数、待复核/无法判定人数。本工具不给等级，也不提供 L/S；凡涉及等级或时限，必须再调 grade_risk。',
     parameters:{ type:'object',
       properties:{
-        work_type:{ type:'string', description:'作业类型：普通作业 / 车辆作业 / 高处作业 / 动火作业 / 受限空间' }
+        work_type:{ type:'string', description:'作业类型（仅作背景记录，不参与定级）' }
       },
-      required:['work_type'] } } },
+      required:[] } } },
   { type:'function', function:{
     name:'grade_risk',
     description:'按「要不要马上处理」给出处置等级 A/B/C 与处理时限（A=2 小时内、B=24 小时内、C=7 天内），依据是本次确认未佩戴的人数。不需要传参数。',
@@ -2065,8 +1965,8 @@ var TOOLS = [
     name:'create_ticket',
     description:'生成整改工单（工单号由系统生成，不要自己编）。',
     parameters:{ type:'object',
-      properties:{ scene:{ type:'string', description:'场景编号 A/B/C' },
-                  level:{ type:'string', description:'风险等级，如「红色」' },
+      properties:{ scene:{ type:'string', description:'区域编号，如 A-03（A/B/C 不是场景编号）' },
+                  level:{ type:'string', description:'处置等级 A / B / C，取自 grade_risk；不要填颜色或 R 值' },
                   action:{ type:'string', description:'整改要求' } },
       required:['scene','level'] } } }
 ];
@@ -2074,15 +1974,16 @@ var TOOLS = [
 function runTool(name, args){
   var a = args || {};
   if(name === 'risk_factors'){
-    // L 只看本次判定：有确认未佩戴 → 4；只有待复核 → 2；全合规 → 1。
-    // 区域历史次数（violation_count）不再参与计算，只作为背景记录。
+    // v1.4：只给判定概况。等级由 grade_risk 按人数决定，
+    // 不再向模型暴露 L/S，否则模型会把作废的 R=L×S 又讲一遍。
     var scn = SCENES[S.scene] || {};
-    var lr = likelihoodOfVerdicts(scn.verdicts || []);
-    var sr = S_from_work(a.work_type || (scn.work && scn.work.type) || '');
+    var vs = scn.verdicts || [];
+    var bad = vs.filter(function(v){ return v.state === '未佩戴'; }).length;
+    var pending = vs.filter(function(v){ return v.state === '待复核' || v.state === '无法判定'; }).length;
     return {
-      L: lr.L, S: sr.S,
-      L_basis: lr.why,
-      S_basis: sr.note
+      total: vs.length, confirmed: bad, pending: pending,
+      basis: '确认未佩戴 ' + bad + ' 人 · 待复核/无法判定 ' + pending + ' 人',
+      note: '等级只看本次确认未佩戴人数，不使用 L/S、作业类型或区域历史'
     };
   }
   if(name === 'grade_risk'){
@@ -2567,7 +2468,7 @@ function buildTicketXml(d){
   body += wP('四、签署', { sz:22, b:1, before:120, after:80 });
   body += wTbl([sign], SW);
   body += wP('', { sz:12, after:60 });
-  body += wP('本通知单由安巡 Agent 依据 ' + d.model + ' 实测判定与《安巡风险分级标准 v1.2》自动生成；'
+  body += wP('本通知单由安巡 Agent 依据 ' + d.model + ' 实测判定与《安巡风险分级标准 v1.4》自动生成；'
     + '处置等级按处理时限分档：确认未佩戴 ≥3 人 → A（2 小时内）、1–2 人 → B（24 小时内）、仅待复核 → C（7 天内）。', { sz:17, color:'666666', after:0 });
 
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
