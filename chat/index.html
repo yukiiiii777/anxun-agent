@@ -369,7 +369,7 @@ var SCENES = {
     ],
     count:{ n:4, why:'近 30 天该通道同类违规 4 次' },
     work:{ type:'普通作业', why:'普通作业 · 安全帽缺失' },
-    ticket:{ no:'GD-A-0931', owner:'当班班组长', reviewer:'当班安全员',
+    ticket:{ no:'TK-A-0931', owner:'当班班组长', reviewer:'当班安全员',
       action:'现场补发安全帽，核验同班组其余 6 人佩戴情况，回传整改照片' },
     checks:['补齐 6 顶安全帽并签字确认','当日 17:00 前回传整改照片','班前会重讲佩戴要求'],
     law:[{code:'安全生产法 第四十五条',
@@ -385,7 +385,7 @@ var SCENES = {
     ],
     count:{ n:7, why:'近 30 天该平台同类违规 7 次' },
     work:{ type:'高处作业', why:'高处作业 · 安全帽缺失（作业面距坠落高度 6.2 m）', height:6.2 },
-    ticket:{ no:'GD-B-0932', owner:'作业负责人', reviewer:'安全总监',
+    ticket:{ no:'TK-B-0932', owner:'作业负责人', reviewer:'安全总监',
       action:'立即停止高处作业，人员撤离至地面，补发并正确佩戴安全帽后方可复工' },
     checks:['即时叫停并撤离平台人员','补发安全帽 + 安全带复查','复工前安全交底签字'],
     law:[{code:'安全生产法 第四十五条',
@@ -403,7 +403,7 @@ var SCENES = {
     ],
     count:{ n:1, why:'近 30 天该区域同类违规 1 次' },
     work:{ type:'车辆作业', why:'车辆作业 · 安全帽缺失' },
-    ticket:{ no:'GD-C-0933', owner:'仓储值班主管', reviewer:'区域安全员',
+    ticket:{ no:'TK-C-0933', owner:'仓储值班主管', reviewer:'区域安全员',
       action:'纳入本周安全提醒，装卸作业前增加佩戴确认环节' },
     checks:['班前会提醒并签到','装卸区入口加贴提示牌'],
     law:[{code:'安全生产法 第四十五条',
@@ -1190,7 +1190,9 @@ function dateCode(){ var d = new Date(); return ('0'+(d.getMonth()+1)).slice(-2)
 function ticketNoFor(sceneId){
   var sc = String(sceneId || S.scene).toUpperCase();
   if(!SCENES[sc]) sc = S.scene;
-  return 'GD-' + sc + '-' + dateCode();
+  // 前缀跟服务端保持一致（服务端是 TK-…）；原来这里是 GD-，
+  // 演示模式显示 GD-B-1109、跑起服务又变 TK-2026…，同一件东西两套编号。
+  return 'TK-' + sc + '-' + dateCode();
 }
 
 /* 把模型给的卡片"过一遍引擎"：能算的全算，能校验的全校验 */
