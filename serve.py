@@ -266,6 +266,11 @@ class Handler(BaseHTTPRequestHandler):
         p = urlparse(self.path).path
         if p in ("/", "/chat", "/chat/", "/index.html"):
             return self._file(ROOT / "chat" / "index.html")
+        # 研判台挂在根路径上，页面里的 ./wbc-sdk.js 会解析成 /wbc-sdk.js；
+        # GitHub Pages 下页面在 /chat/，解析成 /chat/wbc-sdk.js。两个都接住，
+        # 否则本地跑的时候云端 SDK 404，页面永远连不上。
+        if p in ("/wbc-sdk.js", "/chat/wbc-sdk.js"):
+            return self._file(ROOT / "chat" / "wbc-sdk.js")
         if p in ("/demo", "/demo/"):
             return self._file(ROOT / "demo" / "index.html")
         if p == "/api/health":
