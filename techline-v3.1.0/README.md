@@ -104,6 +104,30 @@ python src/anxun/verify_all.py
                "onnx_providers": ["CPUExecutionProvider"], "onnx_weights": true}}
 ```
 
+### 2.0 想要带界面的研判台
+
+`run.sh` 起的是纯接口服务（8765）。要连着看「对话 + 右侧实测」，用同一个模型：
+
+```bash
+python serve.py            # -> http://127.0.0.1:8611
+```
+
+> `serve.py` 与 `chat/` `demo/` 在**技术线仓的根目录**，主仓里在 `techline-v3.1.0/` 的同级。
+> 两者都不属于技术线本体，所以不在这个子目录里。
+
+| 路径 | 是什么 |
+|---|---|
+| `/` | 研判台：左侧对话，右侧 best.pt 实测（四态 / 定级 / 工单） |
+| `/demo/` | 多智能体链路静态页（②→③→④ 交接，固定样例数据） |
+| `/api/health` | 模型与对话后端状态 |
+| `/api/inspect` | 传 `scene_id` 跑样例，或传 `image_base64` 跑任意图 |
+
+没有显卡也能开页面：模型加载失败时 `/api/health` 报 `model.ready=false`，
+页面自动退回示例数据，不会白屏。
+
+> 对话走云端免密钥模型，需要外网。纯离线演示只看右侧面板也能讲完整链路；
+> 两侧用的是同一份 `best.pt`，不是两套代码。
+
 ### 2.1 为什么要做 ONNX 后端
 
 原来的门槛不是代码，是依赖：
