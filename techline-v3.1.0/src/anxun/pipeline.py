@@ -108,7 +108,8 @@ def inspect(scene: dict, region: Region, detector,
     for equip, vs in grouped.items():
         ev = build_event(region, equip, ts, max(v.conf for v in vs),
                          f"{scene['scene_id']} · frame {requested - 1} · {len(vs)} 人",
-                         event_id=f"EV-{ts:%Y%m%d%H%M%S}-{region.region_id}-{equip}-{_suffix(scene)}")
+                         event_id=f"EV-{ts:%Y%m%d%H%M%S}-{region.region_id}-{equip}-{_suffix(scene)}",
+                         scale=len(vs))
         events.append(_event_dict(ev))
         tickets.append(make_ticket(ev, affected=len(vs)))
 
@@ -159,6 +160,7 @@ def _event_dict(ev: Event) -> dict:
         "event_id": ev.event_id,
         "equip": ev.equip,
         "L": ev.L, "S": ev.S, "R": ev.R,
+        "scale": ev.scale,
         "grade": ev.grade,
         "grade_hex": GRADE_HEX.get(ev.grade, "#888"),
         "action": ev.action,
@@ -176,10 +178,21 @@ def _rule_text(ev: Event) -> dict:
     s_why = f"作业类型 {ev.region.scene} → S={ev.S}"
     if ev.region.scene not in S_MAP:
         s_why += "（作业类型未登记，按最低档 S=2）"
+
+    hist = ev.region.violation_30d
+    if ev.scale > hist:
+        # 本次规模盖过历史记录时，必须把话说全：否则「为什么 10 人算 L4」答不上来
+        l_why = (f"{ev.region.name} 近 30 天违规 {hist} 次（L_{hist}）；"
+                 f"本次一次抓到 {ev.scale} 人同发（L_{ev.scale}）；"
+                 f"取高者 → L={ev.L}")
+    else:
+        l_why = f"{ev.region.name} 近 30 天违规 {hist} 次 → L={ev.L}"
+
     return {
-        "L_why": f"{ev.region.name} 近 30 天违规 {ev.region.violation_30d} 次 → L={ev.L}",
+        "L_why": l_why,
         "S_why": s_why,
         "R_why": f"R = L × S = {ev.L} × {ev.S} = {ev.R}",
+        "scale": ev.scale,
         "L_table": l_rows,
         "S_table": [{"k": k, "S": v} for k, v in S_MAP.items()],
     }

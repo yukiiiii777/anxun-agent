@@ -47,7 +47,14 @@ from urllib.parse import unquote, urlparse
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
+
+# 两个仓库的目录结构不一样：
+#   主仓        <root>/techline-v3.1.0/{src,models,datasets}
+#   技术线仓     <root>/{src,models,datasets}       ← 根目录就是技术线
+# 写死 techline-v3.1.0 的话，技术线仓 clone 下来 `python serve.py` 直接 ImportError。
 TL = ROOT / "techline-v3.1.0"
+if not (TL / "src" / "anxun").is_dir():
+    TL = ROOT
 sys.path.insert(0, str(TL / "src"))
 
 MAX_BODY = 16 * 1024 * 1024          # 单请求上限，防超大 base64 吃光内存
@@ -135,6 +142,57 @@ def run_scene(scene_id: str) -> dict:
     return out
 
 
+def _looks_like_image(raw: bytes) -> bool:
+    """按文件头判断是不是真图片。
+
+    不校验的话，一段随便什么字节会一路走到 cv2.imdecode → None →
+    `list index out of range` 的 500，前端只能看到一串英文异常。
+    """
+    head = raw[:16]
+    if head.startswith(b"\xff\xd8\xff"):            # jpeg
+        return True
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):      # png
+        return True
+    if head.startswith(b"GIF8"):                   # gif
+        return True
+    if head.startswith(b"BM"):                     # bmp
+        return True
+    if head.startswith(b"RIFF") and head[8:12] == b"WEBP":
+        return True
+    return False
+
+
+def _scene_check(out: dict) -> dict:
+    """给上传图加一条「这像不像作业面」的提示。
+
+    模型对着一张光脚草地图也会检出一个 0.41 的 person 框，
+    然后一本正经地开「未佩戴安全帽」的工单。这里不改判定结果，
+    只把可疑信号显式标出来，让页面能提示「该图疑似非作业全景」。
+    """
+    persons = out.get("persons") or []
+    frame = (out.get("frames") or [{}])[-1]
+    fw, fh = frame.get("frame_w") or 0, frame.get("frame_h") or 0
+    if not persons or not fw or not fh:
+        out["scene_check"] = {"ok": not persons, "reason": "" if persons else "未检出人员框"}
+        return out
+
+    area = fw * fh
+    boxes = [p["box"] for p in persons]
+    avg_ratio = sum((b["x2"] - b["x1"]) * (b["y2"] - b["y1"]) for b in boxes) / len(boxes) / area
+    avg_aspect = sum((b["x2"] - b["x1"]) / max(1e-6, b["y2"] - b["y1"]) for b in boxes) / len(boxes)
+
+    # 站姿的人框细长（宽/高≈0.3–0.5）；整片草地/地面被当成"人"时框接近方形，
+    # 而且一张图就占掉半屏。两个条件同时成立才提示，避免误伤近距离特写。
+    suspect = avg_ratio > 0.40 and avg_aspect > 0.62
+    out["scene_check"] = {
+        "ok": not suspect,
+        "reason": "人员框占画面 {:.0%}、宽高比 {:.2f}，疑似非作业全景".format(avg_ratio, avg_aspect) if suspect else "",
+        "avg_person_area_ratio": round(avg_ratio, 4),
+        "avg_person_aspect": round(avg_aspect, 3),
+    }
+    return out
+
+
 def run_upload(image_b64: str, region_id: str = "A-03") -> dict:
     from anxun.catalog import REGION_MAP, REGIONS
 
@@ -142,9 +200,14 @@ def run_upload(image_b64: str, region_id: str = "A-03") -> dict:
         raise RuntimeError("模型未加载：" + (STATE["error"] or "未知原因"))
     if "," in image_b64[:100]:                       # 兼容 data URI
         image_b64 = image_b64.split(",", 1)[1]
-    raw = base64.b64decode(image_b64, validate=False)
+    try:
+        raw = base64.b64decode(image_b64, validate=False)
+    except Exception:                                # noqa: BLE001
+        raise ValueError("image_base64 不是合法 base64") from None
     if not raw:
         raise ValueError("image_base64 解码后为空")
+    if not _looks_like_image(raw):
+        raise ValueError("不是有效图片：只支持 jpg / png / webp / bmp")
 
     region = REGION_MAP.get(region_id) or REGIONS[0]
     tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
@@ -162,7 +225,7 @@ def run_upload(image_b64: str, region_id: str = "A-03") -> dict:
         }
         out = _inspect(scene, region)
         out["source"] = "upload"
-        return out
+        return _scene_check(out)
     finally:
         try:
             os.unlink(tmp.name)
@@ -338,7 +401,10 @@ class Handler(BaseHTTPRequestHandler):
         try:
             return json.loads(raw.decode("utf-8") or "{}")
         except (UnicodeDecodeError, json.JSONDecodeError):
-            return {}
+            # 原来静默返回 {}，于是非法 JSON 会被当成「跑默认场景 R-01」，
+            # 看起来像请求成功。改成明确 400。
+            self._json({"error": "请求体不是合法 JSON"}, 400)
+            return None
 
     def _static(self, path: str) -> None:
         # 只允许读 assets/ 目录内的文件。原来只判 is_relative_to(ROOT)，

@@ -151,6 +151,9 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;backgrou
 .msg:hover .acts{opacity:1}
 .acts button{font-size:11.5px;color:var(--faint);padding:3px 7px;border-radius:6px}
 .acts button:hover{background:#EFEDE6;color:var(--sub)}
+.pending{color:var(--sub);font-size:13px;line-height:1.6;display:flex;align-items:center;gap:8px}
+.pending:before{content:"";width:12px;height:12px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--red);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .caret{display:inline-block;width:7px;height:15px;background:var(--red);vertical-align:-2px;
   margin-left:2px;border-radius:1px;animation:blink 1s steps(2) infinite}
 @keyframes blink{50%{opacity:0}}
@@ -307,7 +310,7 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
     <div class="clist scroll" id="clist"></div>
     <div class="side-foot">
       <b>Enter</b> 发送 · <b>Shift+Enter</b> 换行<br>
-      判定口径 conf <b>0.30</b> / 复核 <b>0.20</b>
+      判定口径 conf <b id="footConf">0.65</b> / 复核 <b id="footReview">0.20</b>
     </div>
   </aside>
 
@@ -327,7 +330,7 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
           <button class="send" id="btnSend" title="发送">↑</button>
         </div>
       </div>
-      <div class="tip">内容由模型生成，判定与工单以规则引擎输出为准 · 场景数据为示例（人工构造），非现场运行记录</div>
+      <div class="tip" id="tip">内容由模型生成，判定与工单以规则引擎输出为准 · 场景数据为示例（人工构造），非现场运行记录</div>
     </div>
   </main>
 
@@ -360,7 +363,7 @@ var SCENES = {
     id:'A', name:'3 号车间东侧通道', short:'通道', tag:'普通作业',
     verdicts:[
       {p:'P1', state:'已佩戴', tone:'ok',   note:'安全帽置信度 0.93，中心点落在头部区域内'},
-      {p:'P2', state:'待复核', tone:'warn', note:'置信度 0.25，落在 0.20–0.30 灰区，转人工'},
+      {p:'P2', state:'待复核', tone:'warn', note:'置信度 0.25，落在复核灰区，转人工'},
       {p:'P3', state:'未佩戴', tone:'bad',  note:'无安全帽框'},
       {p:'P4', state:'无法判定', tone:'mute', note:'人员框 6000 px²，低于 8000 px² 门槛'}
     ],
@@ -428,10 +431,19 @@ var S_RULES = {
   '受限空间':   { S:4, note:'受限空间 → S4' }
 };
 
-function L_from_count(n){
+function L_from_count(n, scale){
   n = Number(n) || 0;
-  for(var i=0;i<L_RULES.length;i++){ if(n <= L_RULES[i].max) return L_RULES[i]; }
-  return L_RULES[L_RULES.length-1];
+  var base = L_RULES[L_RULES.length-1];
+  for(var i=0;i<L_RULES.length;i++){ if(n <= L_RULES[i].max){ base = L_RULES[i]; break; } }
+
+  // v1.1：本次单次违规人数也参与 L 取值（docs/安巡风险分级标准.md §2.1.1）。
+  // 只看历史台账会把「刚装系统」的区域判得过轻：台账 1 次（L1）但一次抓到 10 人。
+  var sc = Number(scale) || 0;
+  if(sc <= 0 || sc <= n) return base;
+  var top = L_RULES[L_RULES.length-1];
+  for(var j=0;j<L_RULES.length;j++){ if(sc <= L_RULES[j].max){ top = L_RULES[j]; break; } }
+  if(top.L <= base.L) return base;
+  return { L:top.L, note:top.note, baseL:base.L, scaleN:sc };
 }
 function S_from_work(type){
   return S_RULES[type] || { S:2, note:'未登记的作业类型，按较低严重性处理' };
@@ -441,12 +453,14 @@ function S_from_work(type){
 function sceneRisk(id){
   var s = SCENES[id];
   if(!s) return null;
-  var lr = L_from_count(s.count.n);
+  var lr = L_from_count(s.count.n, s.count.scale);
   var sr = S_from_work(s.work.type);
   var g = grade(lr.L, sr.S);
   return {
     L: g.L, S: g.S, R: g.R, level: g.level, deadline: g.deadline, tone: g.tone,
-    Lwhy: s.count.why + '（' + lr.note + '）',
+    Lwhy: s.count.why + (lr.scaleN
+      ? '（历史档 L' + lr.baseL + '；本次 ' + lr.scaleN + ' 人同发 → L' + lr.L + '，取高者）'
+      : '（' + lr.note + '）'),
     Swhy: s.work.why + '（' + sr.note + '）'
   };
 }
@@ -490,6 +504,8 @@ function toneOfLevel(lv){
 function sceneFromApi(d){
   var persons = d.persons || [];
   var n = (d.region && d.region.violation_30d) || 0;
+  // 本次违规人数：服务端已按「未佩戴」计数，同时参与 L（见 /docs/安巡风险分级标准.md §2.1.1）
+  var violN = persons.filter(function(p){ return p.worst === '未佩戴'; }).length;
   // 区域的 scene 有时登记的是场所属性（如「消防通道」），不是作业类型。
   // 这时按 risk_class 兜底，否则页面会落 S=2，而接口按 risk_class 算 3，两边又对不上。
   var WORK_TYPES = ['普通', '车辆', '高处', '动火', '受限空间'];
@@ -498,12 +514,17 @@ function sceneFromApi(d){
     var rc = (d.region && d.region.risk_class) || '';
     work = WORK_TYPES.indexOf(rc) >= 0 ? rc : work;
   }
-  var t = (d.tickets || [])[0] || null;
+  // 一个场景可能开出两张单（安全帽 / 背心），各自的人数不同、等级也不同。
+  // 原来取 tickets[0]，R-03 会显示成黄色（helmet 3 人），而本次最重的是橙色。
+  // 右栏只摆一张卡，就摆最重的那张。
+  var t = (d.tickets || []).slice().sort(function(a, b){
+    return (b.risk || 0) - (a.risk || 0);
+  })[0] || null;
   var out = {
     verdicts: persons.map(function(p, i){
       return { p:'P' + (i + 1), state:p.worst || '-', tone:toneOfState(p.worst), note:reasonOf(p.items, p.worst) };
     }),
-    count: { n:n, why:'近 30 天' + ((d.region && d.region.name) || '') + '同类违规 ' + n + ' 次' },
+    count: { n:n, scale:violN, why:'近 30 天 · ' + ((d.region && d.region.name) || '') + '同类违规 ' + n + ' 次' },
     work: { type:work + '作业', why:work + '作业 · 按作业类型取 S' },
     ticket: null, checks: [], law: [],
     _model: true,
@@ -523,7 +544,12 @@ function sceneFromApi(d){
       no: t.ticket_id,
       owner: t.assignee || '当班班组长',
       reviewer: t.review_at ? '安全员（' + String(t.review_at).replace('T', ' ').slice(5, 16) + ' 复查）' : '安全员',
-      action: t.requirement || ''
+      action: t.requirement || '',
+      grade: t.grade || '',
+      risk: t.risk,
+      L: t.L, S: t.S,
+      due_at: t.due_at || '',
+      review_at: t.review_at || ''
     };
     out.checks = [
       t.requirement || '',
@@ -542,13 +568,26 @@ function applyModelScene(k, d){
   if(!s || !d || !d.region) return;
   var x = sceneFromApi(d);
   for(var key in x) s[key] = x[key];
+  applyThresholds(d.thresholds);
+
+  // 页脚措辞跟着数据来源走：跑过模型就别再写「场景数据为示例」，那等于自打脸
+  var tip = document.getElementById('tip');
+  if(tip) tip.textContent = '内容由模型生成，判定与工单以规则引擎输出为准 · 右侧为本机 best.pt 对样例图的实测结果；'
+    + '样例图为公开数据集素材（CC BY 4.0），非同厂现场记录';
 
   var st = {};
   x.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
   SCENE_CTX[k] = '当前场景 ' + k + '：' + s.name + '，作业类型「' + x.work.type + '」。'
     + x.verdicts.length + ' 名人员：'
     + Object.keys(st).map(function(y){ return y + ' ' + st[y] + ' 人'; }).join('、')
-    + '。近 30 天该区域同类违规 ' + x.count.n + ' 次。'
+    + '。近 30 天该区域同类违规 ' + x.count.n + ' 次'
+    + '；本次一次抓到 ' + (x.count.scale || 0) + ' 人未佩戴，L 取「历史次数」与「本次人数」的高者'
+    + '（《安巡风险分级标准 v1.1》§2.1.1）。'
+    + (s.ticket && /^TK-/.test(String(s.ticket.no || ''))
+        ? '规则引擎已按实测开出工单 ' + s.ticket.no
+          + '（' + (s.ticket.grade || '') + '' + (s.ticket.risk ? ' · R=' + s.ticket.risk : '') + '），'
+          + '责任人 ' + (s.ticket.owner || '') + '；用户问工单就直接引用这个号，不要另编。'
+        : '')
     + '以上为 best.pt 实测结果（' + ((d.source || '').indexOf('scene') === 0 ? (d.source.split(':')[1] || '') : '上传图') + '），不是手写数据。';
 }
 
@@ -594,6 +633,10 @@ async function uploadInspect(file){
     x.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
     var head = '**上传图片实测**（区域 ' + regionId + ' · best.pt · ' + x.verdicts.length + ' 人）\n\n'
       + Object.keys(st).map(function(y){ return y + ' ' + st[y]; }).join('、') + '。\n\n';
+    if(d.scene_check && d.scene_check.ok === false){
+      head += '> 注意：' + (d.scene_check.reason || '该图疑似非作业全景')
+        + '，本次判定仅供参考；换一张包含完整作业面的照片更准。\n\n';
+    }
     var body = ev
       ? '定级：R = ' + ev.L + ' × ' + ev.S + ' = **' + ev.R + '**，' + ev.grade + '，' + ev.action + '。\n'
       : '**没有确认违规，直接放行**，不开工单。\n';
@@ -661,6 +704,8 @@ var CLOUD_CONFIG = {
   oauthRelayBaseUrl: 'https://www.workbuddy.cn/v2/as/genie-baas/oauth'
 };
 var CLOUD = { ready:false, client:null, model:null, modelName:'', supportsTools:false, avail:{}, names:{}, tools:{} };
+// 单档单轮上限。超时即视为「这一档没产出」，交给 cloudRun 升档重试。
+var CLOUD_TIMEOUT_MS = 30000;
 /* 按任务复杂度分档，便宜优先，不够再升：
    0 免费档 hy4free         x0.00  寒暄、单句事实
    1 快速档 fast-model      x0.15  常规研判（要调工具、要说人话）
@@ -679,7 +724,12 @@ var COMPLEX_RE = /对比|比较|分析|评估|方案|总结|分别|多种|多个
 /* 成本档位：'save' 省钱优先（默认，一律从免费档起，撑不住才升）
              'balanced' 按复杂度分档    'quality' 质量优先（领域问题直接快速档起）
    改这一个常量就能切换整体策略。 */
-var COST_MODE = 'save';
+/* 演示默认走「质量优先」。
+   'save' 一律从免费档 hy4free 起，实测一次研判要 215 秒才出结果
+   （40 s 才出第一条工具 trace，210 s 才出第一个字），
+   评委面前等于白屏三分钟——省下的那点倍率不值。
+   省钱路径仍在，改成 'save' 即可，但别在演示机上用。 */
+var COST_MODE = 'quality';
 
 function whyTier(q){
   var t = String(q || '');
@@ -697,8 +747,11 @@ function pickTier(q){
   var t = String(q || '');
   if(COST_MODE === 'save') return 0;
   if(COST_MODE === 'quality'){
-    if(t.length > 160 || COMPLEX_RE.test(t)) return 2;
+    // 领域问题先给快速档：研判类提问必然命中 DOMAIN_RE，
+    // 排在 COMPLEX_RE 前面才不会因为一句「为什么」直接跳到均衡档（耗时翻倍）。
+    if(t.length > 200) return 2;
     if(DOMAIN_RE.test(t)) return 1;
+    if(COMPLEX_RE.test(t)) return 2;
     return 0;
   }
   if(t.length > 160 || COMPLEX_RE.test(t)) return 2;
@@ -756,15 +809,33 @@ function cloudErrText(e){
 /* 云端要求 messages[0] 是应用的 system，且不认两条 system：
    把 SYS 与场景上下文合成一条再发。 */
 function cloudMessages(c){
-  var sys = SYS + '\n\n' + (SCENE_CTX[S.scene] || '');
+  var sys = sysText() + '\n\n' + (SCENE_CTX[S.scene] || '');
   var msgs = [{ role:'system', content: sys }];
   c.msgs.slice(0, -1).forEach(function(x){
+    // 只带当前场景的历史。切换到 B 之后还把 C 的对话塞进去，
+    // 模型会拿着 C 的 8 人违规数据回答「B 场景什么等级」。
+    if(x.scene && x.scene !== S.scene) return;
     if(x.role === 'user' || x.role === 'assistant') msgs.push({ role:x.role, content:x.content });
   });
   return msgs;
 }
 
 /* 一次完整的「工具循环 + 收尾」，返回这一档有没有说出正文 */
+/* 有些模型不走结构化 tool_calls，而是把调用当正文吐：
+     <tool_call>law_lookup<arg_key>code</arg_key><arg_value>…</arg_value></tool_call></think>
+   直接把这段渲染出去，评委看到的就是一屏 XML。这里统一剥掉。 */
+function cleanModelText(t){
+  return String(t || '')
+    .replace(/<tool_call>[\s\S]*?<\/tool_call>/g, ' ')
+    .replace(/<think>[\s\S]*?<\/think>/g, ' ')
+    .replace(/<\/?think>/g, ' ')
+    .replace(/<arg_key>[\s\S]*?<\/arg_value>/g, ' ')
+    .replace(/<\/?[a-z_][a-z0-9_]*\s*>/gi, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 async function cloudAttempt(c, tier, signal, onDelta, onTrace){
   var messages = cloudMessages(c);
   var useTools = CLOUD.tools[tier.id] === true;
@@ -777,10 +848,15 @@ async function cloudAttempt(c, tier, signal, onDelta, onTrace){
     if(useTools && round < 2){ req.tools = TOOLS; req.tool_choice = 'auto'; }
 
     var acc = '', calls = [];
+    // 没有超时的 for await 会一直挂着：实测免费档 60 s 不返回，
+    // 界面就永久停在「生成中」，升档逻辑永远走不到。
+    var wt = withTimeout(signal, CLOUD_TIMEOUT_MS);
+    req.signal = wt.signal;
+    try {
     for await (var chunk of CLOUD.client.llm.chat.completions.create(req)){
       var ch = chunk.choices && chunk.choices[0];
       var d = ch && ch.delta;
-      if(d && d.content){ acc += d.content; emit(d.content); }
+      if(d && d.content){ acc += d.content; }   // 先攒，洗完再吐，避免漏出 XML
       if(d && d.tool_calls){
         for(var k = 0; k < d.tool_calls.length; k++){
           var tc = d.tool_calls[k];
@@ -792,8 +868,17 @@ async function cloudAttempt(c, tier, signal, onDelta, onTrace){
         }
       }
     }
+    } finally { wt.done(); }
     var clean = calls.filter(Boolean);
-    if(!clean.length) break;          // 这一轮没调工具，正文已经流出来了
+    if(!clean.length){
+      // 这一轮没调工具，acc 才是正文。先清洗，再按小段吐出去（保留打字感）。
+      var txt = cleanModelText(acc);
+      for(var ci = 0; ci < txt.length; ci += 28){
+        emit(txt.slice(ci, ci + 28));
+        await sleep(10);
+      }
+      break;
+    }
 
     messages.push({ role:'assistant', content: acc || '', tool_calls: clean });
     for(var i = 0; i < clean.length; i++){
@@ -817,9 +902,15 @@ async function cloudAttempt(c, tier, signal, onDelta, onTrace){
       temperature: 0.3
     };
     if(signal) fin.signal = signal;
+    var finAcc = '';
     for await (var c2 of CLOUD.client.llm.chat.completions.create(fin)){
       var d2 = c2.choices && c2.choices[0] && c2.choices[0].delta;
-      if(d2 && d2.content) emit(d2.content);
+      if(d2 && d2.content) finAcc += d2.content;
+    }
+    var finTxt = cleanModelText(finAcc);
+    for(var fi = 0; fi < finTxt.length; fi += 28){
+      emit(finTxt.slice(fi, fi + 28));
+      await sleep(10);
     }
   }
   return spoke;
@@ -858,7 +949,7 @@ var SYS = [
   '你是「安巡 Agent」，面向厂区安全巡检的研判助手，服务于《安全生产法》与 GB 2811 / GB 39800 体系。',
   '',
   '硬规则：',
-  '1) 判定只有四态：已佩戴 / 未佩戴 / 待复核 / 无法判定；置信度 0.20 以下丢弃，0.20–0.30 转人工复核，不进统计。',
+  '1) 判定只有四态：已佩戴 / 未佩戴 / 待复核 / 无法判定；置信度 {CR} 以下丢弃，{CR}–{CF} 转人工复核，不进统计。',
   '2) 风险用 R = L × S（L 可能性 1–4，S 严重性 1–4）：R≤4 蓝色（30 天内）、5–8 黄色（7 天内）、9–12 橙色（24 小时内）、R≥13 红色（2 小时内）。',
   '3) 引用法规必须写条款号并给原文；检索不到就写「未检索到」，不许编造条文或文号。',
   '4) 回答用中文，先结论后依据；能用表格就别用长段落；不要客套话。',
@@ -869,14 +960,35 @@ var SYS = [
   '9) 引用条文时，code 写成「法规名 第X条」或「GB 编号-年份」。law_lookup 返回「未收录」的条款，一律不要引用。',
   '',
   '当你要给出一次完整研判（四态判定 + 定级 + 工单）时，在正文末尾输出一个 anxun 代码块，内容是一行 JSON：',
-  '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"GD-B-0932","owner":"作业负责人","reviewer":"安全总监","action":"立即停止作业并撤离"},"checks":["叫停并撤离"],"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
+  '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"<create_ticket 返回的号，不要自己编>","owner":"作业负责人","reviewer":"安全总监","action":"立即停止作业并撤离"},"checks":["叫停并撤离"],"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
   'tone 取 ok / warn / bad / info。这块会被前端渲染成卡片，正文里不要重复它的内容。'
-].join('\n');
+];
 
+/* 本轮真实阈值：从 /api/inspect 的 thresholds 读，读不到就用 v3 默认。
+   原来 SYS 与左下角写死「0.20–0.30 转人工复核」，而实际 conf_final=0.65 ——
+   模型照着错的数字解释判定，页面同一屏还会出现 0.30 和 0.65 两个口径。 */
+var THR = { conf_final: 0.65, conf_review: 0.20, profile: 'v3' };
+function sysText(){
+  return SYS.join('\n')
+    .replace(/\{CF\}/g, THR.conf_final)
+    .replace(/\{CR\}/g, THR.conf_review);
+}
+function applyThresholds(thr){
+  if(!thr || thr.conf_final == null) return;
+  THR.conf_final = thr.conf_final;
+  THR.conf_review = thr.conf_review != null ? thr.conf_review : THR.conf_review;
+  THR.profile = thr.profile || THR.profile;
+  var a = document.getElementById('footConf'), b = document.getElementById('footReview');
+  if(a) a.textContent = THR.conf_final;
+  if(b) b.textContent = THR.conf_review;
+}
+
+/* 还没拿到实测结果时的兜底文案。措辞必须写明「示例」，
+   否则模型会把 4 人假数据当成 best.pt 的判定结果说出去。 */
 var SCENE_CTX = {
-  A: '当前场景 A：3 号车间东侧通道，作业类型「普通作业」。4 名人员：1 人未佩戴安全帽、1 人待复核、1 人无法判定、1 人已佩戴。近 30 天该通道同类违规 4 次。',
-  B: '当前场景 B：2 号车间高处作业平台，作业类型「高处作业」，作业面距坠落高度 6.2 m。4 名人员：2 人未佩戴安全帽、1 人待复核、1 人已佩戴。近 30 天该平台同类违规 7 次。',
-  C: '当前场景 C：原料库装卸区，作业类型「车辆作业」。4 名人员：1 人未佩戴安全帽、1 人无法判定（被货箱遮挡）、2 人已佩戴。近 30 天该区域同类违规 1 次。'
+  A: '当前场景 A：3 号车间东侧通道，作业类型「普通作业」。以下为示例数据（非实测）：4 名人员：1 人未佩戴安全帽、1 人待复核、1 人无法判定、1 人已佩戴。近 30 天该通道同类违规 4 次。',
+  B: '当前场景 B：2 号车间高处作业平台，作业类型「高处作业」。以下为示例数据（非实测）：4 名人员：2 人未佩戴安全帽、1 人待复核、1 人已佩戴。近 30 天该平台同类违规 7 次。',
+  C: '当前场景 C：原料库装卸区，作业类型「车辆作业」。以下为示例数据（非实测）：4 名人员：1 人未佩戴安全帽、1 人无法判定（被货箱遮挡）、2 人已佩戴。近 30 天该区域同类违规 1 次。'
 };
 
 /* ---------------- 状态 ---------------- */
@@ -890,7 +1002,8 @@ var S = {
   mode: 'demo',
   model: 'anxun-demo',
   key: '',
-  transport: 'demo'
+  transport: 'demo',
+  verified: false        // 首次对话真的吐出正文后置 true，状态栏才敢写「已连接」
 };
 
 /* ---------------- 工具 ---------------- */
@@ -1104,9 +1217,19 @@ function normalizeCard(card, sceneId, idx){
     card._fallback = true;
   }
 
-  // 服务端开出来的工单号是 TK- 前缀，别用页面自己的 GD- 规则覆盖它
-  if(card.ticket && !/^TK-/.test(String(card.ticket.no || ''))){
-    card.ticket.no = ticketNoFor(sceneId);
+  // 工单号：服务端开过单就用系统的 TK- 号。
+  // 原来只判「不是 TK 就换成 GD-」，于是模型从提示词里照抄 GD-B-0932，
+  // 屏幕右栏是 TK-2026…-B-01-vest-01、对话卡片是 GD-B-1109，同一个单两个号。
+  if(card.ticket){
+    var sysT = (SCENES[sceneId] && SCENES[sceneId].ticket) || null;
+    var sysNo = sysT && sysT.no ? String(sysT.no) : '';
+    if(/^TK-/.test(sysNo)){
+      card.ticket.no = sysNo;
+      card.ticket.owner = card.ticket.owner || sysT.owner;
+      card.ticket.reviewer = card.ticket.reviewer || sysT.reviewer;
+    }else if(!/^TK-/.test(String(card.ticket.no || ''))){
+      card.ticket.no = ticketNoFor(sceneId);
+    }
   }
 
   if(card.law && card.law.length){
@@ -1212,8 +1335,12 @@ function renderPanel(){
   var counts = { ok:0, warn:0, bad:0, mute:0 };
   s.verdicts.forEach(function(v){ counts[v.tone] = (counts[v.tone]||0) + 1; });
 
+  // 本次零违规就别把卡片染成风险色：A 场景放行时 R 仍是 9（那是"假如违规"），
+  // 用橙色边框会让人以为这一单有风险。
+  var tone = s._clean ? 'ok' : g.tone;
+
   var h = '';
-  h += '<div class="pcard ' + g.tone + '">' +
+  h += '<div class="pcard ' + tone + '">' +
        '<div class="ph">' + esc(s.name) + '<span class="r">' + esc(s.tag) + '</span></div>' +
        '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
        '<span class="pill t-ok">已佩戴 ' + counts.ok + '</span>' +
@@ -1222,7 +1349,7 @@ function renderPanel(){
        '<span class="pill t-mute">无法判定 ' + counts.mute + '</span>' +
        '</div></div>';
 
-  h += '<div class="pcard ' + g.tone + '"><div class="ph">四态判定<span class="r">' +
+  h += '<div class="pcard ' + tone + '"><div class="ph">四态判定<span class="r">' +
        (s._model ? (s.verdicts.length + ' 人 · best.pt 实测') : ('4 人 · 示例数据')) + '</span></div>';
   s.verdicts.forEach(function(v){
     var p = pillOf(v.tone);
@@ -1244,7 +1371,7 @@ function renderPanel(){
        '<div class="meter ' + g.tone + '"><i style="width:0" data-w="' + Math.min(100, g.R/25*100) + '"></i></div>' +
        '<div class="kv"><span>可能性 L</span><b>' + g.L + ' · ' + esc(g.Lwhy) + '</b></div>' +
        '<div class="kv"><span>严重性 S</span><b>' + g.S + ' · ' + esc(g.Swhy) + '</b></div>' +
-       '<div class="kv"><span>分级依据</span><b>R=L×S（MIL-STD-882 矩阵）· L/S 取值见 <a href="https://github.com/yukiiiii777/anxun-agent/blob/main/docs/%E5%AE%89%E5%B7%A1%E9%A3%8E%E9%99%A9%E5%88%86%E7%BA%A7%E6%A0%87%E5%87%86.md" target="_blank" rel="noopener noreferrer">《安巡风险分级标准 v1.0》</a> 第 2 节</b></div>' +
+       '<div class="kv"><span>分级依据</span><b>R=L×S（MIL-STD-882 矩阵）· L/S 取值见 <a href="https://github.com/yukiiiii777/anxun-agent/blob/main/docs/%E5%AE%89%E5%B7%A1%E9%A3%8E%E9%99%A9%E5%88%86%E7%BA%A7%E6%A0%87%E5%87%86.md" target="_blank" rel="noopener noreferrer">《安巡风险分级标准 v1.1》</a> §2.1.1 / §2.2</b></div>' +
        '</div>';
   }
 
@@ -1284,11 +1411,26 @@ function renderPanel(){
   $('#pbody').innerHTML = h;
   animateNumbers();
 }
+var _lastShownR = null;      // 上一次已经滚过的 R 值
 function animateNumbers(){
   var st = document.body.classList.contains('static');
+  var el0 = document.querySelector('#pbody .R[data-count]');
+  var target0 = el0 ? +el0.getAttribute('data-count') : null;
+  // R 没变就别重播：renderPanel 会因为 refreshModelScene / 切场景被调多次，
+  // 每次都从 0 滚一遍，投屏时能看到 0→13→0→16 乱跳，中间那帧是错的数。
+  if(st || target0 === _lastShownR){
+    $$('#pbody .R[data-count]').forEach(function(el){
+      el.textContent = el.getAttribute('data-count');
+    });
+    $$('#pbody .meter i[data-w]').forEach(function(el){
+      el.style.width = el.getAttribute('data-w') + '%';
+    });
+    _lastShownR = target0;
+    return;
+  }
+  _lastShownR = target0;
   $$('#pbody .R[data-count]').forEach(function(el){
     var target = +el.getAttribute('data-count');
-    if(st){ el.textContent = target; return; }
     var t0 = performance.now(), dur = 620;
     function step(t){
       var k = Math.min(1, (t - t0) / dur);
@@ -1298,7 +1440,6 @@ function animateNumbers(){
     requestAnimationFrame(step);
   });
   $$('#pbody .meter i[data-w]').forEach(function(el){
-    if(st){ el.style.width = el.getAttribute('data-w') + '%'; return; }
     requestAnimationFrame(function(){ el.style.width = el.getAttribute('data-w') + '%'; });
   });
 }
@@ -1350,12 +1491,16 @@ function paintStreaming(m, idx){
 
   var card = findCard(m.content);
   if(card) card = normalizeCard(card, m.scene || S.scene, idx);
-  var text = stripCard(m.content);
+  var text = stripCard(cleanModelText(m.content));
   // 卡片还没写完时（```anxun 未闭合），别把 JSON 原文漏在正文里
   if(m.streaming) text = text.replace(/```anxun[\s\S]*$/, '').trim();
   var bubble = el.querySelector('.bubble');
   if(!bubble){ renderConvo(); return; }
-  bubble.innerHTML = md(text) + (card ? compactCard(card) : '')
+  // 云端首字要等几十秒。原来这里只有一个光标，看起来像卡死。
+  var head = (!text && m.streaming && m.hint)
+    ? '<div class="pending">' + esc(m.hint) + '</div>'
+    : md(text);
+  bubble.innerHTML = head + (card ? compactCard(card) : '')
     + (m.streaming ? '<span class="caret"></span>' : '');
 
   var tlen = (m.trace || []).length;
@@ -1410,7 +1555,7 @@ function msgHTML(m, i){
   }else{
     var card = findCard(m.content);
     if(card) card = normalizeCard(card, m.scene || S.scene, i);
-    var text = stripCard(m.content);
+    var text = stripCard(cleanModelText(m.content));
     var caret = m.streaming ? '<span class="caret"></span>' : '';
     var acts = m.streaming ? '' :
       '<div class="acts"><button data-copy="' + i + '">复制</button><button data-regen="1">重新生成</button></div>';
@@ -1439,7 +1584,7 @@ function demoAnswer(kind, s){
   if(s._clean){
     var st = {};
     s.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
-    return '场景 **' + s.id + ' · ' + s.name + '**：best.pt 实测 ' + s.verdicts.length + ' 人，' +
+    return '场景 **' + s.id + ' · ' + s.name + '**：' + (s._model ? 'best.pt 实测 ' : '示例数据 ') + s.verdicts.length + ' 人，' +
       Object.keys(st).map(function(k){ return k + ' ' + st[k]; }).join('、') + '。\n\n' +
       '**没有确认违规，直接放行**——不生成事件、不开工单。这是误报率的现场体现：' +
       '合规的人不该被拦下来复核；拦错了，班组很快就会把系统关掉。\n\n' +
@@ -1460,7 +1605,7 @@ function demoAnswer(kind, s){
       '\n\n条文里两个动作是分开的：**提供**（单位义务）和**佩戴**（个人义务）。' +
       '我们判的是"没戴"，落在个人义务这一侧，所以工单的责任人写班组、不写采购。\n\n' +
       '判定不是靠模型猜的：头盔框中心点落在头部区域内才算"戴了"，落不进去就是"没戴"；' +
-      '置信度 0.20 以下直接丢弃，0.20–0.30 转人工复核，不进统计。\n';
+      '置信度 ' + THR.conf_review + ' 以下直接丢弃，' + THR.conf_review + '–' + THR.conf_final + ' 转人工复核，不进统计。\n';
   }
 
   if(kind === 'ticket'){
@@ -1521,7 +1666,8 @@ async function reply(q){
 
   S.busy = true; setBusy(true);
 
-  var m = { role:'assistant', content:'', ts:Date.now(), streaming:true, scene:S.scene, demo:(S.mode !== 'live') };
+  var m = { role:'assistant', content:'', ts:Date.now(), streaming:true, scene:S.scene,
+            demo:(S.mode !== 'live'), hint:'正在连接模型…' };
   c.msgs.push(m);
 
   var acc = '';
@@ -1535,6 +1681,8 @@ async function reply(q){
     lastPaint = now;
     var stick = atBottom();
     m.content = acc;
+    if(acc && !S.verified){ S.verified = true; paintStatus(); }
+    if(acc) m.hint = '';
     paintStreaming(m, c.msgs.length - 1);
     if(stick) toBottom(false);
   }
@@ -1542,17 +1690,30 @@ async function reply(q){
   renderConvo(); enterLast();
   toBottom(false);
 
+  // 场景实测还没回来就先等它。否则 SCENE_CTX 还是那套示例文案（4 人假数据），
+  // 模型会照着假数据答，右栏却已经是实测的 1 人 / 10 人，两边对不上。
+  if(MODEL.ready && !MODEL.cache[S.scene]){
+    m.hint = '正在用 best.pt 读当前场景…';
+    paint(true);
+    try{ await refreshModelScene(S.scene, true); }catch(e){}
+    for(var wi = 0; wi < 30 && !MODEL.cache[S.scene]; wi++) await sleep(150);
+    m.hint = '正在连接模型…';
+    paint(true);
+  }
+
   try{
     if(S.mode === 'live' && S.transport === 'direct'){
       await agentRun(c, ctrl.signal, function(delta){ acc += delta; paint(false); }, function(step){
         m.trace = m.trace || [];
         m.trace.push(step);
+        m.hint = '正在调用 ' + step.name + '…';
         paint(true);
       });
     }else if(S.mode === 'live' && S.transport === 'cloud'){
       await cloudRun(c, ctrl.signal, function(delta){ acc += delta; paint(false); }, function(step){
         m.trace = m.trace || [];
         m.trace.push(step);
+        m.hint = '正在调用 ' + step.name + '…';
         paint(true);
       });
     }else if(S.mode === 'live'){
@@ -1593,7 +1754,8 @@ var TOOLS = [
     parameters:{ type:'object',
       properties:{
         violation_count:{ type:'integer', description:'近 30 天同类违规次数' },
-        work_type:{ type:'string', description:'作业类型：普通作业 / 车辆作业 / 高处作业 / 动火作业 / 受限空间' }
+        work_type:{ type:'string', description:'作业类型：普通作业 / 车辆作业 / 高处作业 / 动火作业 / 受限空间' },
+        violation_scale:{ type:'integer', description:'本次单次违规人数（可选；不传则用当前场景实测的未佩戴人数）' }
       },
       required:['violation_count','work_type'] } } },
   { type:'function', function:{
@@ -1622,9 +1784,21 @@ var TOOLS = [
 function runTool(name, args){
   var a = args || {};
   if(name === 'risk_factors'){
-    var lr = L_from_count(a.violation_count);
+    // 本次规模默认取当前场景的实测违规人数：模型只会传历史次数，
+    // 不补这一项的话，10 人违规它照样算 L=1、R=3 蓝色，和接口结论打架。
+    var scn = SCENES[S.scene] || {};
+    var scale = (a.violation_scale != null) ? a.violation_scale
+              : ((scn.count && scn.count.scale) || 0);
+    var lr = L_from_count(a.violation_count, scale);
     var sr = S_from_work(a.work_type);
-    return { L:lr.L, S:sr.S, L_basis:lr.note, S_basis:sr.note };
+    return {
+      L: lr.L, S: sr.S,
+      L_basis: lr.scaleN
+        ? ('历史 ' + a.violation_count + ' 次→L' + lr.baseL + '；本次 ' + lr.scaleN + ' 人同发→L' + lr.L + '，取高者')
+        : lr.note,
+      S_basis: sr.note,
+      violation_scale: scale
+    };
   }
   if(name === 'grade_risk'){
     var g = grade(a.L, a.S);
@@ -1639,8 +1813,13 @@ function runTool(name, args){
     var sc = String(a.scene || S.scene).toUpperCase();
     var scene = SCENES[sc] || SCENES[S.scene];
     var rk = sceneRisk(sc) || { level:'' };
+    // 服务端已经为这个场景开过单，就把系统单号给它。
+    // 否则模型会拿着 ticketNoFor() 拼的 GD-C-1109 去写正文，
+    // 而右栏卡片显示的是 TK-2026…，同一个单两个号。
+    var sysNo = (scene.ticket && /^TK-/.test(String(scene.ticket.no || '')))
+      ? scene.ticket.no : ticketNoFor(sc);
     return {
-      no: ticketNoFor(sc),
+      no: sysNo,
       scene: sc,
       level: a.level || rk.level,
       owner: scene.ticket.owner,
@@ -1652,8 +1831,11 @@ function runTool(name, args){
 }
 
 function buildMessages(c){
-  var msgs = [{ role:'system', content: SYS }, { role:'system', content: SCENE_CTX[S.scene] || '' }];
+  var msgs = [{ role:'system', content: sysText() }, { role:'system', content: SCENE_CTX[S.scene] || '' }];
   c.msgs.slice(0, -1).forEach(function(x){
+    // 只带当前场景的历史。切换到 B 之后还把 C 的对话塞进去，
+    // 模型会拿着 C 的 8 人违规数据回答「B 场景什么等级」。
+    if(x.scene && x.scene !== S.scene) return;
     if(x.role === 'user' || x.role === 'assistant') msgs.push({ role:x.role, content:x.content });
   });
   return msgs;
@@ -1885,7 +2067,7 @@ document.addEventListener('click', function(e){
   if(copy){
     var idx = +copy.getAttribute('data-copy');
     var cc = convo(S.active);
-    var txt = cc && cc.msgs[idx] ? stripCard(cc.msgs[idx].content) : '';
+    var txt = cc && cc.msgs[idx] ? stripCard(cleanModelText(cc.msgs[idx].content)) : '';
     if(navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ toast('已复制'); });
     return;
   }
@@ -1907,14 +2089,19 @@ function exportTicket(){
   var s = SCENES[S.scene];
   var t = s.ticket;
   var rk = sceneRisk(S.scene);
-  var no = ticketNoFor(S.scene);
+  // 服务端已经发了 TK- 号就用它。原来一律用 ticketNoFor() 重拼，
+  // 结果屏幕上 TK-20261109231106-B-01-vest-01、导出文件却叫 GD-B-1109.md，
+  // 交给车间的纸单和系统里的单号对不上。
+  var no = (t && t.no) ? String(t.no) : ticketNoFor(S.scene);
+  var dueTxt = (t && t.due_at) ? String(t.due_at).replace('T', ' ').slice(5, 16) + ' 前完成'
+                               : rk.deadline;
   var mdTxt = '# 整改工单 ' + no + '\n\n' +
     '- 场景：' + s.name + '（' + s.tag + '）\n' +
     '- 风险：' + rk.level + '（R=' + rk.R + '，L=' + rk.L + ' × S=' + rk.S + '）\n' +
-    '- 时限：' + rk.deadline + '\n' +
+    '- 时限：' + dueTxt + '\n' +
     '- 责任人：' + t.owner + '\n' +
     '- 复查人：' + t.reviewer + '\n' +
-    '- 分级依据：R=L×S（MIL-STD-882 矩阵）；L/S 取值见《安巡风险分级标准 v1.0》第 2 节\n\n' +
+    '- 分级依据：R=L×S（MIL-STD-882 矩阵）；L/S 取值见《安巡风险分级标准 v1.1》§2.1.1 / §2.2\n\n' +
     '## 整改要求\n\n' + t.action + '\n\n' +
     '## 验收项\n\n' + s.checks.map(function(x){ return '- [ ] ' + x; }).join('\n') + '\n\n' +
     '## 法规依据\n\n' + s.law.map(function(l){ return '> ' + l.code + '\n>\n> ' + l.text; }).join('\n\n') + '\n';
@@ -1938,9 +2125,12 @@ function paintStatus(){
     st.classList.add('demo');
     txt.textContent = MODEL.ready ? '演示模式 · best.pt 实测判定' : '演示模式 · anxun-demo';
   }else{
-    st.classList.add('live');
+    // 原来只要 transport 不是 demo 就写「已连接」，可 cloud 态仅仅代表
+    // 「能列出模型」——实测对话 215 秒才回，绿点亮着但一问三不知。
+    // 现在首次对话真出正文前只写「待验证」。
+    st.classList.add(S.verified ? 'live' : 'demo');
     var via = S.transport === 'direct' ? '直连 ' : (S.transport === 'cloud' ? '云端 ' : '');
-    txt.textContent = '已连接 · ' + via + S.model
+    txt.textContent = (S.verified ? '已连接 · ' : '待验证 · ') + via + S.model
       + (MODEL.ready ? ' · best.pt' : '');
   }
 }

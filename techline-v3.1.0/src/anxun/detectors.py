@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from pathlib import Path
 
@@ -78,7 +79,7 @@ class YoloDetector:
                                - set(self.LABEL_MAP) - self.IGNORE) if isinstance(self.names, dict) else []
 
     def detect_image(self, image_path: str | Path, frame_idx: int = 0) -> dict:
-        key = (str(image_path), frame_idx)
+        key = self._cache_key(image_path, frame_idx)
         if key in self._cache:
             return self._cache[key]
         if len(self._cache) >= self.cache_max:
@@ -86,6 +87,20 @@ class YoloDetector:
         out = self._predict(str(image_path))
         self._cache[key] = out
         return out
+
+    @staticmethod
+    def _cache_key(image_path: str | Path, frame_idx: int) -> tuple:
+        """缓存键必须带文件指纹。
+
+        只按路径缓存的话，原地换掉 real_ok_2.jpg 之后服务一直返回旧图的
+        检测结果——素材替换、现场重拍都会踩这个坑，而且看起来像模型没生效。
+        """
+        p = str(image_path)
+        try:
+            st = os.stat(p)
+            return (p, frame_idx, st.st_mtime_ns, st.st_size)
+        except OSError:
+            return (p, frame_idx, 0, 0)
 
     def detect_frame(self, frame) -> dict:
         """直接吃 numpy 帧（视频流用），不进缓存——实时场景每帧都不同。"""

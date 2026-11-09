@@ -31,9 +31,12 @@ T0 = datetime(2026, 11, 3, 9, 20, 0)
 FRAME_GAP = timedelta(seconds=2)
 
 REGIONS: dict[str, Region] = {
-    "A": Region("A-03", "3 号车间东侧通道", "普通", "李建国", violation_30d=4),
-    "B": Region("B-01", "2 号车间高处作业平台", "高处", "王志强", violation_30d=7),
-    "C": Region("C-07", "原料库装卸区", "车辆", "赵明", violation_30d=1),
+    # 区域编号与负责人必须和 techline 的 catalog.REGIONS 一致，
+    # 否则同一个「2 号车间高处作业平台」在两个页面上挂着两个负责人，
+    # 评委一对照就发现对不上。
+    "A": Region("A-03", "3 号车间东侧通道", "普通", "李国强", violation_30d=4),
+    "B": Region("B-01", "2 号车间高处作业平台", "高处", "王克俭", violation_30d=7),
+    "C": Region("C-02", "原料库装卸区", "车辆", "陈志远", violation_30d=1),
 }
 
 # P2 安全帽置信度逐帧抖动：0.35 定论 → 0.25 灰区 → 0.32 → 0.28 灰区

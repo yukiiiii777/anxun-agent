@@ -272,7 +272,7 @@ L_MAX = 4
 
 # 风险矩阵：作业类型 -> 后果严重度 S
 #
-# 口径唯一出处：docs/安巡风险分级标准.md 第 2.2 节（v1.0，2026-11-08）。
+# 口径唯一出处：docs/安巡风险分级标准.md 第 2.2 节（v1.1，2026-11-09）。
 # S 只由**作业类型**决定，与违规的是安全帽还是反光背心无关。
 # 旧实现按「装备类型 × 场景」查表（如 vest·普通=2），与文档、与研判台页面都不一致：
 # 同一场景网页算出红色 2 小时、接口算出橙色 24 小时。2026-11-09 统一到文档。
@@ -531,7 +531,8 @@ def judge_equipment(person: Box, idx: int, boxes: Sequence[Box],
                     best, bc = b, b.conf
         return best
 
-    if EQUIP_MATCH_MODE.get(equip, MATCH_MODE) == "center":
+    mode_center = EQUIP_MATCH_MODE.get(equip, MATCH_MODE) == "center"
+    if mode_center:
         best = _center(equip, CONF_FINAL)
         matched = best is not None
         best_iou = iou(region, best) if best else 0.0
@@ -544,6 +545,19 @@ def judge_equipment(person: Box, idx: int, boxes: Sequence[Box],
         best, best_iou, best_contain, matched = _score(equip)
         # 反向证据：模型专门训过「裸头」这一类（NO-Hardhat）。扔了它就只剩半个模型。
         neg, neg_iou, neg_contain, neg_ok = _score(NEG_LABEL.get(equip, ""))
+
+    # 判定理由要和**实际用的判据**对齐。
+    # 原来一律打印 IoU/包含度，于是出现「IoU=0.12 < 阈值 0.28，却判已佩戴」——
+    # 因为头盔走的是中心点判据，那两个数根本不参与判定。评委一眼就看穿。
+    if mode_center:
+        hit_txt = (f"装备框中心点落在{region_name}内"
+                   + (f"（框 {best.w:.0f}×{best.h:.0f}px）" if best else ""))
+        miss_txt = (f"{region_name}内没有中心点落进来的装备框"
+                    f"（中心点判据，conf≥{CONF_FINAL}）")
+    else:
+        hit_txt = f"装备框与{region_name} IoU={best_iou:.2f}，包含度 {best_contain:.2f}"
+        miss_txt = (f"{region_name}内未检出装备框（最高 IoU={best_iou:.2f} < {iou_min}，"
+                    f"包含度 {best_contain:.2f} < {contain_min}）")
 
     # --- 4. 结论 ---
     # 顺序很重要：正向证据优先；反向证据只有「高置信」时才有权覆盖。
@@ -561,8 +575,7 @@ def judge_equipment(person: Box, idx: int, boxes: Sequence[Box],
                            f"与裸头框（{neg.conf:.2f}），转人工",
                            person_id=pid, iou=best_iou)
         return Verdict(idx, equip, "已佩戴", best.conf,
-                       f"装备框与{region_name} IoU={best_iou:.2f}，包含度 {best_contain:.2f}，"
-                       f"置信度 {best.conf:.2f}",
+                       f"{hit_txt}，置信度 {best.conf:.2f}",
                        person_id=pid, iou=best_iou)
 
     if matched:
@@ -572,8 +585,7 @@ def judge_equipment(person: Box, idx: int, boxes: Sequence[Box],
                            f"装备框置信度 {conf:.2f} 低于 {CONF_REVIEW}，不可用",
                            person_id=pid, iou=best_iou)
         return Verdict(idx, equip, "待复核", conf,
-                       f"装备框与{region_name} IoU={best_iou:.2f} / 包含度 {best_contain:.2f} 成立，"
-                       f"但置信度 {conf:.2f} 落在复核区间",
+                       f"{hit_txt}，但置信度 {conf:.2f} 落在复核区间",
                        person_id=pid, iou=best_iou)
 
     if neg_ok and neg.conf >= CONF_FINAL:
@@ -593,8 +605,7 @@ def judge_equipment(person: Box, idx: int, boxes: Sequence[Box],
                        f"{region_name}内未检出装备框，但人员框置信度 {conf:.2f} 落在复核区间",
                        person_id=pid, iou=best_iou)
     return Verdict(idx, equip, "未佩戴", conf,
-                   f"{region_name}内未检出装备框（最高 IoU={best_iou:.2f} < {iou_min}，"
-                   f"包含度 {best_contain:.2f} < {contain_min}），判定为未佩戴",
+                   f"{miss_txt}，判定为未佩戴",
                    is_violation=True, person_id=pid, iou=best_iou)
 
 
@@ -661,12 +672,32 @@ def aggregate_temporal(frames: Sequence[Sequence[Verdict]],
 # ============================================================
 # 四、风险矩阵
 
-def likelihood(violation_count_30d: int) -> int:
-    """可能性 L：由该区域近 30 天违规次数决定。"""
+def likelihood(violation_count_30d: int, scale: int = 0) -> int:
+    """可能性 L：历史频次与**本次规模**取较高档。
+
+    只看近 30 天台账会把「刚装系统」的区域判得过轻：原料库台账记 1 次
+    （L=1），可一次巡检就抓到 10 人未佩戴——管控失效程度显然远高于 L=1。
+    所以再加一个信号：**本次单次抓到的违规人数**，与历史同表换算后取高者。
+
+    这也修正了一处反直觉：7 人全缺 PPE 判蓝色（R=3，30 天内），
+    1 人少穿背心反判红色（R=16，2 小时内）。规模不进 L 时必然出现。
+
+    scale=0（默认）表示「不提供本次规模」，此时行为与旧版完全一致。
+    """
+    L = L_MAX
     for cap, val in L_TABLE:
         if violation_count_30d <= cap:
-            return val
-    return L_MAX
+            L = val
+            break
+
+    if scale > 0:
+        for cap, val in L_TABLE:
+            if scale <= cap:
+                L = max(L, val)
+                break
+        else:
+            L = L_MAX
+    return L
 
 
 def severity(scene: str, risk_class: str = "") -> int:
@@ -718,22 +749,28 @@ class Event:
     L: int = 0
     S: int = 0
     R: int = 0
+    scale: int = 0             # 本次单次违规人数，参与 L 取值（0=未提供）
     grade: str = ""
     action: str = ""
     due_at: datetime | None = None
 
 
 def build_event(region: Region, equip: str, ts: datetime,
-                conf: float, evidence: str, event_id: str = "") -> Event:
-    """把一条违规判定转成带定级的事件。"""
-    L = likelihood(region.violation_30d)
+                conf: float, evidence: str, event_id: str = "",
+                scale: int = 0) -> Event:
+    """把一条违规判定转成带定级的事件。
+
+    `scale` 是本次同一违规的违规人数，会与历史频次一起决定 L——
+    见 `likelihood()` 的说明。
+    """
+    L = likelihood(region.violation_30d, scale)
     S = severity(region.scene, getattr(region, "risk_class", ""))
     R = L * S
     g, act, due_delta = grade_of(R)
     return Event(
         event_id=event_id or f"EV-{ts:%Y%m%d%H%M%S}-{region.region_id}",
         region=region, equip=equip, ts=ts, conf=conf, evidence=evidence,
-        L=L, S=S, R=R, grade=g, action=act, due_at=ts + due_delta,
+        L=L, S=S, R=R, scale=scale, grade=g, action=act, due_at=ts + due_delta,
     )
 
 
