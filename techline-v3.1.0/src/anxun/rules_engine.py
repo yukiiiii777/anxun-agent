@@ -759,7 +759,8 @@ class Event:
     L: int = 0
     S: int = 0
     R: int = 0
-    scale: int = 0             # 本次单次违规人数，参与 L 取值（0=未提供）
+    scale: int = 0             # 本类装备本次确认未佩戴人数（工单受影响人数）
+    confirmed_total: int = 0   # 本次全场合计确认未佩戴人数——v1.4 定级的唯一依据
     grade: str = ""
     action: str = ""
     due_at: datetime | None = None
@@ -776,12 +777,14 @@ def build_event(region: Region, equip: str, ts: datetime,
     # v1.4：等级按处置时限分档，不再走 L×S 矩阵；L/S/R 仅保留字段位，置 0。
     # 分档按**本次全部确认未佩戴人数**，不按单类装备拆开算，
     # 否则同一场景会出现「安全帽 B、背心 A」两张不同等级的单。
-    g, act, due_delta = urgency_of(confirmed=(confirmed_total or scale), pending=pending)
+    ct = confirmed_total or scale
+    g, act, due_delta = urgency_of(confirmed=ct, pending=pending)
     L = S = R = 0
     return Event(
         event_id=event_id or f"EV-{ts:%Y%m%d%H%M%S}-{region.region_id}",
         region=region, equip=equip, ts=ts, conf=conf, evidence=evidence,
-        L=L, S=S, R=R, scale=scale, grade=g, action=act, due_at=ts + due_delta,
+        L=L, S=S, R=R, scale=scale, confirmed_total=ct,
+        grade=g, action=act, due_at=ts + due_delta,
     )
 
 
@@ -805,7 +808,7 @@ def make_ticket(ev: Event, affected: int = 1) -> dict:
         "scene": ev.region.scene,
         "requirement": requirement,
         "assignee": ev.region.owner,
-        "cc": "部门安全负责人" if ev.grade == "红色" else "",
+        "cc": "部门安全负责人" if ev.grade == "A" else "",
         "created_at": ev.ts.isoformat(timespec="minutes"),
         "due_at": ev.due_at.isoformat(timespec="minutes"),
         "review_at": (ev.due_at + timedelta(days=1)).isoformat(timespec="minutes"),

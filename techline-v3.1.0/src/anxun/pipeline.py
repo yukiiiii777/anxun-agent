@@ -178,18 +178,22 @@ def _event_dict(ev: Event) -> dict:
 
 def _rule_text(ev: Event) -> dict:
     """把分级过程摊开，回答「为什么是这个等级」。v1.4 起按处置时限分档。"""
-    n = ev.scale
+    # 定级依据是**全场合计**确认人数（ev.confirmed_total），不是本类装备的
+    # ev.scale。R-04 这类场景：安全帽 1 人 + 背心 5 人 → 两张单都按合计 6 人判 A，
+    # 若这里用 ev.scale，文案会写成「1 人（≥3）」，自相矛盾。
+    n = ev.confirmed_total or ev.scale
     if ev.grade == "A":
-        why = f"本次确认未佩戴 {n} 人（≥3），已不是个别人问题 → A 级，2 小时内"
+        why = f"本次全场合计确认未佩戴 {n} 人（≥3），已不是个别人问题 → A 级，2 小时内"
     elif ev.grade == "B":
-        why = f"本次确认未佩戴 {n} 人（1–2）→ B 级，24 小时内"
+        why = f"本次全场合计确认未佩戴 {n} 人（1–2）→ B 级，24 小时内"
     else:
         why = "本次无确认违规，仅待复核/无法判定 → C 级，7 天内核实"
 
     return {
         "level_why": why,
         "honesty": "等级只看本次判定与处置时限，不使用作业类型或区域历史次数",
-        "scale": n,
+        "scale": ev.scale,              # 本类装备确认人数（工单受影响人数）
+        "basis": n,                     # 全场合计确认人数（定级依据）
         "buckets": [
             {"range": "≥3 人", "grade": "A", "deadline": "2 小时内"},
             {"range": "1–2 人", "grade": "B", "deadline": "24 小时内"},

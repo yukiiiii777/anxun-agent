@@ -198,7 +198,10 @@ class StreamPipeline:
                 ev = build_event(self.region, v.equip, datetime.now(), v.conf,
                                  f"{self.sid} track T{tr.tid} @ {t_video:.1f}s",
                                  event_id=f"EV-{datetime.now():%Y%m%d%H%M%S}-"
-                                          f"{self.region.region_id}-{v.equip}-{self.sid}-T{tr.tid}")
+                                          f"{self.region.region_id}-{v.equip}-{self.sid}-T{tr.tid}",
+                                 # 一条轨道 = 一个确认未佩戴的人。不传会落到 0 人 → 恒判
+                                 # C 级，视频巡查出的每条告警都会变成「7 天内核实」。
+                                 scale=1, confirmed_total=1)
                 d = _event_dict(ev, v, tr, t_video)
                 d["stream"] = self.sid
                 self.events.append(d)
