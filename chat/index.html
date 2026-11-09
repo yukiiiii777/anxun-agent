@@ -675,17 +675,31 @@ var TIERS = [
 var DOMAIN_RE = /风险|等级|定级|工单|整改|法规|条文|条款|安全帽|反光背心|背心|判定|置信|违规|隐患|区域|场景|巡检|L\s*[=×]|S\s*[=×]|R\s*=/;
 var COMPLEX_RE = /对比|比较|分析|评估|方案|总结|分别|多种|多个|为什么|原因|推导|流程|闭环|权衡/;
 
+/* 成本档位：'save' 省钱优先（默认，一律从免费档起，撑不住才升）
+             'balanced' 按复杂度分档    'quality' 质量优先（领域问题直接快速档起）
+   改这一个常量就能切换整体策略。 */
+var COST_MODE = 'save';
+
 function whyTier(q){
   var t = String(q || '');
+  if(COST_MODE === 'save') return '省钱优先：默认免费档';
   if(t.length > 160) return '长问题（' + t.length + ' 字）';
   if(COMPLEX_RE.test(t)) return '多步/分析型提问';
   if(DOMAIN_RE.test(t)) return '厂区研判类提问';
   return t.length <= 12 ? '短问或寒暄' : '普通提问';
 }
 
-/* 0 免费 / 1 快速 / 2 均衡 —— 只决定起点，后面还会按失败升档 */
+/* 只决定**起点**，运行时还会按失败升档。
+   save：一律 0（免费），长/难问题也先试免费，撑不住再升——代价是慢一点，收益是 0 倍率。
+   balanced：按复杂度 0/1/2。 quality：领域问题至少 1，分析型直接 2。 */
 function pickTier(q){
   var t = String(q || '');
+  if(COST_MODE === 'save') return 0;
+  if(COST_MODE === 'quality'){
+    if(t.length > 160 || COMPLEX_RE.test(t)) return 2;
+    if(DOMAIN_RE.test(t)) return 1;
+    return 0;
+  }
   if(t.length > 160 || COMPLEX_RE.test(t)) return 2;
   if(t.length > 60 && DOMAIN_RE.test(t)) return 2;
   if(DOMAIN_RE.test(t)) return 1;
