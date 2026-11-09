@@ -706,6 +706,24 @@ def severity(scene: str, risk_class: str = "") -> int:
     return S_DEFAULT
 
 
+def urgency_of(confirmed: int, pending: int = 0) -> tuple[str, str, timedelta]:
+    """处置等级：只看**要不要马上处理**，按处理时限分档，不看场景。
+
+    - 确认未佩戴 ≥3 人 → A（2 小时内）：已经不是个别人的问题，面上失控
+    - 确认未佩戴 1–2 人 → B（24 小时内）：当日整改完
+    - 只有待复核 / 无法判定 → C（7 天内核实）
+    - 全部已佩戴 → 不出单
+
+    作业类型（高处/动火/普通…）只作为背景记录，不参与分档——
+    等级回答的是「多久内必须处理」，不是「这个场景有多危险」。
+    """
+    if confirmed >= 3:
+        return "A", "立即停止相关作业并完成整改", timedelta(hours=2)
+    if confirmed >= 1:
+        return "B", "当日完成整改并留痕", timedelta(hours=24)
+    return "C", "限期核实并提交结论", timedelta(days=7)
+
+
 def grade_of(risk: int) -> tuple[str, str, timedelta]:
     """风险值 -> (等级, 处置要求, 整改时限)。"""
     for low, name, action, due in GRADE_RULES:
@@ -755,10 +773,9 @@ def build_event(region: Region, equip: str, ts: datetime,
     L 由本次判定决定：已确认未佩戴 → 4；只有待复核 → 2（见 likelihood()）。
     `scale` 只用于记录本次违规人数，不再影响 L。
     """
-    L = likelihood(confirmed=scale, pending=pending)
-    S = severity(region.scene, getattr(region, "risk_class", ""))
-    R = L * S
-    g, act, due_delta = grade_of(R)
+    # v1.4：等级按处置时限分档，不再走 L×S 矩阵；L/S/R 仅保留字段位，置 0。
+    g, act, due_delta = urgency_of(confirmed=scale, pending=pending)
+    L = S = R = 0
     return Event(
         event_id=event_id or f"EV-{ts:%Y%m%d%H%M%S}-{region.region_id}",
         region=region, equip=equip, ts=ts, conf=conf, evidence=evidence,

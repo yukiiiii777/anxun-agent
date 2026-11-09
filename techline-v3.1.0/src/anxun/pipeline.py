@@ -22,7 +22,7 @@ from .rules_engine import (Box, Region, Event, aggregate_temporal, build_event,
                            min_person_area, profile_snapshot, L_TABLE, S_MAP)
 
 FRAME_COUNT = 3          # 视频流的时序窗口：连续 3 帧一致才定论
-GRADE_ORDER = {"蓝色": 1, "黄色": 2, "橙色": 3, "红色": 4}
+GRADE_ORDER = {"C": 1, "B": 2, "A": 3}      # v1.4：处置等级 A/B/C，按处理时限
 
 
 def thresholds() -> dict:
@@ -176,29 +176,24 @@ def _event_dict(ev: Event) -> dict:
 
 
 def _rule_text(ev: Event) -> dict:
-    """把 L/S 的查表过程摊开，回答「为什么是这个等级」。"""
-    l_rows = [{"range": f"≤{cap}", "L": val} for cap, val in L_TABLE]
-    l_rows.append({"range": f">{L_TABLE[-1][0]}", "L": 4})
-    s_why = f"作业类型 {ev.region.scene} → S={ev.S}"
-    if ev.region.scene not in S_MAP:
-        s_why += "（作业类型未登记，按最低档 S=2）"
-
-    hist = ev.region.violation_30d
-    if ev.scale > hist:
-        # 本次规模盖过历史记录时，必须把话说全：否则「为什么 10 人算 L4」答不上来
-        l_why = (f"{ev.region.name} 近 30 天违规 {hist} 次（L_{hist}）；"
-                 f"本次一次抓到 {ev.scale} 人同发（L_{ev.scale}）；"
-                 f"取高者 → L={ev.L}")
+    """把分级过程摊开，回答「为什么是这个等级」。v1.4 起按处置时限分档。"""
+    n = ev.scale
+    if ev.grade == "A":
+        why = f"本次确认未佩戴 {n} 人（≥3），已不是个别人问题 → A 级，2 小时内"
+    elif ev.grade == "B":
+        why = f"本次确认未佩戴 {n} 人（1–2）→ B 级，24 小时内"
     else:
-        l_why = f"{ev.region.name} 近 30 天违规 {hist} 次 → L={ev.L}"
+        why = "本次无确认违规，仅待复核/无法判定 → C 级，7 天内核实"
 
     return {
-        "L_why": l_why,
-        "S_why": s_why,
-        "R_why": f"R = L × S = {ev.L} × {ev.S} = {ev.R}",
-        "scale": ev.scale,
-        "L_table": l_rows,
-        "S_table": [{"k": k, "S": v} for k, v in S_MAP.items()],
+        "level_why": why,
+        "honesty": "等级只看本次判定与处置时限，不使用作业类型或区域历史次数",
+        "scale": n,
+        "buckets": [
+            {"range": "≥3 人", "grade": "A", "deadline": "2 小时内"},
+            {"range": "1–2 人", "grade": "B", "deadline": "24 小时内"},
+            {"range": "0 人（仅待复核）", "grade": "C", "deadline": "7 天内"},
+        ],
     }
 
 

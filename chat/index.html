@@ -459,34 +459,40 @@ function S_from_work(type){
 }
 
 /* 场景的 L/S/R 全部由事实推导：SCENES 里只存事实（违规次数、作业类型） */
-/* 定级口径 v1.3：L 只看**本次判定的态势**，不看区域历史台账。
-   等级要回答的是「多久内必须处理」，历史次数回答不了这件事：
-   刚装系统的区域台账是 0，抓到 10 人全缺 PPE 也只给 L=1；
-   反过来历史多的区域，一个人没戴就被拉满。 */
-function likelihoodOfVerdicts(vs){
+/* 处置等级（v1.4）：只看**要不要马上处理**，按处理时限分档，不看作业类型。
+   - 确认未佩戴 ≥3 人 → A｜立即（2 小时内）
+   - 确认未佩戴 1–2 人 → B｜当日（24 小时内）
+   - 只有待复核/无法判定 → C｜限期（7 天内核实）
+   - 全部已佩戴 → 不出单
+   作业类型只作背景记录，不再参与定级：等级回答的是「多久内必须处理」。 */
+function urgencyOfVerdicts(vs){
   var bad = 0, pending = 0;
   (vs || []).forEach(function(v){
     if(v.state === '未佩戴') bad++;
     else if(v.state === '待复核' || v.state === '无法判定') pending++;
   });
-  if(bad > 0)     return { L:4, bad:bad, pending:pending,
-    why:'本次确认未佩戴 ' + bad + ' 人 → L=4' };
-  if(pending > 0) return { L:2, bad:bad, pending:pending,
-    why:'本次只有待复核/无法判定 ' + pending + ' 项，无确认违规 → L=2' };
-  return { L:1, bad:0, pending:0, why:'本次全部已佩戴 → L=1' };
+  if(bad >= 3){
+    return { code:'A', name:'立即处置', deadline:'2 小时内', tone:'bad',
+             bad:bad, pending:pending,
+             why:'本次确认未佩戴 ' + bad + ' 人，已不是个别人问题 → 立即处置' };
+  }
+  if(bad >= 1){
+    return { code:'B', name:'当日处置', deadline:'24 小时内', tone:'warn',
+             bad:bad, pending:pending,
+             why:'本次确认未佩戴 ' + bad + ' 人 → 当日完成整改' };
+  }
+  if(pending > 0){
+    return { code:'C', name:'限期核实', deadline:'7 天内', tone:'gold',
+             bad:0, pending:pending,
+             why:'本次无确认违规，' + pending + ' 项待复核/无法判定 → 7 天内核实' };
+  }
+  return null;
 }
 
 function sceneRisk(id){
   var s = SCENES[id];
   if(!s) return null;
-  var lr = likelihoodOfVerdicts(s.verdicts);
-  var sr = S_from_work(s.work.type);
-  var g = grade(lr.L, sr.S);
-  return {
-    L: g.L, S: g.S, R: g.R, level: g.level, deadline: g.deadline, tone: g.tone,
-    Lwhy: lr.why,
-    Swhy: s.work.why + '（' + sr.note + '）'
-  };
+  return urgencyOfVerdicts(s.verdicts);
 }
 
 /* ---------------- 真模型：POST /api/inspect ----------------
@@ -541,8 +547,10 @@ function sceneFromApi(d){
   // 一个场景可能开出两张单（安全帽 / 背心），各自的人数不同、等级也不同。
   // 原来取 tickets[0]，R-03 会显示成黄色（helmet 3 人），而本次最重的是橙色。
   // 右栏只摆一张卡，就摆最重的那张。
+  // v1.4 起按处置等级排序（A > B > C），R 已不参与定级
+  var RANK = { A:3, B:2, C:1 };
   var t = (d.tickets || []).slice().sort(function(a, b){
-    return (b.risk || 0) - (a.risk || 0);
+    return (RANK[b.grade] || 0) - (RANK[a.grade] || 0);
   })[0] || null;
   var out = {
     verdicts: persons.map(function(p, i){
@@ -614,11 +622,11 @@ function applyModelScene(k, d){
           + (s.ticket.equip === 'vest' ? '（反光背心）' : s.ticket.equip === 'helmet' ? '（安全帽）' : '')
           + '——查法规、写整改要求都用这一项，不要换成别的装备。'
         : '')
-    + '。定级口径 v1.3：L 只看本次判定——有确认未佩戴即 L=4，只有待复核 L=2，'
-    + '全合规 L=1；区域历史违规次数（' + x.count.n + ' 次）只作背景，不参与定级。'
+    + '。处置等级按「要不要马上处理」分档，不看作业类型：确认未佩戴 ≥3 人 → A（2 小时内）、'
+    + '1–2 人 → B（24 小时内）、只有待复核 → C（7 天内）。'
     + (s.ticket && /^TK-/.test(String(s.ticket.no || ''))
         ? '规则引擎已按实测开出工单 ' + s.ticket.no
-          + '（' + (s.ticket.grade || '') + '' + (s.ticket.risk ? ' · R=' + s.ticket.risk : '') + '），'
+          + '（' + (s.ticket.grade || '') + ' 级），'
           + '工单号已开好，用户问工单就直接引用这个号，不要另编。'
         : '')
     + '以上为 ' + modelName() + ' 实测结果，不是手写数据。';
@@ -726,7 +734,7 @@ async function uploadInspect(file){
       : '**没有确认违规，直接放行**，不开工单。\n';
     var card = {
       tone: toneOfLevel(g.level), verdicts: x.verdicts,
-      risk: { R:g.R, L:g.L, S:g.S, level:g.level, deadline:g.deadline },
+      risk: g,
       ticket: x.ticket, checks: x.checks, law: x.law,
       _clean: x._clean
     };
@@ -1062,22 +1070,22 @@ var SYS = [
   '',
   '硬规则：',
   '1) 判定只有四态：已佩戴 / 未佩戴 / 待复核 / 无法判定；置信度 {CR} 以下丢弃，{CR}–{CF} 转人工复核，不进统计。',
-  '2) 风险用 R = L × S（L 可能性 1–4，S 严重性 1–4）：R≤4 蓝色（30 天内）、5–8 黄色（7 天内）、9–12 橙色（24 小时内）、R≥13 红色（2 小时内）。',
+  '2) 处置等级只看「要不要马上处理」，按处理时限分档，**不看作业类型**：确认未佩戴 ≥3 人 → A 级（2 小时内）；1–2 人 → B 级（24 小时内）；只有待复核/无法判定 → C 级（7 天内核实）；全部已佩戴 → 不出单。',
   '3) 引用法规必须写条款号并给原文；检索不到就写「未检索到」，不许编造条文或文号。',
   '4) 回答用中文，先结论后依据；能用表格就别用长段落；不要客套话。',
   '5) 与厂区安全无关的问题：不要拒答，也不要长篇大论——先用一两句话说清，再顺一句「如果这是厂区场景，我可以按安巡口径出一份研判」。你具备通用常识，可以正常聊天。',
   '6) 但只要问题落在工厂安全、法规、判定、工单上，就必须严格按上面的口径和条款来，不许含糊、不许编造。',
-  '7) 你有四个工具：risk_factors（按现场事实推导 L 与 S）、grade_risk（按 L×S 算 R、等级、时限）、law_lookup（查条文原文）、create_ticket（开单，工单号由系统生成）。**凡涉及等级或时限，必须先调 risk_factors 拿 L/S，再调 grade_risk 拿 R；不许自己拍 L/S。** 引用条文前先调 law_lookup；开工单必须调 create_ticket。',
-  '8) 卡片里 risk 只写 L 和 S（用 risk_factors 的返回值，附理由）；正文里引用 R 和等级时，必须用 grade_risk 返回的值。工单号用 create_ticket 返回的，不要自己编。',
+  '7) 你有四个工具：risk_factors（返回本次判定概况）、grade_risk（按人数给处置等级与时限）、law_lookup（查条文原文）、create_ticket（开单，工单号由系统生成）。**凡涉及等级或时限，必须先调 grade_risk；不许自己拍等级。** 引用条文前先调 law_lookup；开工单必须调 create_ticket。',
+  '8) 卡片里 risk 写 code / name / deadline / why（用 grade_risk 的返回值）；正文里引用等级和时限必须与之一致。工单号用 create_ticket 返回的，不要自己编。',
   '9) 引用条文时，code 写成「法规名 第X条」或「GB 编号-年份」。law_lookup 返回「未收录」的条款，一律不要引用。',
-  '10) **只写本轮上下文里明确给出的事实**：人数与四态、L/S/R 与等级、工具返回的条文原文、近 30 天违规次数。',
+  '10) **只写本轮上下文里明确给出的事实**：人数与四态、处置等级与时限、工具返回的条文原文。',
   '    没有给出的，一律不写、也不推断——不要补装备种类（安全带、手套、护目镜、口罩），',
   '    不要补距离/高度/温度/时长等数值，不要补人名、厂区/车间/平台等地名、部门、班次。',
   '    用户问到没有的数据，直接说「本轮判定里没有这一项」，不要用「大概」「通常」凑一个答案。',
   '11) 判定范围只有头盔与反光背心两类。不要把安全带、手套、护目镜写进结论或工单——',
   '    哪怕场景是高处作业，模型没检这两类，写了就是编的。',
-  '12) 等级对外统一用紧急程度 A/B/C 表述：A 级=紧急（R≥13，2 小时内）、B 级=较急（R 9–12，24 小时内）、',
-  '    C 级=一般（R≤8，7 天内 / 30 天内）。可以说「A 级 · 紧急 · 红色」，但不要只甩颜色。',
+  '12) 等级对外只用 A/B/C 讲，并且总是带上时限：A 级 = 2 小时内、B 级 = 24 小时内、C 级 = 7 天内。',
+  '    不要说「红色/橙色」这套颜色，也不要提 R 值或 L/S——这套口径已经不用了。',
   '13) 工单只说编号、等级、时限、整改要求。整改要求**照抄工具返回值**，不要改写、不要换说法；',
   '    不要出现任何具体人名或厂区/车间/平台等地名，也不要替某个岗位署名；',
   '    用户没问就不要补充签字、盖章、经办人这类内容。',
@@ -1085,7 +1093,7 @@ var SYS = [
   '    也不要在正文里重复卡片上已有的 R/等级/工单号；一两句话说清即可。',
   '',
   '当你要给出一次完整研判（四态判定 + 定级 + 工单）时，在正文末尾输出一个 anxun 代码块，内容是一行 JSON：',
-  '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"<create_ticket 返回的号，不要自己编>","action":"立即停止作业并撤离"},"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
+  '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"code":"A","name":"立即处置","deadline":"2 小时内","why":"本次确认未佩戴 3 人"},"ticket":{"no":"<create_ticket 返回的号，不要自己编>","action":"立即停止作业并撤离"},"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
   'tone 取 ok / warn / bad / info。这块会被前端渲染成卡片，正文里不要重复它的内容。'
 ];
 
@@ -1306,7 +1314,7 @@ function cardFromScene(sc){
     verdicts: (s.verdicts || []).map(function(v){
       return { p:v.p, state:v.state, tone:v.tone, note:v.note };
     }),
-    risk: { R:g.R, L:g.L, S:g.S, level:g.level, deadline:g.deadline },
+    risk: g,
     ticket: { no:s.ticket.no, owner:'', action:s.ticket.action },
     checks: s.checks || [],
     law: s.law || []
@@ -1402,12 +1410,10 @@ function normalizeCard(card, sceneId, idx){
     return card;
   }
 
-  var r = card.risk || {};
-  var L = r.L, S = r.S;
-  if(L == null || S == null){ var rk = sceneRisk(sceneId) || {}; L = rk.L; S = rk.S; card._fallback = true; }
-  var g = grade(L, S);
+  // 等级不由模型给：按本次判定的人数重新分档（A≥3 人 / B 1–2 人 / C 仅待复核）
+  var g = urgencyOfVerdicts(card.verdicts && card.verdicts.length ? card.verdicts : (s.verdicts || []));
   if(g){
-    card.risk = { R:g.R, L:g.L, S:g.S, level:g.level, deadline:g.deadline };
+    card.risk = g;
     card.tone = g.tone;
   }else{
     card._fallback = true;
@@ -1450,7 +1456,7 @@ function pillOf(tone){
 function compactCard(c, idx){
   if(!c) return '';
   var h = '<div class="pcard ' + (c.tone||'info') + ' chatcard">';
-  h += '<div class="ph">研判结果<span class="eng">规则引擎计算</span><span class="r">R = L × S</span></div>';
+  h += '<div class="ph">研判结果<span class="eng">规则引擎</span><span class="r">按处置时限分档</span></div>';
   if(c.verdicts && c.verdicts.length){
     h += '<div class="crow">';
     c.verdicts.forEach(function(v){
@@ -1461,8 +1467,8 @@ function compactCard(c, idx){
   }
   if(c.risk){
     var r = c.risk;
-    h += '<div class="cline"><b class="n ' + (c.tone||'info') + '">' + r.R + '</b>' +
-         '<span>' + (function(){ var u = urgencyOf(r.R); return u ? (u.code + ' 级 · ' + u.name + ' · ') : ''; })() + esc(r.level) + ' · ' + esc(r.deadline) + ' · L=' + r.L + ' × S=' + r.S + '</span></div>';
+    h += '<div class="cline"><b class="n ' + (r.tone||'info') + '">' + esc(r.code) + '</b>' +
+         '<span>' + esc(r.code) + ' 级 · ' + esc(r.name) + ' · ' + esc(r.deadline) + ' · ' + esc(r.why) + '</span></div>';
   }
   if(c.ticket){
     h += '<div class="kv"><span>工单</span><b class="tno">' + esc(c.ticket.no) + '</b></div>';
@@ -1476,7 +1482,7 @@ function compactCard(c, idx){
 function cardHTML(c){
   if(!c) return '';
   var h = '<div class="pcard ' + (c.tone||'info') + '" style="margin:10px 0 2px">';
-  h += '<div class="ph">研判结果<span class="eng">规则引擎计算</span><span class="r">R = L × S</span></div>';
+  h += '<div class="ph">研判结果<span class="eng">规则引擎</span><span class="r">按处置时限分档</span></div>';
 
   if(c.verdicts && c.verdicts.length){
     c.verdicts.forEach(function(v){
@@ -1490,11 +1496,11 @@ function cardHTML(c){
     var r = c.risk;
     h += '<div style="display:flex;align-items:flex-end;gap:12px;margin-top:10px">' +
          '<div class="R" style="font-size:34px;font-weight:750;line-height:1;color:' +
-         (c.tone==='bad'?'var(--red)':c.tone==='warn'?'var(--orange)':'var(--blue)') + '">' + r.R + '</div>' +
+         (r.tone==='bad'?'var(--red)':r.tone==='warn'?'var(--orange)':'var(--blue)') + '">' + esc(r.code) + '</div>' +
          '<div style="font-size:11px;color:var(--sub);padding-bottom:3px;line-height:1.5">' +
-         '<b style="color:var(--ink)">' + esc(r.level) + '风险 · ' + esc(r.deadline) + '</b>' +
-         'R = L(' + r.L + ') × S(' + r.S + ')</div></div>';
-    h += '<div class="meter ' + (c.tone||'info') + '"><i style="width:' + Math.min(100, r.R/25*100) + '%"></i></div>';
+         '<b style="color:var(--ink)">' + esc(r.code) + ' 级 · ' + esc(r.name) + ' · ' + esc(r.deadline) + '</b><br>' +
+         esc(r.why) + '</div></div>';
+    h += '<div class="meter ' + (r.tone||'info') + '"><i style="width:' + (r.code==='A'?100:r.code==='B'?63:30) + '%"></i></div>';
   }
   if(c.ticket){
     var t = c.ticket;
@@ -1551,15 +1557,14 @@ function renderPanel(){
     h += '<div class="pcard info"><div class="ph">风险定级<span class="r">本次无违规</span></div>' +
          '<div style="padding:4px 2px 2px;color:var(--muted);font-size:12px;line-height:1.7">' +
          '全部人员判定完成，无「未佩戴」，系统直接放行，不生成事件与工单。<br>' +
-         '若这里真发生违规：L=' + g.L + '（' + esc(g.Lwhy) + '）× S=' + g.S + '（' + esc(g.Swhy) + '）= ' + g.R + ' → ' + esc(g.level) + '。</div></div>';
+         '若有确认违规，按人数分档：≥3 人 A 级（2 小时内）、1–2 人 B 级（24 小时内）。</div></div>';
   }else{
-  h += '<div class="pcard ' + g.tone + '"><div class="ph">风险定级<span class="eng">引擎计算</span><span class="r">R = L × S</span></div>' +
-       '<div class="risk ' + g.tone + '"><div class="R" data-count="' + g.R + '">0</div>' +
-       '<div class="f"><b>' + (function(){ var u = urgencyOf(g.R); return u ? (u.code + ' 级 · ' + u.name + ' · ') : ''; })() + esc(g.level) + ' · ' + esc(g.deadline) + '</b>L=' + g.L + ' · S=' + g.S + '</div></div>' +
-       '<div class="meter ' + g.tone + '"><i style="width:0" data-w="' + Math.min(100, g.R/25*100) + '"></i></div>' +
-       '<div class="kv"><span>可能性 L</span><b>' + g.L + ' · ' + esc(g.Lwhy) + '</b></div>' +
-       '<div class="kv"><span>严重性 S</span><b>' + g.S + ' · ' + esc(g.Swhy) + '</b></div>' +
-       '<div class="kv"><span>分级依据</span><b>R=L×S（MIL-STD-882 矩阵）· L/S 取值见 <a href="https://github.com/yukiiiii777/anxun-agent/blob/main/docs/%E5%AE%89%E5%B7%A1%E9%A3%8E%E9%99%A9%E5%88%86%E7%BA%A7%E6%A0%87%E5%87%86.md" target="_blank" rel="noopener noreferrer">《安巡风险分级标准 v1.1》</a> §2.1.1 / §2.2</b></div>' +
+  h += '<div class="pcard ' + g.tone + '"><div class="ph">处置等级<span class="eng">引擎判定</span><span class="r">按处理时限</span></div>' +
+       '<div class="risk ' + g.tone + '"><div class="R">' + esc(g.code) + '</div>' +
+       '<div class="f"><b>' + esc(g.code) + ' 级 · ' + esc(g.name) + ' · ' + esc(g.deadline) + '</b></div></div>' +
+       '<div class="meter ' + g.tone + '"><i style="width:' + (g.code==='A'?100:g.code==='B'?63:30) + '%"></i></div>' +
+       '<div class="kv"><span>判定依据</span><b>' + esc(g.why) + '</b></div>' +
+       '<div class="kv"><span>分档规则</span><b>A 级=≥3 人未佩戴（2 小时内）· B 级=1–2 人（24 小时内）· C 级=仅待复核（7 天内）</b></div>' +
        '</div>';
   }
 
@@ -1635,12 +1640,12 @@ function renderPanelCard(card, sceneKey){
   h += '</div>';
 
   if(card.risk){
-    h += '<div class="pcard ' + tone + '"><div class="ph">风险定级<span class="eng">引擎计算</span><span class="r">R = L × S</span></div>'
-       + '<div class="risk ' + tone + '"><div class="R">' + card.risk.R + '</div>'
-       + '<div class="f"><b>' + (function(){ var u = urgencyOf(card.risk.R); return u ? (u.code + ' 级 · ' + u.name + ' · ') : ''; })() + esc(card.risk.level) + ' · ' + esc(card.risk.deadline) + '</b>'
-       + 'L=' + card.risk.L + ' · S=' + card.risk.S + '</div></div>'
-       + '<div class="meter ' + tone + '"><i style="width:' + Math.min(100, card.risk.R / 25 * 100) + '%"></i></div>'
-       + '<div class="kv"><span>分级依据</span><b>R=L×S（MIL-STD-882 矩阵）· L/S 取值见《安巡风险分级标准 v1.1》§2.1.1 / §2.2</b></div>'
+    var cr = card.risk;
+    h += '<div class="pcard ' + (cr.tone||tone) + '"><div class="ph">处置等级<span class="eng">引擎判定</span><span class="r">按处理时限</span></div>'
+       + '<div class="risk ' + (cr.tone||tone) + '"><div class="R">' + esc(cr.code) + '</div>'
+       + '<div class="f"><b>' + esc(cr.code) + ' 级 · ' + esc(cr.name) + ' · ' + esc(cr.deadline) + '</b></div></div>'
+       + '<div class="meter ' + (cr.tone||tone) + '"><i style="width:' + (cr.code==='A'?100:cr.code==='B'?63:30) + '%"></i></div>'
+       + '<div class="kv"><span>判定依据</span><b>' + esc(cr.why) + '</b></div>'
        + '</div>';
   }else{
     h += '<div class="pcard info"><div class="ph">风险定级<span class="r">本次无违规</span></div>'
@@ -1807,8 +1812,8 @@ function traceHTML(trace){
     var a = t.args || {}, o = t.out || {};
     var argStr = Object.keys(a).map(function(k){ return k + '=' + a[k]; }).join(', ');
     var res;
-    if(t.name === 'risk_factors') res = o.error ? '错误' : ('L=' + o.L + ' · S=' + o.S);
-    else if(t.name === 'grade_risk') res = o.error ? '参数不合法' : ('R=' + o.R + ' · ' + o.level);
+    if(t.name === 'risk_factors') res = o.error ? '错误' : (o.L_basis || '本次判定概况');
+    else if(t.name === 'grade_risk') res = o.error ? '参数不合法' : ((o.code || '—') + ' 级 · ' + (o.deadline || '不出单'));
     else if(t.name === 'law_lookup') res = o.found ? ('命中 ' + o.code) : '未收录';
     else if(t.name === 'create_ticket') res = (o.no || '已生成');
     else res = '完成';
@@ -2047,11 +2052,9 @@ var TOOLS = [
       required:['work_type'] } } },
   { type:'function', function:{
     name:'grade_risk',
-    description:'按 R = L × S 计算风险等级与整改时限。L、S 必须来自 risk_factors 的返回值。',
+    description:'按「要不要马上处理」给出处置等级 A/B/C 与处理时限（A=2 小时内、B=24 小时内、C=7 天内），依据是本次确认未佩戴的人数。不需要传参数。',
     parameters:{ type:'object',
-      properties:{ L:{ type:'integer', description:'可能性 L，1–4 的整数' },
-                  S:{ type:'integer', description:'严重性 S，1–4 的整数' } },
-      required:['L','S'] } } },
+      properties:{} } } },
   { type:'function', function:{
     name:'law_lookup',
     description:'在项目条文库里查法规原文。引用任何条款之前必须先查；查不到就不要引用。',
@@ -2083,8 +2086,10 @@ function runTool(name, args){
     };
   }
   if(name === 'grade_risk'){
-    var g = grade(a.L, a.S);
-    return g ? { R:g.R, level:g.level, deadline:g.deadline, L:g.L, S:g.S } : { error:'L 或 S 不是 1–4 的整数' };
+    // v1.4：等级按「要不要马上处理」分档，不吃 L/S，也不看场景。
+    var gv = sceneRisk(S.scene);
+    return gv ? { code:gv.code, name:gv.name, deadline:gv.deadline, why:gv.why }
+              : { code:'—', note:'本次无违规，不出等级' };
   }
   if(name === 'law_lookup'){
     // 按装备直接映射到条文：模型常拿「未穿戴反光背心」去匹配，
@@ -2498,8 +2503,8 @@ function buildTicketXml(d){
   info.push('<w:tr>' + wTc('受检区域', {w:W[0], b:1, fill:'F2F2F2', align:'center'})
     + wTc(d.region, {w:W[1]}) + wTc('作业类型', {w:W[2], b:1, fill:'F2F2F2', align:'center'})
     + wTc(d.work, {w:W[3]}) + '</w:tr>');
-  info.push('<w:tr>' + wTc('风险等级', {w:W[0], b:1, fill:'F2F2F2', align:'center'})
-    + wTc(d.grade, {w:W[1]}) + wTc('风险值', {w:W[2], b:1, fill:'F2F2F2', align:'center'})
+  info.push('<w:tr>' + wTc('处置等级', {w:W[0], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.grade, {w:W[1]}) + wTc('判定依据', {w:W[2], b:1, fill:'F2F2F2', align:'center'})
     + wTc(d.rvalue, {w:W[3]}) + '</w:tr>');
   info.push('<w:tr>' + wTc('整改时限', {w:W[0], b:1, fill:'F2F2F2', align:'center'})
     + wTc(d.due, {w:W[1]}) + wTc('判定方式', {w:W[2], b:1, fill:'F2F2F2', align:'center'})
@@ -2563,7 +2568,7 @@ function buildTicketXml(d){
   body += wTbl([sign], SW);
   body += wP('', { sz:12, after:60 });
   body += wP('本通知单由安巡 Agent 依据 ' + d.model + ' 实测判定与《安巡风险分级标准 v1.2》自动生成；'
-    + 'R = L × S，L 取历史违规次数与本次违规人数的较高档，S 按作业类型取值。', { sz:17, color:'666666', after:0 });
+    + '处置等级按处理时限分档：确认未佩戴 ≥3 人 → A（2 小时内）、1–2 人 → B（24 小时内）、仅待复核 → C（7 天内）。', { sz:17, color:'666666', after:0 });
 
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     + '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
@@ -2577,8 +2582,8 @@ function buildTicketXml(d){
 function exportTicket(){
   var s = SCENES[S.scene];
   var t = s.ticket || {};
-  var rk = sceneRisk(S.scene) || { L:'-', S:'-', R:'-', level:'', deadline:'' };
-  var u = urgencyOf(rk.R) || { code:'', name:'' };
+  var rk = sceneRisk(S.scene) || { code:'', name:'', deadline:'', why:'' };
+  var u = rk;
   var no = (t.no) ? String(t.no) : ticketNoFor(S.scene);
   var now = new Date();
   var counts = { ok:0, warn:0, bad:0, mute:0 };
@@ -2588,15 +2593,15 @@ function exportTicket(){
     no: no,
     region: '＿＿＿＿＿＿＿＿',   // 无法确定的就不填，留空手写
     work: '＿＿＿＿＿＿',   // 作业类型同样无法从画面确定，留空手填
-    grade: (u.code ? u.code + ' 级 · ' + u.name + '（' : '') + (rk.level || '') + (u.code ? '）' : ''),
-    rvalue: 'R = ' + rk.R + '（L=' + rk.L + ' × S=' + rk.S + '）',
+    grade: (u.code ? u.code + ' 级 · ' + u.name : '—'),
+    rvalue: u.why || '',
     due: (t.due_at ? String(t.due_at).replace('T', ' ').slice(5, 16) + ' 前' : (rk.deadline || '—')),
     method: 'AI 视觉识别 + 规则引擎（' + modelName() + '）',
     owner: t.owner || '＿＿＿＿＿＿（签字）',
     reviewer: t.reviewer || '＿＿＿＿＿＿（签字）',
     issued: now.getFullYear() + '-' + p2(now.getMonth() + 1) + '-' + p2(now.getDate())
       + ' ' + p2(now.getHours()) + ':' + p2(now.getMinutes()),
-    urgency: u.code ? (u.code + ' 级 · ' + u.name) : (rk.level || '—'),
+    urgency: u.code ? (u.code + ' 级 · ' + u.name) : '—',
     persons: (s.verdicts || []).length,
     bad: counts.bad || 0, warn: counts.warn || 0, mute: counts.mute || 0,
     action: cleanReq(t.action || '按现场实际情况整改'),
