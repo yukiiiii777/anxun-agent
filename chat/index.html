@@ -611,12 +611,25 @@ function applyModelScene(k, d){
 /* ---------------- 上传图片跑真模型 ---------------- */
 var REGION_OF_SCENE = { A:'A-03', B:'B-01', C:'C-02' };
 
+/* 一直挂在模块级，别让 input 被回收。
+   iOS Safari 上，createElement 出来的 input 如果只是局部变量、又没插进 DOM，
+   用户选完照片后它可能已经被 GC，onchange 永远不触发——表现就是
+   「相册能打开、选完什么也没发生」，桌面浏览器上几乎复现不出来。 */
+var _picker = null;
+
 function pickImage(){
+  if(_picker){ try{ _picker.remove(); }catch(e){} }
   var inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = 'image/*';
+  inp.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0';
+  _picker = inp;
+  document.body.appendChild(inp);        // 必须进 DOM，iOS 才稳定派发 change
   inp.onchange = function(){
-    if(inp.files && inp.files[0]) uploadInspect(inp.files[0]);
+    var f = (inp.files && inp.files[0]) || null;
+    try{ inp.remove(); }catch(e){}
+    if(_picker === inp) _picker = null;
+    if(f) uploadInspect(f);
   };
   inp.click();
 }
@@ -697,7 +710,7 @@ async function uploadInspect(file){
             || /image\/hei[cf]/.test((file && file.type) || '');
   var regionId = REGION_OF_SCENE[S.scene] || 'A-03';
   try{
-    toast('正在跑 ' + modelName() + '…');
+    toast('正在上传并跑 ' + modelName() + '…');
     // 先把这张图摆进对话，用户才知道系统看的是哪张。
     // 缩略图偶尔会失败（无头浏览器、异常编码），失败就用原图 dataURL 顶上，
     // 上限 700 KB —— 再大就不进消息，免得把 localStorage 撑爆。
@@ -719,10 +732,19 @@ async function uploadInspect(file){
     }
     addMsg('user', '上传图片实测：' + (file.name || '未命名'), thumb);
     renderConvo(); enterLast(); toBottom(true);
-    var r = await fetch(apiUrl('/api/inspect'), {
-      method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ image_base64:dataUrl, region_id:regionId })
-    });
+    // 没有超时的 fetch 会一直挂着，用户看到的就是「选完图什么也没发生」。
+    var ctrl = new AbortController();
+    var timer = setTimeout(function(){ ctrl.abort(); }, 75000);
+    var r;
+    try{
+      r = await fetch(apiUrl('/api/inspect'), {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ image_base64:dataUrl, region_id:regionId }),
+        signal: ctrl.signal
+      });
+    }finally{
+      clearTimeout(timer);
+    }
     var d = await r.json();
     if(!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
     var x = sceneFromApi(d);
@@ -759,7 +781,11 @@ async function uploadInspect(file){
     addMsg('assistant', head + body + '\n```anxun\n' + JSON.stringify(card) + '\n```\n');
     renderConvo(); enterLast(); toBottom(true);
   }catch(e){
-    toast('实测失败：' + (e.message || e));
+    if(e && e.name === 'AbortError'){
+      toast('上传超时：75 秒没等到结果。换个网络，或换一张小一点的图再试。');
+    }else{
+      toast('实测失败：' + (e.message || e));
+    }
   }
 }
 
