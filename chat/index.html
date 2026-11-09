@@ -591,7 +591,7 @@ function applyModelScene(k, d){
   // 页脚措辞跟着数据来源走：跑过模型就别再写「场景数据为示例」，那等于自打脸
   var tip = document.getElementById('tip');
   if(tip) tip.textContent = '内容由模型生成，判定与工单以规则引擎输出为准 · 右侧为 '
-    + ((MODEL.info && MODEL.info.name) || 'best.pt') + ' 对样例图的实测结果；'
+    + modelName() + ' 对样例图的实测结果；'
     + '样例图为公开数据集素材（CC BY 4.0），非同厂现场记录';
 
   var st = {};
@@ -607,7 +607,7 @@ function applyModelScene(k, d){
           + '（' + (s.ticket.grade || '') + '' + (s.ticket.risk ? ' · R=' + s.ticket.risk : '') + '），'
           + '责任人 ' + (s.ticket.owner || '') + '；用户问工单就直接引用这个号，不要另编。'
         : '')
-    + '以上为 best.pt 实测结果（' + ((d.source || '').indexOf('scene') === 0 ? (d.source.split(':')[1] || '') : '上传图') + '），不是手写数据。';
+    + '以上为 ' + modelName() + ' 实测结果（' + ((d.source || '').indexOf('scene') === 0 ? (d.source.split(':')[1] || '') : '上传图') + '），不是手写数据。';
 }
 
 /* ---------------- 上传图片跑真模型 ---------------- */
@@ -670,7 +670,7 @@ async function uploadInspect(file){
   if(!MODEL.ready){ toast('模型服务没起来：先运行 python serve.py'); return; }
   var regionId = REGION_OF_SCENE[S.scene] || 'A-03';
   try{
-    toast('正在跑 best.pt…');
+    toast('正在跑 ' + modelName() + '…');
     // 先把这张图摆进对话，用户才知道系统看的是哪张。
     // 缩略图偶尔会失败（无头浏览器、异常编码），失败就用原图 dataURL 顶上，
     // 上限 700 KB —— 再大就不进消息，免得把 localStorage 撑爆。
@@ -696,7 +696,7 @@ async function uploadInspect(file){
     var ev = (d.events || [])[0];
     var st = {};
     x.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
-    var head = '**上传图片实测**（区域 ' + regionId + ' · best.pt · ' + x.verdicts.length + ' 人）\n\n'
+    var head = '**上传图片实测**（区域 ' + regionId + ' · ' + modelName() + ' · ' + x.verdicts.length + ' 人）\n\n'
       + Object.keys(st).map(function(y){ return y + ' ' + st[y]; }).join('、') + '。\n\n';
     if(d.scene_check && d.scene_check.ok === false){
       head += '> 注意：' + (d.scene_check.reason || '该图疑似非作业全景')
@@ -739,7 +739,7 @@ async function refreshModelScene(k, silent){
     MODEL.cache[k] = d;
     applyModelScene(k, d);
     if(S.scene === k) renderPanel();
-    if(!silent) toast('已用 best.pt 重跑 ' + sid + '：' + ((d.persons || []).length) + ' 人 / ' + ((d.events || []).length) + ' 条违规');
+    if(!silent) toast('已用 ' + modelName() + ' 重跑 ' + sid + '：' + ((d.persons || []).length) + ' 人 / ' + ((d.events || []).length) + ' 条违规');
   }catch(e){
     MODEL.ready = false;
     paintStatus();
@@ -1290,6 +1290,12 @@ function urgencyOf(R){
   return            { code:'C', name:'一般', note:'限期处置', tone:'gold' };
 }
 
+/* 模型文件名按后端返回：本地 GPU 是 best.pt，线上 ONNX 是 best.onnx。
+   以前文案里写死 best.pt，部署版会标错文件名。 */
+function modelName(){
+  return (MODEL.info && MODEL.info.name) || 'best.pt';
+}
+
 function pad3(n){ n = String(n); while(n.length < 3){ n = '0' + n; } return n; }
 function dateCode(){ var d = new Date(); return ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2); }
 
@@ -1459,7 +1465,7 @@ function renderPanel(){
        '</div></div>';
 
   h += '<div class="pcard ' + tone + '"><div class="ph">四态判定<span class="r">' +
-       (s._model ? (s.verdicts.length + ' 人 · best.pt 实测') : ('4 人 · 示例数据')) + '</span></div>';
+       (s._model ? (s.verdicts.length + ' 人 · ' + modelName() + ' 实测') : ('4 人 · 示例数据')) + '</span></div>';
   s.verdicts.forEach(function(v){
     var p = pillOf(v.tone);
     h += '<div class="vrow"><span class="p">' + esc(v.p) + '</span>' +
@@ -1514,7 +1520,7 @@ function renderPanel(){
   h += '<div class="pfoot"><b>统计口径</b>：有效样本 = 已佩戴 + 未佩戴；待复核与无法判定单列、不进分子分母，只进人工复核队列。<br>' +
        confTxt + '；对外报数用评测口径：mAP 0.8654 · 误报 6.12% · 漏报 4.35% · 15.0 ms<br>' +
        (s._model
-         ? '数据来源：本机 best.pt 实测（' + esc((s._meta && s._meta.scene) || '') + '）' + ((s._meta && s._meta.ms) ? ' · ' + s._meta.ms + ' ms/帧' : '')
+         ? '数据来源：' + modelName() + ' 实测（' + esc((s._meta && s._meta.scene) || '') + '）' + ((s._meta && s._meta.ms) ? ' · ' + s._meta.ms + ' ms/帧' : '')
          : '数据来源：示例数据（人工构造，用于演示判定链路），非现场运行记录') + '</div>';
 
   $('#pbody').innerHTML = h;
@@ -1777,7 +1783,7 @@ function demoAnswer(kind, s){
   if(s._clean){
     var st = {};
     s.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
-    return '场景 **' + s.id + ' · ' + s.name + '**：' + (s._model ? 'best.pt 实测 ' : '示例数据 ') + s.verdicts.length + ' 人，' +
+    return '场景 **' + s.id + ' · ' + s.name + '**：' + (s._model ? modelName() + ' 实测 ' : '示例数据 ') + s.verdicts.length + ' 人，' +
       Object.keys(st).map(function(k){ return k + ' ' + st[k]; }).join('、') + '。\n\n' +
       '**没有确认违规，直接放行**——不生成事件、不开工单。这是误报率的现场体现：' +
       '合规的人不该被拦下来复核；拦错了，班组很快就会把系统关掉。\n\n' +
@@ -1890,7 +1896,7 @@ async function reply(q){
   // 场景实测还没回来就先等它。否则 SCENE_CTX 还是那套示例文案（4 人假数据），
   // 模型会照着假数据答，右栏却已经是实测的 1 人 / 10 人，两边对不上。
   if(MODEL.ready && !MODEL.cache[S.scene]){
-    m.hint = '正在用 best.pt 读当前场景…';
+    m.hint = '正在用 ' + modelName() + ' 读当前场景…';
     paint(true);
     try{ await refreshModelScene(S.scene, true); }catch(e){}
     for(var wi = 0; wi < 30 && !MODEL.cache[S.scene]; wi++) await sleep(150);
@@ -2332,27 +2338,6 @@ function paintStatus(){
   }
   st.title = (S.cloudState === 'failed') ? '点击重新连接云端模型' : '云端模型（免密钥）';
 }
-function askKey(){
-  var cur = S.key ? ('已配置 ' + S.key.slice(0, 10) + '…') : '未配置';
-  var v = window.prompt(
-    'DeepSeek API Key（只存在你本机浏览器，不会上传到任何服务器）\n当前：' + cur +
-    '\n\n留空点「确定」= 清除并回到演示模式', S.key || '');
-  if(v === null) return;
-  v = String(v).trim();
-  try{
-    if(v){
-      localStorage.setItem('anxun.key', v);
-      S.key = v; S.transport = 'direct'; S.mode = 'live'; S.model = 'deepseek-chat'; S.verified = false;
-      toast('已切换为直连真实模型');
-    }else{
-      localStorage.removeItem('anxun.key');
-      S.key = ''; S.transport = 'demo'; S.mode = 'demo'; S.verified = false;
-      toast('已切回演示模式');
-    }
-  }catch(e){ toast('保存失败：浏览器禁用了本地存储'); }
-  paintStatus();
-}
-
 $('#btnUpload').onclick = function(){
   if(!MODEL.ready){ toast('模型服务没起来：先运行 python serve.py'); return; }
   pickImage();
