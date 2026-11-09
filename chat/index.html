@@ -660,6 +660,9 @@ var CLOUD_CONFIG = {
   oauthRelayBaseUrl: 'https://www.workbuddy.cn/v2/as/genie-baas/oauth'
 };
 var CLOUD = { ready:false, client:null, model:null, modelName:'', supportsTools:false };
+/* 优先用免费模型 hy4free（倍率 x0.00），没有就退到最便宜的 fast-model（x0.15），
+   再没有才用目录里第一个可用模型。换哪个模型都不改判定链路：等级仍由本地工具算。 */
+var CLOUD_PREFER = ['hy4free', 'fast-model'];
 
 async function initCloud(){
   if(!window.WorkBuddyCloud || !window.WorkBuddyCloud.createWorkBuddyCloud) return false;
@@ -669,12 +672,18 @@ async function initCloud(){
       publishableKey: CLOUD_CONFIG.publishableKey,
       oauthRelayBaseUrl: CLOUD_CONFIG.oauthRelayBaseUrl
     });
-    var list = await CLOUD.client.llm.models.list();
-    var m = (list || []).filter(function(x){ return x.disabled !== true; })[0];
-    if(!m) return false;
-    CLOUD.model = m.id;
-    CLOUD.modelName = m.name || m.id;
-    CLOUD.supportsTools = m.supportsToolCall === true;
+    var list = (await CLOUD.client.llm.models.list()) || [];
+    var pick = null;
+    for(var i = 0; i < CLOUD_PREFER.length && !pick; i++){
+      pick = list.filter(function(x){
+        return x.id === CLOUD_PREFER[i] && x.disabled !== true;
+      })[0] || null;
+    }
+    if(!pick) pick = list.filter(function(x){ return x.disabled !== true; })[0];
+    if(!pick) return false;
+    CLOUD.model = pick.id;
+    CLOUD.modelName = pick.name || pick.id;
+    CLOUD.supportsTools = pick.supportsToolCall === true;
     CLOUD.ready = true;
     return true;
   }catch(e){
@@ -706,6 +715,9 @@ function cloudMessages(c){
 /* 与直连那条一样的循环：模型调工具 → 本地算 → 结果回灌，最多三轮 */
 async function cloudRun(c, signal, onDelta, onTrace){
   var messages = cloudMessages(c);
+  var spoke = false;
+  function emit(t){ spoke = true; onDelta(t); }
+
   for(var round = 0; round < 3; round++){
     var req = { model: CLOUD.model, messages: messages, stream: true, temperature: 0.3 };
     if(signal) req.signal = signal;
@@ -715,7 +727,7 @@ async function cloudRun(c, signal, onDelta, onTrace){
     for await (var chunk of CLOUD.client.llm.chat.completions.create(req)){
       var ch = chunk.choices && chunk.choices[0];
       var d = ch && ch.delta;
-      if(d && d.content){ acc += d.content; onDelta(d.content); }
+      if(d && d.content){ acc += d.content; emit(d.content); }
       if(d && d.tool_calls){
         for(var k = 0; k < d.tool_calls.length; k++){
           var tc = d.tool_calls[k];
@@ -728,7 +740,7 @@ async function cloudRun(c, signal, onDelta, onTrace){
       }
     }
     var clean = calls.filter(Boolean);
-    if(!clean.length) return;
+    if(!clean.length) break;          // 这一轮没调工具，正文已经流出来了
 
     messages.push({ role:'assistant', content: acc || '', tool_calls: clean });
     for(var i = 0; i < clean.length; i++){
@@ -740,6 +752,21 @@ async function cloudRun(c, signal, onDelta, onTrace){
       catch(e){ out = { error: String(e && e.message || e) }; }
       if(onTrace) onTrace({ name: one.function.name, args: args, out: out });
       messages.push({ role:'tool', tool_call_id: one.id, content: JSON.stringify(out) });
+    }
+  }
+
+  // 兜底：工具走完却一个字没写（免费模型常见），再要一次纯文本结论
+  if(!spoke){
+    var fin = {
+      model: CLOUD.model,
+      messages: messages.concat([{ role:'user', content:'基于上面的工具结果，用中文直接给出最终结论，不要再调用工具。' }]),
+      stream: true,
+      temperature: 0.3
+    };
+    if(signal) fin.signal = signal;
+    for await (var c2 of CLOUD.client.llm.chat.completions.create(fin)){
+      var d2 = c2.choices && c2.choices[0] && c2.choices[0].delta;
+      if(d2 && d2.content) emit(d2.content);
     }
   }
 }
