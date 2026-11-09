@@ -343,6 +343,8 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
 <div class="mask" id="mask"></div>
 <div class="toast" id="toast"></div>
 
+<!-- 云服务 SDK（免密钥大模型）。加载失败不影响页面，会退回演示数据。 -->
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
 <script>
 /* ============================================================
    安巡 Agent · 研判台
@@ -646,6 +648,100 @@ try{ SHARE = new URLSearchParams(location.search).get('sharecode') || ''; }catch
 function apiUrl(p){
   if(!SHARE) return p;
   return p + (p.indexOf('?') >= 0 ? '&' : '?') + 'sharecode=' + encodeURIComponent(SHARE);
+}
+
+/* ---------------- 云服务：免密钥大模型 ----------------
+   下面三个值是云服务激活时返回的 publicConfig。publishableKey 只标识「哪个应用」，
+   本身不带权限；真正的校验是服务端做 Origin 精确匹配——换个域名调用会被拒（auth_）。
+   所以这套只在发布域名下生效，本地 127.0.0.1 会失败并自动退回演示数据。 */
+var CLOUD_CONFIG = {
+  endpoint: 'https://anxun-desk.app.workbuddy.host',
+  publishableKey: 'wbpk_jYwjUdMPtWHiylM060o4yK_v1xu8H9k5VfWvzMokUZ9gjdV6Zewuibt',
+  oauthRelayBaseUrl: 'https://www.workbuddy.cn/v2/as/genie-baas/oauth'
+};
+var CLOUD = { ready:false, client:null, model:null, modelName:'', supportsTools:false };
+
+async function initCloud(){
+  if(!window.WorkBuddyCloud || !window.WorkBuddyCloud.createWorkBuddyCloud) return false;
+  try{
+    CLOUD.client = WorkBuddyCloud.createWorkBuddyCloud({
+      endpoint: CLOUD_CONFIG.endpoint,
+      publishableKey: CLOUD_CONFIG.publishableKey,
+      oauthRelayBaseUrl: CLOUD_CONFIG.oauthRelayBaseUrl
+    });
+    var list = await CLOUD.client.llm.models.list();
+    var m = (list || []).filter(function(x){ return x.disabled !== true; })[0];
+    if(!m) return false;
+    CLOUD.model = m.id;
+    CLOUD.modelName = m.name || m.id;
+    CLOUD.supportsTools = m.supportsToolCall === true;
+    CLOUD.ready = true;
+    return true;
+  }catch(e){
+    CLOUD.ready = false;
+    return false;
+  }
+}
+
+function cloudErrText(e){
+  var code = (e && e.error && e.error.code) || '';
+  if(/^quota_/.test(code)) return '云端额度不足或触发限流，稍后再试';
+  if(/^auth_/.test(code)) return '云端鉴权失败（发布域名不匹配，或环境未启用）';
+  if(/^gateway_|^model_/.test(code)) return '模型服务暂时不可用，点「重新生成」再试';
+  if(/^request_/.test(code)) return '模型不接受这个请求：' + ((e.error && e.error.message) || code);
+  return '云端调用失败：' + ((e && e.message) || code || '未知错误');
+}
+
+/* 云端要求 messages[0] 是应用的 system 提示，且不认两条 system：
+   这里把 SYS 与场景上下文合成一条再发。 */
+function cloudMessages(c){
+  var sys = SYS + '\n\n' + (SCENE_CTX[S.scene] || '');
+  var msgs = [{ role:'system', content: sys }];
+  c.msgs.slice(0, -1).forEach(function(x){
+    if(x.role === 'user' || x.role === 'assistant') msgs.push({ role:x.role, content:x.content });
+  });
+  return msgs;
+}
+
+/* 与直连那条一样的循环：模型调工具 → 本地算 → 结果回灌，最多三轮 */
+async function cloudRun(c, signal, onDelta, onTrace){
+  var messages = cloudMessages(c);
+  for(var round = 0; round < 3; round++){
+    var req = { model: CLOUD.model, messages: messages, stream: true, temperature: 0.3 };
+    if(signal) req.signal = signal;
+    if(CLOUD.supportsTools && round < 2){ req.tools = TOOLS; req.tool_choice = 'auto'; }
+
+    var acc = '', calls = [];
+    for await (var chunk of CLOUD.client.llm.chat.completions.create(req)){
+      var ch = chunk.choices && chunk.choices[0];
+      var d = ch && ch.delta;
+      if(d && d.content){ acc += d.content; onDelta(d.content); }
+      if(d && d.tool_calls){
+        for(var k = 0; k < d.tool_calls.length; k++){
+          var tc = d.tool_calls[k];
+          var cur = calls[tc.index] || { id:'', type:'function', function:{ name:'', arguments:'' } };
+          if(tc.id) cur.id = tc.id;
+          if(tc.function && tc.function.name) cur.function.name = tc.function.name;
+          if(tc.function && tc.function.arguments) cur.function.arguments += tc.function.arguments;
+          calls[tc.index] = cur;
+        }
+      }
+    }
+    var clean = calls.filter(Boolean);
+    if(!clean.length) return;
+
+    messages.push({ role:'assistant', content: acc || '', tool_calls: clean });
+    for(var i = 0; i < clean.length; i++){
+      var one = clean[i];
+      var args = {};
+      try{ args = JSON.parse(one.function.arguments || '{}'); }catch(e){}
+      var out;
+      try{ out = runTool(one.function.name, args); }
+      catch(e){ out = { error: String(e && e.message || e) }; }
+      if(onTrace) onTrace({ name: one.function.name, args: args, out: out });
+      messages.push({ role:'tool', tool_call_id: one.id, content: JSON.stringify(out) });
+    }
+  }
 }
 
 /* ---------------- 模型侧提示词（直连 / 代理 共用） ---------------- */
@@ -1303,6 +1399,12 @@ async function reply(q){
         m.trace.push(step);
         paint(true);
       });
+    }else if(S.mode === 'live' && S.transport === 'cloud'){
+      await cloudRun(c, ctrl.signal, function(delta){ acc += delta; paint(false); }, function(step){
+        m.trace = m.trace || [];
+        m.trace.push(step);
+        paint(true);
+      });
     }else if(S.mode === 'live'){
       await streamLive(c, q, ctrl.signal, function(delta){ acc += delta; paint(false); });
     }else{
@@ -1317,7 +1419,11 @@ async function reply(q){
       }
     }
   }catch(e){
-    if(!acc) acc = '出错了：' + (e && e.message ? e.message : e);
+    if(ctrl.signal.aborted){
+      if(!acc) acc = '（已停止）';
+    }else if(!acc){
+      acc = (S.transport === 'cloud') ? cloudErrText(e) : ('出错了：' + (e && e.message ? e.message : e));
+    }
   }finally{
     m.streaming = false;
     m.content = acc;
@@ -1683,7 +1789,8 @@ function paintStatus(){
     txt.textContent = MODEL.ready ? '演示模式 · best.pt 实测判定' : '演示模式 · anxun-demo';
   }else{
     st.classList.add('live');
-    txt.textContent = '已连接 · ' + (S.transport === 'direct' ? '直连 ' : '') + S.model
+    var via = S.transport === 'direct' ? '直连 ' : (S.transport === 'cloud' ? '云端 ' : '');
+    txt.textContent = '已连接 · ' + via + S.model
       + (MODEL.ready ? ' · best.pt' : '');
   }
 }
@@ -1714,6 +1821,10 @@ $('#btnUpload').onclick = function(){
 };
 
 $('#status').onclick = function(){
+  if(S.transport === 'cloud'){
+    toast('当前用云端模型（免密钥），无需填写 key');
+    return;
+  }
   if(S.transport === 'proxy'){
     toast('密钥在服务端，页面不接触 key');
     return;
@@ -1781,6 +1892,14 @@ async function boot(){
       }
     }
   }catch(e){ /* file:// 或 GitHub Pages 静态托管：保留示例数据 */ }
+
+  // 既没有用户 key、也没有同源代理时，试云服务的免密钥大模型（只在发布域名下能用）
+  if(S.mode !== 'live'){
+    if(await initCloud()){
+      S.transport = 'cloud'; S.mode = 'live'; S.model = CLOUD.modelName;
+      paintStatus();
+    }
+  }
 
   if(!restored){
     newConvo();
