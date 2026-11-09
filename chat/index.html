@@ -570,7 +570,7 @@ async function uploadInspect(file){
   try{
     toast('正在跑 best.pt…');
     var dataUrl = await readAsDataURL(file);
-    var r = await fetch('/api/inspect', {
+    var r = await fetch(apiUrl('/api/inspect'), {
       method:'POST', headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ image_base64:dataUrl, region_id:regionId })
     });
@@ -611,7 +611,7 @@ async function refreshModelScene(k, silent){
   }
   MODEL.busy[k] = true;
   try{
-    var r = await fetch('/api/inspect', {
+    var r = await fetch(apiUrl('/api/inspect'), {
       method:'POST', headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ scene_id:sid })
     });
@@ -629,6 +629,16 @@ async function refreshModelScene(k, silent){
   }finally{
     MODEL.busy[k] = false;
   }
+}
+
+/* ---------------- 同源 API：托管链接要带 sharecode ----------------
+   线上发布后站点在反向代理后面，不带分享码的请求会被换成「链接不完整」页，
+   所以页面里所有 /api 请求都走这里统一拼一次。本地 serve.py 没有 sharecode，原样透传。 */
+var SHARE = '';
+try{ SHARE = new URLSearchParams(location.search).get('sharecode') || ''; }catch(e){}
+function apiUrl(p){
+  if(!SHARE) return p;
+  return p + (p.indexOf('?') >= 0 ? '&' : '?') + 'sharecode=' + encodeURIComponent(SHARE);
 }
 
 /* ---------------- 模型侧提示词（直连 / 代理 共用） ---------------- */
@@ -1481,7 +1491,7 @@ async function agentRun(c, signal, onDelta, onTrace){
 /* 代理模式（Cloudflare 版）保留旧的流式转发 */
 async function streamLive(c, q, signal, onDelta){
   var msgs = c.msgs.slice(0, -1).map(function(x){ return { role:x.role, content:x.content }; });
-  var res = await fetch('/api/chat', {
+  var res = await fetch(apiUrl('/api/chat'), {
     method:'POST', headers:{ 'Content-Type':'application/json' },
     body: JSON.stringify({ messages: msgs, scene: S.scene, stream: true }),
     signal: signal
@@ -1743,7 +1753,7 @@ async function boot(){
 
   // 同源服务（serve.py）：有模型就把右侧面板切成实测，与对话走哪条路无关。
   try{
-    var r = await fetch('/api/health', { cache:'no-store' });
+    var r = await fetch(apiUrl('/api/health'), { cache:'no-store' });
     if(r.ok){
       var j = await r.json();
       if(j && j.model_info && j.model_info.ready){

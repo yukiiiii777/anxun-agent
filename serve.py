@@ -355,9 +355,14 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> int:
+    # 托管平台（Sites / 容器）只给一个 PORT 环境变量，且要求绑 0.0.0.0。
+    # 本机双击启动时没有 PORT，就老实绑回 127.0.0.1——别把服务暴露到局域网。
+    deployed = bool(os.environ.get("PORT"))
     ap = argparse.ArgumentParser(description="安巡 Agent 研判台（页面 + 真模型）")
-    ap.add_argument("--port", type=int, default=8611)
-    ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--port", type=int,
+                    default=int(os.environ.get("PORT") or 8611))
+    ap.add_argument("--host",
+                    default=os.environ.get("HOST") or ("0.0.0.0" if deployed else "127.0.0.1"))
     ap.add_argument("--backend", default="auto", choices=("auto", "torch", "onnx"))
     ap.add_argument("--device", default="", help="cpu 强制 CPU；留空自动")
     ap.add_argument("--imgsz", type=int, default=640)
@@ -365,6 +370,9 @@ def main() -> int:
     ap.add_argument("--no-model", action="store_true", help="只服务页面，不加载模型")
     ap.add_argument("--open", action="store_true", help="启动后自动开浏览器")
     args = ap.parse_args()
+
+    if args.open and deployed:
+        args.open = False          # 服务器上没有浏览器可开
 
     if not args.no_model:
         load_model(prefer=args.backend, imgsz=args.imgsz,

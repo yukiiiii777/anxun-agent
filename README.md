@@ -8,12 +8,14 @@
 
 > **快速入口**
 >
-> - 研判台（对话 + 四态 + R=L×S + 工单）：<https://yukiiiii777.github.io/anxun-agent/chat/>
+> - **在线研判台（真模型，ONNX-CPU）**：<https://anxun-desk.app.workbuddy.host/?sharecode=OLOGYZUPHO>
+>   右侧四态 / L×S 定级 / 工单由 best.onnx 实跑，不是手写数据；任意图片可上传实测
+> - 研判台（静态托管版，预置数据）：<https://yukiiiii777.github.io/anxun-agent/chat/>
 > - 在线演示（三场景可切，无需安装）：<https://yukiiiii777.github.io/anxun-agent/demo/>
 > - 实测指标：[技术页 P10–13](techline-v3.1.0/docs/技术页_10-13.html)
 > - 三组提示词示例：[docs/12-Agent提示词示例.md](docs/12-Agent提示词示例.md)
 >
-> **本地跑真模型**（右侧面板换成 best.pt 实测，不是手写数据）：
+> **本地跑真模型**（自带权重，不依赖上面的托管环境）：
 >
 > ```bash
 > python serve.py          # http://127.0.0.1:8611
