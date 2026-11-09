@@ -655,6 +655,33 @@ function makeThumb(file, maxW){
   });
 }
 
+/* 上传前重编码：iPhone 原图 3–6 MB，base64 后 4–8 MB，POST 出去又慢又容易被
+   平台截断（表现为「测了半天没结果」或直接失败）。canvas 压到最长边 1920、
+   JPEG 0.88 后通常 400–800 KB，对 640 输入的检测没有损失（1920 正好是评测口径）。
+
+   顺带解决 HEIC：Safari 能解 iPhone 的 HEIC，drawImage 到 canvas 再
+   toDataURL('image/jpeg') 出来就是标准 JPEG，服务端不用认识 HEIC。
+   解不出来时返回空串，由调用方决定退原图还是提示换格式。 */
+async function prepareForUpload(file, maxSide, quality){
+  maxSide = maxSide || 1920;
+  quality = quality || 0.88;
+  try{
+    var bmp = await createImageBitmap(file);
+    var bw = bmp.width || 1, bh = bmp.height || 1;
+    var scale = Math.min(1, maxSide / Math.max(bw, bh));
+    var w = Math.max(1, Math.round(bw * scale));
+    var h = Math.max(1, Math.round(bh * scale));
+    var c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(bmp, 0, 0, w, h);
+    if(bmp.close) bmp.close();
+    var out = c.toDataURL('image/jpeg', quality);
+    return (out && out.length > 32) ? out : '';
+  }catch(e){
+    return '';
+  }
+}
+
 function readAsDataURL(file){
   return new Promise(function(resolve, reject){
     var fr = new FileReader();
@@ -666,12 +693,8 @@ function readAsDataURL(file){
 
 async function uploadInspect(file){
   if(!MODEL.ready){ toast('模型服务没起来：先运行 python serve.py'); return; }
-  // iPhone 默认 HEIC：浏览器解不出缩略图，会白等 4 秒兜底再被服务端拒。这里先拦下。
-  var fn = ((file && file.name) || '').toLowerCase();
-  if(/\.(heic|heif)$/.test(fn) || /image\/hei[cf]/.test((file && file.type) || '')){
-    toast('这是 iPhone 的 HEIC 格式，浏览器读不了：请先在相册「导出为 JPG」或截图后再上传。');
-    return;
-  }
+  var isHeic = /\.(heic|heif)$/.test(((file && file.name) || '').toLowerCase())
+            || /image\/hei[cf]/.test((file && file.type) || '');
   var regionId = REGION_OF_SCENE[S.scene] || 'A-03';
   try{
     toast('正在跑 ' + modelName() + '…');
@@ -685,9 +708,17 @@ async function uploadInspect(file){
         if(raw && raw.length < 700000) thumb = raw;
       }catch(e){}
     }
+    // 先把要发出去的图准备好。解不开就先别往对话里塞一条永远没有回复的提问。
+    var dataUrl = await prepareForUpload(file);
+    if(!dataUrl){
+      if(isHeic){
+        toast('这张是 iPhone 的 HEIC 格式，浏览器解不开。请在相册里「导出为 JPG」，或直接截图后再上传。');
+        return;
+      }
+      dataUrl = await readAsDataURL(file);   // canvas 失败就退原图，让服务端判断
+    }
     addMsg('user', '上传图片实测：' + (file.name || '未命名'), thumb);
     renderConvo(); enterLast(); toBottom(true);
-    var dataUrl = await readAsDataURL(file);
     var r = await fetch(apiUrl('/api/inspect'), {
       method:'POST', headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ image_base64:dataUrl, region_id:regionId })
