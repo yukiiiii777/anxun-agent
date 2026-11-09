@@ -659,10 +659,46 @@ var CLOUD_CONFIG = {
   publishableKey: 'wbpk_jYwjUdMPtWHiylM060o4yK_v1xu8H9k5VfWvzMokUZ9gjdV6Zewuibt',
   oauthRelayBaseUrl: 'https://www.workbuddy.cn/v2/as/genie-baas/oauth'
 };
-var CLOUD = { ready:false, client:null, model:null, modelName:'', supportsTools:false };
-/* 优先用免费模型 hy4free（倍率 x0.00），没有就退到最便宜的 fast-model（x0.15），
-   再没有才用目录里第一个可用模型。换哪个模型都不改判定链路：等级仍由本地工具算。 */
-var CLOUD_PREFER = ['hy4free', 'fast-model'];
+var CLOUD = { ready:false, client:null, model:null, modelName:'', supportsTools:false, avail:{}, names:{}, tools:{} };
+/* 按任务复杂度分档，便宜优先，不够再升：
+   0 免费档 hy4free         x0.00  寒暄、单句事实
+   1 快速档 fast-model      x0.15  常规研判（要调工具、要说人话）
+   2 均衡档 balanced-model  x0.50  多步分析、对比、长文
+   3 深度档 deep-model      x1.00  目录里有，且前两档都没给出正文时才用
+   低档没产出正文或调用失败时自动升一档，最多升到均衡档。 */
+var TIERS = [
+  { id:'hy4free',        name:'免费档', cost:'x0.00' },
+  { id:'fast-model',     name:'快速档', cost:'x0.15' },
+  { id:'balanced-model', name:'均衡档', cost:'x0.50' },
+  { id:'deep-model',     name:'深度档', cost:'x1.00' }
+];
+var DOMAIN_RE = /风险|等级|定级|工单|整改|法规|条文|条款|安全帽|反光背心|背心|判定|置信|违规|隐患|区域|场景|巡检|L\s*[=×]|S\s*[=×]|R\s*=/;
+var COMPLEX_RE = /对比|比较|分析|评估|方案|总结|分别|多种|多个|为什么|原因|推导|流程|闭环|权衡/;
+
+function whyTier(q){
+  var t = String(q || '');
+  if(t.length > 160) return '长问题（' + t.length + ' 字）';
+  if(COMPLEX_RE.test(t)) return '多步/分析型提问';
+  if(DOMAIN_RE.test(t)) return '厂区研判类提问';
+  return t.length <= 12 ? '短问或寒暄' : '普通提问';
+}
+
+/* 0 免费 / 1 快速 / 2 均衡 —— 只决定起点，后面还会按失败升档 */
+function pickTier(q){
+  var t = String(q || '');
+  if(t.length > 160 || COMPLEX_RE.test(t)) return 2;
+  if(t.length > 60 && DOMAIN_RE.test(t)) return 2;
+  if(DOMAIN_RE.test(t)) return 1;
+  return t.length <= 12 ? 0 : 1;
+}
+
+function lastUserText(c){
+  var msgs = (c && c.msgs) || [];
+  for(var i = msgs.length - 1; i >= 0; i--){
+    if(msgs[i].role === 'user') return msgs[i].content || '';
+  }
+  return '';
+}
 
 async function initCloud(){
   if(!window.WorkBuddyCloud || !window.WorkBuddyCloud.createWorkBuddyCloud) return false;
@@ -673,17 +709,18 @@ async function initCloud(){
       oauthRelayBaseUrl: CLOUD_CONFIG.oauthRelayBaseUrl
     });
     var list = (await CLOUD.client.llm.models.list()) || [];
-    var pick = null;
-    for(var i = 0; i < CLOUD_PREFER.length && !pick; i++){
-      pick = list.filter(function(x){
-        return x.id === CLOUD_PREFER[i] && x.disabled !== true;
-      })[0] || null;
-    }
-    if(!pick) pick = list.filter(function(x){ return x.disabled !== true; })[0];
-    if(!pick) return false;
-    CLOUD.model = pick.id;
-    CLOUD.modelName = pick.name || pick.id;
-    CLOUD.supportsTools = pick.supportsToolCall === true;
+    CLOUD.avail = {}; CLOUD.names = {}; CLOUD.tools = {};
+    list.forEach(function(m){
+      if(m.disabled === true) return;
+      CLOUD.avail[m.id] = true;
+      CLOUD.names[m.id] = m.name || m.id;
+      CLOUD.tools[m.id] = m.supportsToolCall === true;
+    });
+    var first = TIERS.filter(function(t){ return CLOUD.avail[t.id]; })[0];
+    if(!first) return false;
+    CLOUD.model = first.id;
+    CLOUD.modelName = CLOUD.names[first.id] || first.id;
+    CLOUD.supportsTools = CLOUD.tools[first.id] === true;
     CLOUD.ready = true;
     return true;
   }catch(e){
@@ -701,8 +738,8 @@ function cloudErrText(e){
   return '云端调用失败：' + ((e && e.message) || code || '未知错误');
 }
 
-/* 云端要求 messages[0] 是应用的 system 提示，且不认两条 system：
-   这里把 SYS 与场景上下文合成一条再发。 */
+/* 云端要求 messages[0] 是应用的 system，且不认两条 system：
+   把 SYS 与场景上下文合成一条再发。 */
 function cloudMessages(c){
   var sys = SYS + '\n\n' + (SCENE_CTX[S.scene] || '');
   var msgs = [{ role:'system', content: sys }];
@@ -712,16 +749,17 @@ function cloudMessages(c){
   return msgs;
 }
 
-/* 与直连那条一样的循环：模型调工具 → 本地算 → 结果回灌，最多三轮 */
-async function cloudRun(c, signal, onDelta, onTrace){
+/* 一次完整的「工具循环 + 收尾」，返回这一档有没有说出正文 */
+async function cloudAttempt(c, tier, signal, onDelta, onTrace){
   var messages = cloudMessages(c);
+  var useTools = CLOUD.tools[tier.id] === true;
   var spoke = false;
   function emit(t){ spoke = true; onDelta(t); }
 
   for(var round = 0; round < 3; round++){
-    var req = { model: CLOUD.model, messages: messages, stream: true, temperature: 0.3 };
+    var req = { model: tier.id, messages: messages, stream: true, temperature: 0.3 };
     if(signal) req.signal = signal;
-    if(CLOUD.supportsTools && round < 2){ req.tools = TOOLS; req.tool_choice = 'auto'; }
+    if(useTools && round < 2){ req.tools = TOOLS; req.tool_choice = 'auto'; }
 
     var acc = '', calls = [];
     for await (var chunk of CLOUD.client.llm.chat.completions.create(req)){
@@ -755,10 +793,10 @@ async function cloudRun(c, signal, onDelta, onTrace){
     }
   }
 
-  // 兜底：工具走完却一个字没写（免费模型常见），再要一次纯文本结论
+  // 兜底：工具走完却一个字没写（便宜模型常见），再要一次纯文本结论
   if(!spoke){
     var fin = {
-      model: CLOUD.model,
+      model: tier.id,
       messages: messages.concat([{ role:'user', content:'基于上面的工具结果，用中文直接给出最终结论，不要再调用工具。' }]),
       stream: true,
       temperature: 0.3
@@ -769,6 +807,35 @@ async function cloudRun(c, signal, onDelta, onTrace){
       if(d2 && d2.content) emit(d2.content);
     }
   }
+  return spoke;
+}
+
+async function cloudRun(c, signal, onDelta, onTrace){
+  var q = lastUserText(c);
+  var start = pickTier(q);
+  var tried = [];
+  for(var t = start; t < TIERS.length; t++){
+    var tier = TIERS[t];
+    if(!CLOUD.avail[tier.id]) continue;
+    tried.push(tier.name);
+    if(onTrace) onTrace({ name:'模型路由', args:{ 档位:tier.name, 倍率:tier.cost }, out:{ model:tier.id, 依据:whyTier(q) } });
+    try{
+      if(await cloudAttempt(c, tier, signal, onDelta, onTrace)){
+        CLOUD.model = tier.id;
+        CLOUD.modelName = CLOUD.names[tier.id] || tier.id;
+        CLOUD.supportsTools = CLOUD.tools[tier.id] === true;
+        S.model = CLOUD.modelName;
+        paintStatus();
+        return;
+      }
+      if(onTrace) onTrace({ name:'升档重试', args:{ from:tier.name }, out:{ reason:'没有产出正文' } });
+    }catch(e){
+      var code = (e && e.error && e.error.code) || '';
+      if(/^quota_|^auth_|^request_/.test(code)) throw e;   // 不是模型能力问题，升档也没用
+      if(onTrace) onTrace({ name:'升档重试', args:{ from:tier.name }, out:{ reason:code || (e && e.message) || '调用失败' } });
+    }
+  }
+  throw new Error('云端模型都没有给出结果（已尝试：' + tried.join('、') + '）');
 }
 
 /* ---------------- 模型侧提示词（直连 / 代理 共用） ---------------- */
@@ -1272,6 +1339,8 @@ function traceHTML(trace){
     else if(t.name === 'grade_risk') res = o.error ? '参数不合法' : ('R=' + o.R + ' · ' + o.level);
     else if(t.name === 'law_lookup') res = o.found ? ('命中 ' + o.code) : '未收录';
     else if(t.name === 'create_ticket') res = (o.no || '已生成');
+    else if(t.name === '模型路由') res = (o.model || '') + ' · ' + (o.依据 || '');
+    else if(t.name === '升档重试') res = '升一档：' + (o.reason || '');
     else res = '完成';
     return '<span class="tchip"><b>' + esc(t.name) + '</b>(' + esc(argStr) + ') → ' + esc(res) + '</span>';
   }).join('');
