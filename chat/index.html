@@ -308,7 +308,7 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
      target="_blank" rel="noopener" hidden
      title="在线研判台：同一套页面 + best.onnx 实跑，打开就能聊">在线研判台 ↗</a>
   <div class="status demo" id="status" title="点击切换对话后端">
-    <span class="dot"></span><span id="statusText">演示模式 · anxun-demo</span>
+    <span class="dot"></span><span id="statusText">正在连接云端…</span>
   </div>
   <button class="iconbtn" id="btnMenu" title="会话列表" style="display:none">≡</button>
 </header>
@@ -1587,7 +1587,7 @@ function msgHTML(m, i){
     var acts = m.streaming ? '' :
       '<div class="acts"><button data-copy="' + i + '">复制</button><button data-regen="1">重新生成</button></div>';
     inner = '<div class="body"><div class="name">安巡 Agent</div>' + traceHTML(m.trace) +
-      (m.demo ? '<div class="trace"><span class="tchip demochip">演示模式 · 预置回答，非模型实时生成</span></div>' : '') +
+
       '<div class="bubble">' + md(text) + (card ? compactCard(card) : '') + caret + '</div>' + acts + '</div>';
   }
   return '<div class="msg ' + (isMe?'me':'ai') + '"><div class="av">' + (isMe?'我':'A') + '</div>' + inner + '</div>';
