@@ -265,11 +265,18 @@ uvicorn infer_api:app --host 0.0.0.0 --port 8000
 | 模型 | ✅ 已就绪 | 单模型：自训五类权重（person / helmet / nohelmet / vest / novest）一次前向；权重指纹见 `techline-v3.1.0/docs/模型卡片.md` |
 | 指标实测 | ✅ 已实测 | mAP 0.8654 / 误报 6.12% / 漏报 4.35% / 15.0 ms（GPU）；口径见 `techline-v3.1.0/docs/技术口径.md` |
 | Agent 平台搭建 | ✅ 已上线 | 研判台（对话 + 实测 + Word 工单）已发布到托管地址；`run_agents.py` 三 Agent 离线可跑 |
-| PPT 20 页 | 🟡 大纲完成 | 逐页大纲在 `docs/05-PPT与视频.md` |
-| 6 分钟视频 | 🟡 脚本完成 | 分镜脚本已写 |
-| 报名 | 🔴 待办 | 本校在报名系统下拉中，走三级赛制 |
+| PPT 20 页 | ✅ 成品已交付 | `deliver/安巡Agent_PPT_1110.pptx` · 20 页 16:9 · 1.53 MB；逐页大纲见 `docs/05-PPT与视频.md` |
+| 6 分钟视频 | ✅ 成品已交付 | `deliver/安巡Agent_演示视频_1110.mp4` · 5 分 49 秒 · 9.58 MB；旁白稿见 `deliver/旁白稿.md` |
+| 报名 | ✅ 已完成 | 老大 2026-11-10 确认：官网报名、缴费、建队完成 |
+| 提交包 | ✅ 已打包 | `deliver/制造-上海中侨职业技术大学-张璟瑜-安巡Agent.zip` · 10.28 MB · 只含 3 个文件 |
 
 完整任务分解见 [`TODO.md`](TODO.md)。
+
+> **参赛成品只在本地 `deliver/`**：PPTX / MP4 / ZIP 按 `.gitignore` 不入库
+> （仓库 126MB，禁止整仓打包）。可复现源已入库：`tools/build_slides.py`、
+> `tools/build_video.py`、`deliver/slides/`（20 页 HTML + CSS 母版）。
+> 改 PPT 后重跑这两个脚本即可同步视频画面。官网只上传那一个 zip，
+> **以最后一次上传覆盖为准**。
 
 ---
 
@@ -365,7 +372,8 @@ uvicorn infer_api:app --host 0.0.0.0 --port 8000
 | 三个人怎么分工、每天做什么 | [`docs/07-分工与计划.md`](docs/07-分工与计划.md) |
 | 报名怎么填、资格怎么确认 | [`docs/08-报名事项.md`](docs/08-报名事项.md) |
 | 落选的另外两个方案 | [`docs/09-备选方案.md`](docs/09-备选方案.md) |
-| **明天上山要拍什么**（负责材料的人必看） | [`docs/10-素材拍摄清单.md`](docs/10-素材拍摄清单.md) |
+| **参赛成品 / 怎么重生成 PPT 与视频** | [`deliver/`](deliver/) · [`tools/build_slides.py`](tools/build_slides.py) · [`tools/build_video.py`](tools/build_video.py) |
+| 素材拍摄清单（历史，未执行；演示段已改用线上截图） | [`docs/10-素材拍摄清单.md`](docs/10-素材拍摄清单.md) |
 | 五个 Agent 的完整提示词 | [`docs/安巡Agent_提示词库.md`](docs/安巡Agent_提示词库.md) |
 | 带排版的成品文档 | [`assets/html/`](assets/html/) |
 
