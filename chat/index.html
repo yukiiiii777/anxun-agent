@@ -533,7 +533,7 @@ function sceneFromApi(d){
     verdicts: persons.map(function(p, i){
       return { p:'P' + (i + 1), state:p.worst || '-', tone:toneOfState(p.worst), note:reasonOf(p.items, p.worst) };
     }),
-    count: { n:n, scale:violN, why:'近 30 天 · ' + ((d.region && d.region.name) || '') + '同类违规 ' + n + ' 次' },
+    count: { n:n, scale:violN, why:'近 30 天同类违规 ' + n + ' 次' },
     work: { type:work + '作业', why:work + '作业 · 按作业类型取 S' },
     ticket: null, checks: [], law: [],
     _model: true,
@@ -554,19 +554,17 @@ function sceneFromApi(d){
       // 责任人留空：这张单要打印出来给现场签字，名字由使用方自己填。
       // 服务端给的 assignee 是「区域负责人姓名」，直接印上去等于替某个人认了这条违规。
       owner: '',
-      reviewer: t.review_at ? '安全员（' + String(t.review_at).replace('T', ' ').slice(5, 16) + ' 复查）' : '安全员',
-      action: t.requirement || '',
+      reviewer: '',       // 复查由现场安排，系统不预填、也不预排时间
+      action: cleanReq(t.requirement || ''),
       grade: t.grade || '',
       risk: t.risk,
       L: t.L, S: t.S,
       due_at: t.due_at || '',
       review_at: t.review_at || ''
     };
-    out.checks = [
-      t.requirement || '',
-      '时限：' + String(t.due_at || '').replace('T', ' ').slice(5, 16) + ' 前完成',
-      '复查：' + String(t.review_at || '').replace('T', ' ').slice(5, 16) + '（' + t.grade + ' · R=' + t.risk + '）'
-    ].filter(Boolean);
+    // 验收项留空：以前这里塞「时限 / 复查」两条，前端还打 ✓，
+    // 读起来像是已经做完了——其实都是将来才发生的事。
+    out.checks = [];
     out.law = (t.legal || []).map(function(l){
       return { code:[l.doc, l.clause].filter(Boolean).join(' '), text:l.point || '' };
     });
@@ -589,10 +587,10 @@ function applyModelScene(k, d){
 
   var st = {};
   x.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
-  SCENE_CTX[k] = '当前区域：' + s.name + '，作业类型「' + x.work.type + '」。'
+  SCENE_CTX[k] = '当前区域不写具体地名；作业类型「' + x.work.type + '」。'
     + x.verdicts.length + ' 名人员：'
     + Object.keys(st).map(function(y){ return y + ' ' + st[y] + ' 人'; }).join('、')
-    + '。近 30 天该区域同类违规 ' + x.count.n + ' 次'
+    + '。近 30 天同类违规 ' + x.count.n + ' 次'
     + '；本次一次抓到 ' + (x.count.scale || 0) + ' 人未佩戴，L 取「历史次数」与「本次人数」的高者'
     + '（《安巡风险分级标准 v1.1》§2.1.1）。'
     + (s.ticket && /^TK-/.test(String(s.ticket.no || ''))
@@ -1052,11 +1050,12 @@ var SYS = [
   '    哪怕场景是高处作业，模型没检这两类，写了就是编的。',
   '12) 等级对外统一用紧急程度 A/B/C 表述：A 级=紧急（R≥13，2 小时内）、B 级=较急（R 9–12，24 小时内）、',
   '    C 级=一般（R≤8，7 天内 / 30 天内）。可以说「A 级 · 紧急 · 红色」，但不要只甩颜色。',
-  '13) 工单只说编号、等级、时限、整改要求。不要出现任何具体人名，也不要替某个岗位署名；',
+  '13) 工单只说编号、等级、时限、整改要求。整改要求**照抄工具返回值**，不要改写、不要换说法；',
+  '    不要出现任何具体人名或厂区/车间/平台等地名，也不要替某个岗位署名；',
   '    用户没问就不要补充签字、盖章、经办人这类内容。',
   '',
   '当你要给出一次完整研判（四态判定 + 定级 + 工单）时，在正文末尾输出一个 anxun 代码块，内容是一行 JSON：',
-  '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"<create_ticket 返回的号，不要自己编>","action":"立即停止作业并撤离"},"checks":["叫停并撤离"],"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
+  '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"<create_ticket 返回的号，不要自己编>","action":"立即停止作业并撤离"},"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
   'tone 取 ok / warn / bad / info。这块会被前端渲染成卡片，正文里不要重复它的内容。'
 ];
 
@@ -1256,6 +1255,17 @@ function md(src){
 /* 模型偶尔不输出 anxun 代码块，正文里却已经在说工单号了。
    这时没有卡片就没有「导出工单」按钮。用当前场景的实测结果补一张，
    数据和右栏同源，不是另编的。 */
+/* 服务端的整改要求模板带地名（「补发反光背心 1 件至 2 号车间高处作业平台…」）。
+   地名是样例数据，上传的图跟它对不上，显示时换成「至现场」。 */
+function cleanReq(txt){
+  // 「补发反光背心 1 件至 2 号车间高处作业平台，登记领用记录…」
+  // 地名是样例数据，一律剥掉，只留动作本身。
+  return String(txt || '')
+    .replace(/至\s*[^，,。；;]{2,24}[，,。]/g, '，')
+    .replace(/，\s*，/g, '，')
+    .trim();
+}
+
 function cardFromScene(sc){
   var s = SCENES[sc];
   if(!s || !s.ticket || !/^TK-/.test(String(s.ticket.no || ''))) return null;
@@ -1379,10 +1389,16 @@ function normalizeCard(card, sceneId, idx){
   if(card.ticket){
     var sysT = (SCENES[sceneId] && SCENES[sceneId].ticket) || null;
     var sysNo = sysT && sysT.no ? String(sysT.no) : '';
+    // 卡片自己的号如果是完整服务端号（TK-20261110…-B-01-vest-01），就别用样例短号覆盖，
+    // 否则正文写 TK-2026…、卡片却是 TK-B-0932，又变成一单两号。
+    if(/^TK-\d{8,}/.test(String(card.ticket.no || ''))) sysNo = String(card.ticket.no);
     if(/^TK-/.test(sysNo)){
       card.ticket.no = sysNo;
-      card.ticket.owner = card.ticket.owner || sysT.owner;
-      card.ticket.reviewer = card.ticket.reviewer || sysT.reviewer;
+      // 整改要求只认服务端按实测装备与人数生成的那句。
+      // 模型自己写的那版出现过「未戴反光背心却补发安全帽 4 顶」这种对不上的内容。
+      if(sysT.action) card.ticket.action = sysT.action;
+      card.ticket.owner = '';
+      card.ticket.reviewer = '';
     }else if(!/^TK-/.test(String(card.ticket.no || ''))){
       card.ticket.no = ticketNoFor(sceneId);
     }
@@ -1454,11 +1470,7 @@ function cardHTML(c){
     var t = c.ticket;
     h += '<div style="margin-top:6px"><div class="kv"><span>工单号</span><b class="tno">' + esc(t.no) + '</b></div>' +
          
-         '<div class="kv"><span>复查人</span><b>' + esc(t.reviewer) + '</b></div>' +
-         '<div class="kv" style="display:block"><span style="display:block;margin-bottom:3px">整改要求</span><span>' + esc(t.action) + '</span></div></div>';
-    if(c.checks && c.checks.length){
-      h += '<ul class="checks">' + c.checks.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
-    }
+         '<div class="kv" style="display:block"><span style="display:block;margin-bottom:3px">整改要求</span><span>' + esc(cleanReq(t.action, s.name)) + '</span></div></div>';
     h += '<div style="margin-top:9px;display:flex;gap:6px">' +
          '<button class="chip" data-export="1">导出工单（Word）</button></div>';
   }
@@ -1486,7 +1498,8 @@ function renderPanel(){
 
   var h = '';
   h += '<div class="pcard ' + tone + '">' +
-       '<div class="ph">' + esc(s.name) + '<span class="r">' + esc(s.tag) + '</span></div>' +
+       // 只写作业类型（它决定 S），不写厂区/平台这种样例地名
+       '<div class="ph">实时研判<span class="r">规则引擎</span></div>' +
        '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
        '<span class="pill t-ok">已佩戴 ' + counts.ok + '</span>' +
        '<span class="pill t-warn">待复核 ' + counts.warn + '</span>' +
@@ -1522,9 +1535,11 @@ function renderPanel(){
 
   if(s.ticket){
     h += '<div class="pcard info"><div class="ph">整改工单<span class="r tno">' + esc(s.ticket.no || ticketNoFor(S.scene)) + '</span></div>' +
-         
-         '<div class="kv"><span>复查人</span><b>' + esc(s.ticket.reviewer) + '</b></div>' +
-         '<ul class="checks">' + s.checks.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+         (s.ticket.action
+           ? '<div class="kv" style="display:block"><span style="display:block;margin-bottom:3px">整改要求</span><span>'
+             + esc(cleanReq(s.ticket.action)) + '</span></div>'
+           : '') +
+         '</div>';
   }else{
     h += '<div class="pcard info"><div class="ph">整改工单<span class="r">无需开单</span></div>' +
          '<div style="padding:4px 2px 2px;color:var(--muted);font-size:12px">本次没有确认违规，按分级规则不产生工单。</div></div>';
@@ -1562,12 +1577,15 @@ function renderPanel(){
 function renderPanelCard(card, sceneKey){
   var s = SCENES[sceneKey] || SCENES[S.scene] || {};
   var tone = card.tone || 'info';
-  var vs = card.verdicts || [];
+  // 判定明细只认服务端实测（s.verdicts）。模型给的数组可能是它自己凑的，
+  // 之前就出现过「实测 1 人」却写成「未佩戴 4」。
+  var vs = (s.verdicts && s.verdicts.length) ? s.verdicts : (card.verdicts || []);
   var counts = { ok:0, warn:0, bad:0, mute:0 };
   vs.forEach(function(v){ counts[v.tone] = (counts[v.tone]||0) + 1; });
 
   var h = '';
-  h += '<div class="pcard ' + tone + '"><div class="ph">' + esc(s.name || '对话里的研判')
+  // 不写区域名：这个名字来自内置样例，用户上传的图跟它没关系
+  h += '<div class="pcard ' + tone + '"><div class="ph">研判结果'
      + '<span class="r">来自对话</span></div>'
      + '<div style="display:flex;gap:6px;flex-wrap:wrap">'
      + '<span class="pill t-ok">已佩戴 ' + counts.ok + '</span>'
@@ -1603,11 +1621,7 @@ function renderPanelCard(card, sceneKey){
   if(card.ticket){
     h += '<div class="pcard info"><div class="ph">整改工单<span class="r tno">' + esc(card.ticket.no || '') + '</span></div>';
     
-    if(card.ticket.reviewer) h += '<div class="kv"><span>复查人</span><b>' + esc(card.ticket.reviewer) + '</b></div>';
-    if(card.ticket.action) h += '<div class="kv" style="display:block"><span style="display:block;margin-bottom:3px">整改要求</span><span>' + esc(card.ticket.action) + '</span></div>';
-    if((card.checks || []).length){
-      h += '<ul class="checks">' + card.checks.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
-    }
+    if(card.ticket.action) h += '<div class="kv" style="display:block"><span style="display:block;margin-bottom:3px">整改要求</span><span>' + esc(cleanReq(card.ticket.action)) + '</span></div>';
     h += '</div>';
   }else{
     h += '<div class="pcard info"><div class="ph">整改工单<span class="r">无需开单</span></div>'
@@ -2325,7 +2339,7 @@ document.addEventListener('click', function(e){
    一个 .docx 就是一个 zip；这里用「存储不压缩」的 zip，浏览器里百来行就能写出来，
    不引任何第三方库、不走 CDN、不依赖后端，离线也能导出。
    版式按常规《安全隐患整改通知单》：标题 → 基本信息表 → 违规明细 →
-   整改要求 → 验收项 → 法规依据 → 签署栏。 */
+   整改要求 → 法规依据 → 签署栏。 */
 var CRC_T = (function(){
   var t = new Int32Array(256);
   for(var n = 0; n < 256; n++){
@@ -2480,22 +2494,14 @@ function buildTicketXml(d){
   body += wP(d.action, { sz:21, ind:420, after:120 });
   body += wP('完成时限：' + d.due, { sz:21, ind:420, after:160 });
 
-  body += wP('三、验收项', { sz:22, b:1, before:120, after:80 });
-  var checks = d.checks.filter(function(x){ return !/^(时限|复查)[:：]/.test(String(x).trim()); });
-  if(!checks.length) checks = ['按整改要求完成并提交现场照片'];
-  checks.forEach(function(x, i){
-    body += wP('□ ' + (i + 1) + '. ' + x, { sz:21, ind:420, after:60 });
-  });
-  body += wP('', { sz:12, after:60 });
-
-  body += wP('四、法规依据', { sz:22, b:1, before:120, after:80 });
+  body += wP('三、法规依据', { sz:22, b:1, before:120, after:80 });
   d.law.forEach(function(l){
     body += wP(l.code, { sz:21, b:1, ind:420, after:20 });
     body += wP('「' + l.text + '」', { sz:19, ind:420, after:80 });
   });
 
   body += wP('', { sz:12, after:60 });
-  body += wP('五、签署', { sz:22, b:1, before:120, after:80 });
+  body += wP('四、签署', { sz:22, b:1, before:120, after:80 });
   body += wTbl([sign], SW);
   body += wP('', { sz:12, after:60 });
   body += wP('本通知单由安巡 Agent 依据 ' + d.model + ' 实测判定与《安巡风险分级标准 v1.2》自动生成；'
@@ -2522,20 +2528,20 @@ function exportTicket(){
 
   var d = {
     no: no,
-    region: s.name + '（' + (s.tag || '') + '）',
-    work: (s.work && s.work.type) || '—',
+    region: '＿＿＿＿＿＿＿＿',   // 无法确定的就不填，留空手写
+    work: '＿＿＿＿＿＿',   // 作业类型同样无法从画面确定，留空手填
     grade: (u.code ? u.code + ' 级 · ' + u.name + '（' : '') + (rk.level || '') + (u.code ? '）' : ''),
     rvalue: 'R = ' + rk.R + '（L=' + rk.L + ' × S=' + rk.S + '）',
     due: (t.due_at ? String(t.due_at).replace('T', ' ').slice(5, 16) + ' 前' : (rk.deadline || '—')),
     method: 'AI 视觉识别 + 规则引擎（' + modelName() + '）',
     owner: t.owner || '＿＿＿＿＿＿（签字）',
-    reviewer: t.reviewer || '安全员',
+    reviewer: t.reviewer || '＿＿＿＿＿＿（签字）',
     issued: now.getFullYear() + '-' + p2(now.getMonth() + 1) + '-' + p2(now.getDate())
       + ' ' + p2(now.getHours()) + ':' + p2(now.getMinutes()),
     urgency: u.code ? (u.code + ' 级 · ' + u.name) : (rk.level || '—'),
     persons: (s.verdicts || []).length,
     bad: counts.bad || 0, warn: counts.warn || 0, mute: counts.mute || 0,
-    action: t.action || '按现场实际情况整改',
+    action: cleanReq(t.action || '按现场实际情况整改'),
     checks: s.checks || [],
     law: s.law || [],
     verdicts: s.verdicts || [],
