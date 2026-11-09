@@ -113,7 +113,8 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;backgrou
   font-size:11px;display:grid;place-items:center;flex:none}
 .sugg .go{margin-left:auto;color:var(--faint);font-size:15px}
 
-.msg{display:flex;gap:12px;padding:11px 0;animation:fade .32s ease}
+.msg{display:flex;gap:12px;padding:11px 0}
+.msg.enter{animation:fade .28s ease}
 .msg .av{width:28px;height:28px;border-radius:9px;flex:none;display:grid;place-items:center;
   font-size:12px;box-shadow:0 1px 0 rgba(255,255,255,.4) inset}
 .msg.ai .av{background:linear-gradient(145deg,#2B2A27,#43413B);color:#F7F6F2}
@@ -604,7 +605,7 @@ async function uploadInspect(file){
     };
     if(x._clean){ card.tone = 'ok'; card.risk = null; }
     addMsg('assistant', head + body + '\n```anxun\n' + JSON.stringify(card) + '\n```\n');
-    renderConvo(); toBottom(true);
+    renderConvo(); enterLast(); toBottom(true);
   }catch(e){
     toast('实测失败：' + (e.message || e));
   }
@@ -1324,6 +1325,13 @@ function ensureConvo(){
   S.active = c.id;
   return c;
 }
+/* 只让「刚出现的那条」播一次入场动画。
+   以前动画挂在 .msg 上，每次重建对话所有消息都重放，看起来就是闪屏。 */
+function enterLast(){
+  var nodes = $('#flow').querySelectorAll('.msg');
+  if(nodes.length) nodes[nodes.length - 1].classList.add('enter');
+}
+
 function renderConvo(){
   var c = convo(S.active);
   var flow = $('#flow');
@@ -1332,7 +1340,39 @@ function renderConvo(){
     return;
   }
   flow.innerHTML = c.msgs.map(function(m, i){ return msgHTML(m, i); }).join('');
-}function emptyHTML(){
+}/* 流式输出时只重画最后一条消息的正文，避免整段 innerHTML 重建造成闪屏。
+   轨迹（trace）只在新增步骤时重画一次——它每帧都重建的话，卡片会跟着抖。 */
+function paintStreaming(m, idx){
+  var flow = $('#flow');
+  var nodes = flow.querySelectorAll('.msg');
+  var el = nodes[nodes.length - 1];
+  if(!el || !el.classList.contains('ai')){ renderConvo(); return; }
+
+  var card = findCard(m.content);
+  if(card) card = normalizeCard(card, m.scene || S.scene, idx);
+  var text = stripCard(m.content);
+  // 卡片还没写完时（```anxun 未闭合），别把 JSON 原文漏在正文里
+  if(m.streaming) text = text.replace(/```anxun[\s\S]*$/, '').trim();
+  var bubble = el.querySelector('.bubble');
+  if(!bubble){ renderConvo(); return; }
+  bubble.innerHTML = md(text) + (card ? compactCard(card) : '')
+    + (m.streaming ? '<span class="caret"></span>' : '');
+
+  var tlen = (m.trace || []).length;
+  if(tlen !== (m._tlen || 0)){
+    m._tlen = tlen;
+    var body = el.querySelector('.body');
+    var old = body.querySelector('.trace');
+    var fresh = traceHTML(m.trace);
+    if(old){
+      if(fresh) old.outerHTML = fresh; else old.remove();
+    }else if(fresh && body.querySelector('.name')){
+      body.querySelector('.name').insertAdjacentHTML('afterend', fresh);
+    }
+  }
+}
+
+function emptyHTML(){
   var s = SCENES[S.scene];
   return '<div class="empty">' +
     '<h1>先把「告警」变成<span>「工单」</span></h1>' +
@@ -1470,7 +1510,7 @@ async function send(){
   if(!q || S.busy) return;
   ta.value = ''; autoGrow(ta);
   addMsg('user', q);
-  renderConvo();
+  renderConvo(); enterLast();
   toBottom(false);
   await reply(q);
 }
@@ -1495,11 +1535,11 @@ async function reply(q){
     lastPaint = now;
     var stick = atBottom();
     m.content = acc;
-    renderConvo();
+    paintStreaming(m, c.msgs.length - 1);
     if(stick) toBottom(false);
   }
 
-  renderConvo();
+  renderConvo(); enterLast();
   toBottom(false);
 
   try{
