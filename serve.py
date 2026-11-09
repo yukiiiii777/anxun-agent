@@ -142,6 +142,14 @@ def run_scene(scene_id: str) -> dict:
     return out
 
 
+def _is_heic(raw: bytes) -> bool:
+    """iPhone 默认拍照格式 HEIC/HEIF。浏览器与 OpenCV 都读不了。"""
+    head = raw[:16]
+    return head[4:8] == b"ftyp" and head[8:12] in (
+        b"heic", b"heix", b"hevc", b"heim", b"heis", b"mif1", b"msf1",
+    )
+
+
 def _looks_like_image(raw: bytes) -> bool:
     """按文件头判断是不是真图片。
 
@@ -207,6 +215,11 @@ def run_upload(image_b64: str, region_id: str = "A-03") -> dict:
     if not raw:
         raise ValueError("image_base64 解码后为空")
     if not _looks_like_image(raw):
+        if _is_heic(raw):
+            raise ValueError(
+                "这是 iPhone 的 HEIC 格式，浏览器和模型都读不了。"
+                "请在相册里「导出/另存为 JPG」，或直接截图后再上传"
+            )
         raise ValueError("不是有效图片：只支持 jpg / png / webp / bmp")
 
     region = REGION_MAP.get(region_id) or REGIONS[0]

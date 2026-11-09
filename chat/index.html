@@ -666,6 +666,12 @@ function readAsDataURL(file){
 
 async function uploadInspect(file){
   if(!MODEL.ready){ toast('模型服务没起来：先运行 python serve.py'); return; }
+  // iPhone 默认 HEIC：浏览器解不出缩略图，会白等 4 秒兜底再被服务端拒。这里先拦下。
+  var fn = ((file && file.name) || '').toLowerCase();
+  if(/\.(heic|heif)$/.test(fn) || /image\/hei[cf]/.test((file && file.type) || '')){
+    toast('这是 iPhone 的 HEIC 格式，浏览器读不了：请先在相册「导出为 JPG」或截图后再上传。');
+    return;
+  }
   var regionId = REGION_OF_SCENE[S.scene] || 'A-03';
   try{
     toast('正在跑 ' + modelName() + '…');

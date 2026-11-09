@@ -54,7 +54,13 @@ def letterbox(img: np.ndarray, size: int = 640, color: int = 114):
     h, w = img.shape[:2]
     r = min(size / h, size / w)
     nw, nh = int(round(w * r)), int(round(h * r))
-    if (nw, nh) == (size, size):
+    # ⚠️ 这里必须判**原图**尺寸，不能判缩放后的 (nw, nh)。
+    # 判 (nw, nh) == (size, size) 只对「本来就是 640×640」成立，但任何正方形原图
+    # （500²、1024²、1920²…）都会让 nw=nh=640 命中这一行，于是原图原样返回、
+    # 不做 resize 也不做填充，送进模型直接报
+    #   INVALID_ARGUMENT: Got invalid dimensions ... Got: 1920 Expected: 640
+    # 而模型只收 640×640。评测集正好是 640×640，走快路径，所以本地评测测不出来。
+    if (w, h) == (size, size):
         return img, r, (0, 0)          # 已经是目标尺寸：不 resize 也不拷贝
     if (nw, nh) != (w, h):
         img = cv2.resize(img, (nw, nh), interpolation=cv2.INTER_LINEAR)
