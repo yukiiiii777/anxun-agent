@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#C25E2A}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 4 章 · 创新性与独特视角</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>场景是对的，感知任务是选的</h1><div class="sub">语义判断 vs 存在性判断：前者的误差无法归因</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="row" style="min-height:238px">
+  <div class="card col" style="border-top:4px solid #B03A48">
+    <h3>火焰检测 · 语义判断</h3>
+    <p>要回答「这块红色是火、是蒸汽、是反光，还是红色物料？」——
+       <b>同类外观、不同语义</b>，边界由场景定义，加数据也未必收敛。</p>
+    <ul><li>误报来源：蒸汽、夕照、红色工装、焊花。</li>
+        <li>标注本身就有分歧，不同人框得不一样。</li>
+        <li>上一轮模型的准确率问题，本质是<b>任务级语义模糊</b>。</li></ul>
+  </div>
+  <div class="card col" style="border-top:4px solid #2E7D5B">
+    <h3>PPE 检测 · 存在性判断</h3>
+    <p>要回答「这个人的头上有没有一顶帽子？」——
+       <b>目标明确、边界清晰、有国标可依</b>，是工程问题不是定义问题。</p>
+    <ul><li>漏报看得见、归因得到：小目标、遮挡、框没对齐。</li>
+        <li>补样本、调阈值、换 backbone 都有明确路径。</li>
+        <li>实测误报 6.12% / 漏报 4.35%，四项指标全达标。</li></ul>
+  </div>
+</div>
+<div class="row" style="margin-top:16px;min-height:104px">
+  <div class="card col" style="padding:16px"><div class="big">场景是对的，感知任务是选的</div>
+    <div class="smalltxt" style="margin-top:6px">我们没有放弃视觉能力，也没有放弃厂区巡检；
+       换掉的是那个「边界说不清」的任务。</div></div>
+  <div class="card col" style="padding:16px"><div class="big">从告警到工单，价值落在闭环</div>
+    <div class="smalltxt" style="margin-top:6px">火焰检测做到最好也只是更早报警；
+       PPE 检测后面接得上等级、时限、法规与签署。</div></div>
+</div>
+<div class="note blue">答辩预设：「你们不就是换了个检测目标吗？」——
+换的是<b>可判定性</b>与<b>可闭环性</b>：前者的误差无法归因，后者每一例漏报都能指到具体帧。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>12 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

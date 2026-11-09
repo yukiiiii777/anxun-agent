@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#2E7D5B}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 5 章 · 结果解释与建议</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>隐私、误报信任、责任边界</h1><div class="sub">三道无效性保护，以及一条不越界的叙事红线</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="row" style="min-height:196px">
+  <div class="card col"><h3>隐私风险</h3><p>工人影像<b>不落地、不进截图、不进提交包</b>；研判台只输出结构化判定与工单，
+       不输出人脸身份信息。</p><div class="small">提交前逐张检查：无正脸、无工牌、无姓名</div></div>
+  <div class="card col"><h3>误报信任风险</h3><p>工业场景里误报几次，安全员就把告警关了。三道无效性保护把「不确定」显式说出来，
+       宁可转人工，不硬判。</p><div class="small">实测误报 6.12%</div></div>
+  <div class="card col"><h3>责任边界风险</h3><p>系统只做<b>辅助判定</b>，不替代安全员签字；工单里责任人、复查人、验收项一律留空由现场手填。</p>
+    <div class="small">输出的是可签署、可追责的通知单</div></div>
+</div>
+<div class="card" style="margin-top:16px;padding:18px 22px;min-height:142px">
+  <h3>三道无效性保护（对应第 09 页思维导图左支）</h3>
+  <div class="flow" style="margin-top:12px">
+    <div class="step"><b>置信度三档</b><span>定论 / 转人工 / 丢弃</span></div><span class="arrow">→</span>
+    <div class="step"><b>连续 3 帧聚合</b><span>结论一致才输出，否则待复核</span></div><span class="arrow">→</span>
+    <div class="step"><b>小目标拦截</b><span>框面积 &lt; 8000 px² 判无法判定</span></div><span class="arrow">→</span>
+    <div class="step"><b>四态输出</b><span>禁止「可能 / 大概」</span></div>
+  </div>
+  <div class="small" style="margin-top:12px">「无法判定」与「待复核」不得被时序聚合成「待复核」以外的任何结论——
+     这是规则引擎里专门修过的一个 bug，失效状态不允许被改写成违规。</div>
+</div>
+<div class="note blue">答辩口径：系统不自动指派责任人，<b>它把该由谁签字、什么时候验收的位置留出来</b>。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>17 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

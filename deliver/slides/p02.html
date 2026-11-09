@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#0F2740}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 1 章 · 作品背景与说明</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>别人做告警，我们做工单</h1><div class="sub">三人分工、一句话定位与参考来源</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="row" style="min-height:118px">
+  <div class="card" style="flex:1.5;background:#0F2740;border-color:#0F2740">
+    <div style="font-size:12px;color:#8FB0CC;letter-spacing:2px;margin-bottom:8px">一句话定位</div>
+    <div style="font-size:20px;color:#fff;font-weight:800;line-height:1.5">别人做的是告警，我们做的是工单。<br>
+      <span style="color:#F0A468">告警是一条通知，工单是一个责任。</span></div>
+  </div>
+  <div class="card" style="flex:1">
+    <h3>解决什么</h3>
+    <p>摄像头已经装好了，但「看到未戴安全帽」之后，没人负责把它变成一张限期整改、可签署、可追责的通知单。</p>
+  </div>
+</div>
+<div class="row" style="margin-top:16px;min-height:170px">
+  <div class="card col"><h3><span class="n">1</span>技术线</h3><p>五类 PPE 权重训练、评测集构建、指标实测与误差归因；提供 ONNX 推理服务。</p><div class="small">交付：best.onnx · metrics_real.json · 技术页 P10–13</div></div>
+  <div class="card col"><h3><span class="n">2</span>系统线</h3><p>判定与定级的确定性实现、三智能体编排、研判台前后端与 Word 工单导出。</p><div class="small">交付：规则引擎 · 研判台 · 分级标准 v1.4</div></div>
+  <div class="card col"><h3><span class="n">3</span>材料线</h3><p>赛事口径核对、20 页 PPT、6 分钟视频、提交包与答辩预案。</p><div class="small">交付：PPT · MP4 · 链接说明</div></div>
+</div>
+<div class="card" style="margin-top:16px;padding:16px 22px">
+  <h3 style="margin-bottom:8px">参考来源（单列）</h3>
+  <div class="smalltxt" style="line-height:1.9">
+  <b>数据</b>　Chapian/ppev3（Roboflow <span class="mono" style="padding:1px 5px">ppe-detection-9p0pu</span> v3，CC BY 4.0）· Chapian/PPE_detection（CC BY 4.0）　|
+  <b>法规</b>　《中华人民共和国安全生产法》（2021 年第三次修正）第四十一、四十五、四十六、五十七条　|
+  <b>标准</b>　GB 2811-2019《头部防护 安全帽》· GB 39800.1-2020《个体防护装备配备规范 第 1 部分：总则》　|
+  <b>框架</b>　Ultralytics YOLOv8s · ONNX Runtime · FastAPI</div>
+</div>
+<div class="note blue">按交付物分工，不按环节分工；三条线的接口是「检测框 JSON / 事件 JSON / 素材清单」，互不等待。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>02 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#2E7D5B}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 5 章 · 结果解释与建议</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>同一张图换区域，等级不变</h1><div class="sub">v1.4 分档 · 线上接口实测四场景</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="row" style="min-height:112px">
+  <div class="kpi col" style="border-left:4px solid #B03A48"><div class="v">A</div><div class="l">≥3 人 · 2 小时内</div></div>
+  <div class="kpi col" style="border-left:4px solid #C98A16"><div class="v">B</div><div class="l">1–2 人 · 24 小时内</div></div>
+  <div class="kpi col" style="border-left:4px solid #2E7D5B"><div class="v">C</div><div class="l">仅待复核 · 7 天内核实</div></div>
+  <div class="kpi col" style="border-left:4px solid #8996A5"><div class="v">—</div><div class="l">全合规 · 不出单</div></div>
+</div>
+<div class="card" style="margin-top:14px;padding:16px 20px">
+  <h3 style="font-size:15px;margin-bottom:8px">线上接口实测四场景（同一批 best.onnx 权重）</h3>
+  <table><tr><th>场景</th><th>本次判定</th><th>等级</th><th>处理时限</th><th>说明</th></tr>
+    <tr><td>二楼平台</td><td>1 人未穿反光背心</td><td><span class="tag b">B</span></td><td>24 小时内</td><td>作业类型是高处，但不升档</td></tr>
+    <tr class="hl"><td>装卸区</td><td>8 人未穿反光背心</td><td><span class="tag a">A</span></td><td>2 小时内</td><td>面上失控，立即处置</td></tr>
+    <tr><td>喷漆房</td><td>5 人未戴安全帽</td><td><span class="tag a">A</span></td><td>2 小时内</td><td>人数决定，不看区域台账</td></tr>
+    <tr><td>通道</td><td>全部已佩戴</td><td><span class="tag mute">不出单</span></td><td>—</td><td>没有工单也是一次完整研判</td></tr>
+  </table>
+</div>
+<div class="note">关键结论：<b>同一张图换到哪个区域登记，等级都不变。</b>
+这是 v1.4 相对旧矩阵最想说明的事——等级回答「多久处理」，不由台账和场景替你回答。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>14 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

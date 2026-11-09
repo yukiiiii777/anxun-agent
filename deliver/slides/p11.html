@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#C25E2A}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 4 章 · 创新性与独特视角</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>四个数，一个说得清的口径</h1><div class="sub">100 张独立评测集 · rules_profile v3 · 四项点估计全部达标</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="row" style="min-height:104px">
+  <div class="kpi col"><div class="v ok">0.8654</div><div class="l">mAP@0.5</div><div class="t">目标 ≥ 0.85 ✓</div></div>
+  <div class="kpi col"><div class="v ok">6.12%</div><div class="l">误报率（6 / 98）</div><div class="t">目标 ≤ 10% ✓</div></div>
+  <div class="kpi col"><div class="v ok">4.35%</div><div class="l">漏报率（4 / 92）</div><div class="t">目标 ≤ 5% ✓</div></div>
+  <div class="kpi col"><div class="v ok">15.0 ms</div><div class="l">单帧耗时（GPU）</div><div class="t">目标 ≤ 50 ms ✓</div></div>
+</div>
+<div class="row" style="margin-top:14px;min-height:228px">
+  <div class="card" style="flex:1;padding:12px;display:flex;flex-direction:column">
+    <div style="font-size:12.5px;font-weight:800;margin-bottom:6px">混淆矩阵 · helmet</div>
+    <div class="imgframe" style="flex:1"><img src="../../techline-v3.1.0/docs/figs/confusion_matrix.png"></div>
+  </div>
+  <div class="card" style="flex:1;padding:12px;display:flex;flex-direction:column">
+    <div style="font-size:12.5px;font-weight:800;margin-bottom:6px">PR 曲线</div>
+    <div class="imgframe" style="flex:1"><img src="../../techline-v3.1.0/docs/figs/pr_curve.png"></div>
+  </div>
+  <div class="card" style="flex:1.05;padding:13px 16px">
+    <h3 style="font-size:15px;margin-bottom:7px">口径与误差归因</h3>
+    <p style="font-size:12px;line-height:1.6">100 张独立评测集，<b>rules_profile v3</b> · 中心点判据 · conf 0.65 · min_aspect 0.80；ONNX-CPU 36.5 ms/帧。</p>
+    <table style="margin-top:8px;font-size:11.5px"><tr><th>类别</th><th>AP</th><th>说明</th></tr>
+      <tr><td>person</td><td>0.8463</td><td>254 TP / 51 FP</td></tr>
+      <tr><td>helmet</td><td>0.8845</td><td>133 TP / 28 FP</td></tr>
+      <tr class="hl"><td>判定覆盖</td><td>89.62%</td><td>190 / 212 人次</td></tr></table>
+    <div class="small" style="margin-top:8px;font-size:11px">4 例漏报中 2 例是「无法判定」被正确保护。</div>
+  </div>
+</div>
+<div class="note red" style="margin-top:10px">⚠️ 漏报 95% 区间 1.7%–10.7%、误报 2.8%–12.7%，上界均越线：
+<b>只能说「点估计达标」，不能说「稳定达标」</b>。100 张里每 1 例 ≈ 1 个百分点。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>11 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

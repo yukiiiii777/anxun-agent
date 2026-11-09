@@ -109,6 +109,13 @@ temp/
 # ---- 工作区元数据（本地记忆与配置，不入库）----
 .workbuddy/
 
+# ---- 视频合成中间产物（约 70MB，绝不入库）----
+deliver/.video_work/
+
+# ---- 幻灯片源里引用的截图与二维码（小，保留以便改 PPT）----
+!deliver/assets/desk_online.png
+!deliver/assets/qrcode.png
+
 # ---- 例外：交付目录里的运行时权重必须入库（v2.0.0）----
 # 没有权重，clone 下来的仓库跑不动：verify_all 掉一截、HTTP 服务起不来、指标无法复现。
 # 体积约 114MB，单文件最大 42.6MB，在 GitHub 100MB 硬限制内。

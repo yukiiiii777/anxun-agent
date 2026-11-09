@@ -1,0 +1,48 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#5E4B9B}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 3 章 · 分析过程</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>一帧画面 → 一张工单</h1><div class="sub">左侧判得准，右侧落得下；中心只有一次完整研判</div>
+  <div class="rule"></div>
+  <div class="body"><div class="svgwrap">
+<svg viewBox="0 0 1120 400" width="1060" height="380" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei,sans-serif">
+ <defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+   <path d="M0,0 L8,4 L0,8 z" fill="#B9C6D3"/></marker></defs>
+ <g stroke="#C9D5E1" stroke-width="2" fill="none" marker-end="url(#ah)">
+  <path d="M470,200 C380,200 360,72 292,72"/><path d="M470,200 C380,200 360,150 292,150"/>
+  <path d="M470,200 C380,200 360,250 292,250"/><path d="M470,200 C380,200 360,328 292,328"/>
+  <path d="M650,200 C740,200 760,72 828,72"/><path d="M650,200 C740,200 760,150 828,150"/>
+  <path d="M650,200 C740,200 760,250 828,250"/><path d="M650,200 C740,200 760,328 828,328"/>
+ </g>
+ <rect x="452" y="152" width="216" height="96" rx="16" fill="#0F2740"/>
+ <text x="560" y="190" fill="#fff" font-size="20" font-weight="800" text-anchor="middle">一帧画面</text>
+ <text x="560" y="218" fill="#F0A468" font-size="20" font-weight="800" text-anchor="middle">→ 一张工单</text>
+ <g font-size="13" font-weight="700">
+  <g><rect x="60" y="46" width="232" height="52" rx="9" fill="#fff" stroke="#DDE5ED"/>
+     <text x="76" y="68" fill="#1B6E8C">① 四态判定</text><text x="76" y="87" fill="#7C8B9B" font-size="11" font-weight="400">已佩戴 / 未佩戴 / 待复核 / 无法判定</text></g>
+  <g><rect x="60" y="124" width="232" height="52" rx="9" fill="#fff" stroke="#DDE5ED"/>
+     <text x="76" y="146" fill="#1B6E8C">② 三道无效性保护</text><text x="76" y="165" fill="#7C8B9B" font-size="11" font-weight="400">置信度三档 / 连续 3 帧 / 小目标拦截</text></g>
+  <g><rect x="60" y="224" width="232" height="52" rx="9" fill="#fff" stroke="#DDE5ED"/>
+     <text x="76" y="246" fill="#5E4B9B">③ 时序聚合</text><text x="76" y="265" fill="#7C8B9B" font-size="11" font-weight="400">195 条逐帧告警 → 13 个事件</text></g>
+  <g><rect x="60" y="302" width="232" height="52" rx="9" fill="#fff" stroke="#DDE5ED"/>
+     <text x="76" y="324" fill="#5E4B9B">④ 分档规则 v1.4</text><text x="76" y="343" fill="#7C8B9B" font-size="11" font-weight="400">只看本次确认未佩戴人数</text></g>
+  <g><rect x="828" y="46" width="232" height="52" rx="9" fill="#fff" stroke="#DDE5ED"/>
+     <text x="844" y="68" fill="#C25E2A">⑤ 等级与时限</text><text x="844" y="87" fill="#7C8B9B" font-size="11" font-weight="400">A 2h / B 24h / C 7d / 不出单</text></g>
+  <g><rect x="828" y="124" width="232" height="52" rx="9" fill="#fff" stroke="#DDE5ED"/>
+     <text x="844" y="146" fill="#C25E2A">⑥ 法规映射</text><text x="844" y="165" fill="#7C8B9B" font-size="11" font-weight="400">条号 + 原文，查不到写未检索到</text></g>
+  <g><rect x="828" y="224" width="232" height="52" rx="9" fill="#fff" stroke="#DDE5ED"/>
+     <text x="844" y="246" fill="#2E7D5B">⑦ 工单生成</text><text x="844" y="265" fill="#7C8B9B" font-size="11" font-weight="400">系统编号，模型不编人名与地名</text></g>
+  <g><rect x="828" y="302" width="232" height="52" rx="9" fill="#fff" stroke="#DDE5ED"/>
+     <text x="844" y="324" fill="#2E7D5B">⑧ 签署与复查</text><text x="844" y="343" fill="#7C8B9B" font-size="11" font-weight="400">留空由现场手填，导出 Word 通知单</text></g>
+ </g>
+</svg></div>
+<div class="note blue" style="margin-top:2px">中心问题只有一个：<b>这一帧画面，最后要谁、在多久之内、办成一件什么事</b>。
+左侧是「判得准」，右侧是「落得下」。</div></div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>09 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

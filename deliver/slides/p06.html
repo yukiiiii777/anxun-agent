@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#1B6E8C}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 2 章 · 数据收集与处理</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>四层知识库，每条结论可追到条号</h1><div class="sub">法规 / 标准 / 操作 / 经验，原文与摘要严格区分</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="row" style="min-height:196px">
+  <div class="card col"><h3><span class="n">1</span>法规层</h3><p>《安全生产法》第四十一、四十五、四十六、五十七条，第九十九条第（五）项。<b>存原文，不存改写</b>。</p><div class="small">引用前必查，查不到写「未检索到」</div></div>
+  <div class="card col"><h3><span class="n">2</span>标准层</h3><p>GB 2811-2019、GB 39800.1-2020。区分<b>标准原文</b>与<b>要点摘要</b>，避免把解读当条文。</p><div class="small">条号 + 年份可回溯</div></div>
+  <div class="card col"><h3><span class="n">3</span>操作层</h3><p>巡检流程、留痕要求、整改单要素（事实 / 要求 / 依据 / 签署）。</p><div class="small">对应 Word 通知单四段式</div></div>
+  <div class="card col"><h3><span class="n">4</span>经验层</h3><p>逆光、遮挡、远处小目标等现场失效模式，以及对应的三道无效性保护。</p><div class="small">来自误差归因，不是拍脑袋</div></div>
+</div>
+<div class="row" style="margin-top:16px;min-height:150px">
+  <div class="card" style="flex:1.1">
+    <h3>条文库怎么被调用</h3>
+    <div class="flow" style="margin-top:6px">
+      <div class="step"><b>用户提问</b><span>「违反了哪条」</span></div><span class="arrow">→</span>
+      <div class="step"><b>law_lookup</b><span>白名单检索</span></div><span class="arrow">→</span>
+      <div class="step"><b>原文回填</b><span>条号 + 逐字原文</span></div><span class="arrow">→</span>
+      <div class="step"><b>写入工单</b><span>法规依据栏</span></div>
+    </div>
+    <div class="small" style="margin-top:14px">系统提示词第 3 条：不许编造条文或文号；第 10 条：只写本轮上下文明确给出的事实。</div>
+  </div>
+  <div class="card" style="flex:1">
+    <h3>为什么要做白名单</h3>
+    <p>大模型会把「大概有这么一条」说得像真的。工业场景里一条错误的法规引用，
+       足以让整张整改单失去效力。</p>
+    <div class="small">提交前逐字核对原文；法规模板、标准号、数据集出处必须能指认来源。</div>
+  </div>
+</div>
+<div class="note">知识库不是给模型「补充常识」，是给结论<b>一个可被追责的出处</b>。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>06 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

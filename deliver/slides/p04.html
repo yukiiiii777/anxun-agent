@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#1B6E8C}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 2 章 · 数据收集与处理</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>2,451 张训练图像，全部可追溯</h1><div class="sub">Chapian/ppev3 · CC BY 4.0 · 9 类重映射为 5 类</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="row" style="min-height:105px">
+  <div class="kpi col"><div class="v">2,451</div><div class="l">训练图像</div><div class="t">ppe_full/train</div></div>
+  <div class="kpi col"><div class="v">272</div><div class="l">验证图像</div><div class="t">ppe_full/valid</div></div>
+  <div class="kpi col"><div class="v">17,610</div><div class="l">训练集标注框</div><div class="t">全部有标注，无空标注</div></div>
+  <div class="kpi col"><div class="v warn">165</div><div class="l">剔除的重名图像</div><div class="t">防止与评测集泄漏重叠</div></div>
+</div>
+<div class="row" style="margin-top:16px;min-height:215px">
+  <div class="card" style="flex:1.35">
+    <h3>来源与授权</h3>
+    <table><tr><th style="width:96px">项目</th><th>内容</th></tr>
+      <tr><td>数据集</td><td>Chapian/ppev3（Roboflow <span class="mono" style="padding:1px 4px">ppe-detection-9p0pu</span> v3）</td></tr>
+      <tr><td>许可协议</td><td><b>CC BY 4.0</b>（允许商用与再分发，须署名）</td></tr>
+      <tr><td>获取时间</td><td>2026-11-01，经 HF 镜像获取</td></tr>
+      <tr><td>原始类别</td><td>9 类</td></tr>
+      <tr class="hl"><td>重映射</td><td>5 类：person / helmet / no-helmet / vest / no-vest</td></tr>
+    </table>
+  </div>
+  <div class="card" style="flex:1">
+    <h3>为什么重映射为 5 类</h3>
+    <p>一次前向同时得到「人」与「装备状态」，不再外挂 COCO 人体模型做二级串联，
+       避免两个模型的框对不齐造成漏判。</p>
+    <div class="small">goggles / gloves / no-gloves 等原始类别在本项目<b>不参与判定</b>，只保留接口，
+       避免「模型没检却写进结论」。</div>
+    <div class="note blue" style="margin-top:12px">对外只能说「自训五类 PPE 权重」：架构来自 Ultralytics YOLOv8s，
+       数据与训练由本项目完成。</div>
+  </div>
+</div>
+<div class="note">数据卡片的每张图、每个框数都可核对；<b>本项目自采 0 张</b>，这一点在第 16 页主动披露。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>04 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

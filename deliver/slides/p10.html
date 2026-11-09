@@ -1,0 +1,48 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#5E4B9B}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 3 章 · 分析过程</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>判定逻辑与检测模型解耦</h1><div class="sub">检测模型 → 规则引擎 → Agent 编排 → 整改通知单</div>
+  <div class="rule"></div>
+  <div class="body"><div class="svgwrap">
+<svg viewBox="0 0 1120 320" width="1080" height="300" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei,sans-serif">
+ <rect x="20" y="96" width="170" height="96" rx="12" fill="#EAF1F8" stroke="#C6D8E8"/>
+ <text x="105" y="132" font-size="15" font-weight="800" text-anchor="middle" fill="#0F2740">摄像头画面</text>
+ <text x="105" y="158" font-size="11" text-anchor="middle" fill="#6B7A8C">1920×1080 · 单帧</text>
+ <rect x="230" y="96" width="180" height="96" rx="12" fill="#0F2740"/>
+ <text x="320" y="128" font-size="15" font-weight="800" text-anchor="middle" fill="#fff">检测模型</text>
+ <text x="320" y="152" font-size="11" text-anchor="middle" fill="#A9C6DE">自训五类 · YOLOv8s</text>
+ <text x="320" y="172" font-size="11" text-anchor="middle" fill="#F0A468">15.0 ms / 帧</text>
+ <rect x="450" y="96" width="180" height="96" rx="12" fill="#0F2740"/>
+ <text x="540" y="128" font-size="15" font-weight="800" text-anchor="middle" fill="#fff">规则引擎</text>
+ <text x="540" y="152" font-size="11" text-anchor="middle" fill="#A9C6DE">四态 / 分档 / 工单</text>
+ <text x="540" y="172" font-size="11" text-anchor="middle" fill="#F0A468">确定性，可复现</text>
+ <rect x="670" y="96" width="180" height="96" rx="12" fill="#EAF1F8" stroke="#C6D8E8"/>
+ <text x="760" y="128" font-size="15" font-weight="800" text-anchor="middle" fill="#0F2740">Agent 编排</text>
+ <text x="760" y="152" font-size="11" text-anchor="middle" fill="#6B7A8C">理解 / 检索 / 组织语言</text>
+ <text x="760" y="172" font-size="11" text-anchor="middle" fill="#6B7A8C">工具调用轨迹可查</text>
+ <rect x="890" y="96" width="200" height="96" rx="12" fill="#FDF1DC" stroke="#E8C98A"/>
+ <text x="990" y="128" font-size="15" font-weight="800" text-anchor="middle" fill="#8A5D0F">整改通知单</text>
+ <text x="990" y="152" font-size="11" text-anchor="middle" fill="#8A743F">A/B/C · 时限 · 法规</text>
+ <text x="990" y="172" font-size="11" text-anchor="middle" fill="#8A743F">Word 可签署留痕</text>
+ <g stroke="#C05A2A" stroke-width="2.5" fill="none" marker-end="url(#ar)">
+  <path d="M190,144 L226,144"/><path d="M410,144 L446,144"/><path d="M630,144 L666,144"/><path d="M850,144 L886,144"/></g>
+ <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+   <path d="M0,0 L8,4 L0,8 z" fill="#C05A2A"/></marker></defs>
+ <rect x="230" y="228" width="620" height="62" rx="10" fill="#fff" stroke="#E0E7EF"/>
+ <text x="250" y="254" font-size="13" font-weight="800" fill="#C25E2A">核心设计：判定逻辑与检测模型解耦</text>
+ <text x="250" y="276" font-size="12" fill="#5B6D80">模型没训好也能演示 · 换模型不动业务 · 换平台不重写 · 同一输入结果可复现</text>
+</svg></div>
+<div class="row" style="margin-top:8px;min-height:92px">
+ <div class="card col" style="padding:14px 18px"><h3 style="font-size:14px">五 Agent 职责</h3><p style="font-size:12px">巡检规划 · 视觉感知 · 隐患研判 · 工单闭环 · 合规问答，前三步构成主链路。</p></div>
+ <div class="card col" style="padding:14px 18px"><h3 style="font-size:14px">两个后端</h3><p style="font-size:12px">torch-GPU 与 ONNX-CPU 走同一套规则，线上托管用 best.onnx 实算，不是预置回答。</p></div>
+ <div class="card col" style="padding:14px 18px"><h3 style="font-size:14px">一条原则</h3><p style="font-size:12px">数值判定与编号生成不交给大模型；模型只负责理解与表达。</p></div>
+</div></div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>10 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

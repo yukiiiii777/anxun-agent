@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#1B6E8C}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 2 章 · 数据收集与处理</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>每种增强都对应一个现场问题</h1><div class="sub">不是「做了数据增强」，而是增强与失效模式一一对应</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="flow" style="margin-bottom:18px">
+  <div class="step"><b>公开集下载</b><span>2 个渠道</span></div><span class="arrow">→</span>
+  <div class="step"><b>9→5 类重映射</b><span>统一标签</span></div><span class="arrow">→</span>
+  <div class="step"><b>剔除 165 张重叠</b><span>防泄漏</span></div><span class="arrow">→</span>
+  <div class="step"><b>数据增强</b><span>对应现场问题</span></div><span class="arrow">→</span>
+  <div class="step"><b>80 轮训练</b><span>best ep62</span></div><span class="arrow">→</span>
+  <div class="step"><b>独立评测</b><span>100 张</span></div>
+</div>
+<div class="row" style="min-height:200px">
+  <div class="card col"><h3>逆光 / 弱光</h3><p>调整 HSV 明度与饱和度，模拟车间侧窗强光、夜间照明不足。</p><div class="small"><span class="mono" style="padding:1px 5px">hsv_v / hsv_h</span></div></div>
+  <div class="card col"><h3>遮挡</h3><p>随机擦除，模拟设备、料架、同行人员挡住上半身。</p><div class="small"><span class="mono" style="padding:1px 5px">erasing</span></div></div>
+  <div class="card col"><h3>监控距离</h3><p>尺度缩放，模拟远处小目标与近距离大目标同时出现。</p><div class="small"><span class="mono" style="padding:1px 5px">scale</span></div></div>
+  <div class="card col"><h3>安装倾斜</h3><p>小角度旋转，模拟摄像头非正装、俯角偏差。</p><div class="small"><span class="mono" style="padding:1px 5px">degrees</span></div></div>
+</div>
+<div class="note blue">每一项增强都在 <span class="mono" style="padding:1px 5px">train_yolo.py</span> 里注释了「对应哪个现场问题」——
+不是「我们做了数据增强」这种空话，而是<b>增强与失效模式一一对应</b>。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>07 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

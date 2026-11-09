@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#5E4B9B}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 3 章 · 分析过程</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>等级只由本次人数决定，不由模型拍脑袋</h1><div class="sub">我们用了四版风险矩阵，最后把它推翻了</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="row" style="min-height:206px">
+  <div class="card" style="flex:1.1">
+    <h3>为什么要拆成多个 Agent</h3>
+    <p>感知、研判、工单三件事的<b>确定性要求完全不同</b>：</p>
+    <table style="margin-top:10px"><tr><th>角色</th><th>职责</th><th>确定性</th></tr>
+      <tr><td>视觉感知</td><td>输出四态判定</td><td>代码判定</td></tr>
+      <tr><td>隐患研判</td><td>人数 → 等级 → 时限</td><td>规则引擎</td></tr>
+      <tr class="hl"><td>工单闭环</td><td>生成通知单与留痕位</td><td>系统编号</td></tr>
+      <tr><td>对话 Agent</td><td>理解问题、组织语言</td><td>大模型</td></tr>
+    </table>
+  </div>
+  <div class="card" style="flex:1">
+    <h3>等级为什么只由本次人数决定</h3>
+    <p>我们前后用了四版 <b>R = L × S</b> 风险矩阵，最后把它推翻了：</p>
+    <ul><li>L 取「区域近 30 天违规次数」→ 同一张图换个区域登记，等级就变。</li>
+        <li>S 取「作业类型」→ 回答的是「场景多危险」，不是「多久要处理」。</li></ul>
+    <div class="small">曾出现 1 人少穿背心判 2 小时内、7 人全缺 PPE 判 30 天内的倒挂。</div>
+  </div>
+</div>
+<div class="row" style="margin-top:16px;min-height:96px">
+  <div class="kpi col"><div class="v">A</div><div class="l">≥3 人 · 2 小时内</div></div>
+  <div class="kpi col"><div class="v">B</div><div class="l">1–2 人 · 24 小时内</div></div>
+  <div class="kpi col"><div class="v">C</div><div class="l">仅待复核 · 7 天内核实</div></div>
+  <div class="kpi col"><div class="v">—</div><div class="l">全合规 · 不出单</div></div>
+</div>
+<div class="note">把「推翻自己用了四版的矩阵」写进分析过程，是<b>优化改进</b>而不是返工：
+等级唯一由本次判定的人数决定，不由模型拍脑袋，也不由台账决定。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>08 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

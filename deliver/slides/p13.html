@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#C25E2A}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 4 章 · 创新性与独特视角</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>看得见 → 判得准 → 落得下</h1><div class="sub">安全工程 × 计算机视觉 × 管理学 PDCA</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="row" style="min-height:212px">
+  <div class="card col"><h3><span class="n">1</span>感知闭环</h3>
+    <p><b>看得见 → 判得准 → 落得下</b>。不是把检测框推给人，而是把一次判定变成
+       带等级、时限、法规依据和签署位的通知单。</p>
+    <div class="small">195 条逐帧告警 → 13 个事件 → 可签署工单</div></div>
+  <div class="card col"><h3><span class="n">2</span>定级有据</h3>
+    <p>等级由<b>本次确认未佩戴人数</b>唯一确定，规则引擎给值，大模型不拍脑袋；
+       同一输入连跑三次结果一致。</p>
+    <div class="small">工具调用轨迹可在研判台右栏逐条点开</div></div>
+  <div class="card col"><h3><span class="n">3</span>可解释的克制</h3>
+    <p>四态判定 + 三道无效性保护，把「不确定」显式说出来；
+       工单不预填责任人、地名、验收项，画面确认不了就不写。</p>
+    <div class="small">宁可转人工，也不生成一条看起来很确定的错单</div></div>
+</div>
+<div class="card" style="margin-top:16px;padding:18px 22px;min-height:130px">
+  <h3>跨学科视角 · 安全工程 × 计算机视觉 × 管理学</h3>
+  <div class="flow" style="margin-top:12px">
+    <div class="step"><b>安全工程</b><span>风险分级 / 法规留痕</span></div><span class="arrow">×</span>
+    <div class="step"><b>计算机视觉</b><span>五类检测 / 时序聚合</span></div><span class="arrow">×</span>
+    <div class="step"><b>管理学 PDCA</b><span>Plan 派单 → Do 整改 → Check 复查 → Act 归档</span></div>
+  </div>
+  <div class="small" style="margin-top:10px">技术只是其中一环：真正让系统有价值的，是它把一次「看见」放进了企业既有的管理闭环里。</div>
+</div>
+<div class="note">创新点不宣称「算法原创」，而是<b>把已有技术组织成一件办得完的事</b>——这正是通用赛道考察的应用创新。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>13 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>

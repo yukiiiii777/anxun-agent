@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<link rel="stylesheet" href="style.css"><style>:root{--accent:#0F2740}</style></head>
+<body><div class="slide">
+  <div class="head"><div class="chapter"><i></i>第 1 章 · 作品背景与说明</div>
+    <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
+  <h1>法规是刚性的，执行是虚化的</h1><div class="sub">摄像头已经装好了，缺的是把画面变成一件要办的事</div>
+  <div class="rule"></div>
+  <div class="body">
+<div class="row" style="min-height:290px">
+  <div class="card col" style="border-top:4px solid #2E7D5B">
+    <h3>法规是刚性的</h3>
+    <ul>
+      <li>《安全生产法》第四十五条：必须提供符合标准的劳动防护用品，<b>并监督、教育从业人员按规则佩戴</b>。</li>
+      <li>GB 2811-2019 / GB 39800.1-2020 对安全帽与配备规范有明确要求。</li>
+      <li>企业要留痕：谁检查、发现什么、多久整改完、谁验收。</li>
+    </ul>
+    <div class="small">条文原文可在研判台 <span class="mono" style="padding:1px 5px">law_lookup</span> 中逐条查到，查不到就写「未检索到」。</div>
+  </div>
+  <div class="card col" style="border-top:4px solid #C4453C">
+    <h3>执行是虚化的</h3>
+    <ul>
+      <li>一名安全员管多个车间，人工巡查每班只有 2 次 × 15 分钟。</li>
+      <li>检查的人一走，帽子就摘——<b>看得见的违规，抓不住的时间窗</b>。</li>
+      <li>监控系统只推「一条告警」，没有等级、时限、责任，也没有复查。</li>
+      <li>告警太多之后，人就把提醒关了。</li>
+    </ul>
+    <div class="small">195 条逐帧告警里，真正需要处理的只有 13 个事件。</div>
+  </div>
+</div>
+<div class="row" style="margin-top:18px;min-height:96px">
+  <div class="card col" style="text-align:center;padding-top:20px"><div class="kpi" style="border:0;box-shadow:none;padding:0">
+    <div class="v" style="font-size:30px">30 <span style="font-size:16px">分钟/班</span></div><div class="l">人工巡查覆盖</div></div></div>
+  <div class="card col" style="text-align:center;padding-top:20px"><div class="kpi" style="border:0;box-shadow:none;padding:0">
+    <div class="v" style="font-size:30px">195 <span style="font-size:16px">条</span></div><div class="l">34.8 秒视频产生的逐帧告警</div></div></div>
+  <div class="card col" style="text-align:center;padding-top:20px"><div class="kpi" style="border:0;box-shadow:none;padding:0">
+    <div class="v" style="font-size:30px">13 <span style="font-size:16px">个</span></div><div class="l">去重后真正要办的事件</div></div></div>
+</div>
+<div class="note">不是工人不怕，是<b>没人盯得住</b>；也不是没有摄像头，是<b>没人把画面变成一件要办的事</b>。</div>
+</div>
+  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>03 / 20</span></div>
+</div><div id="diag" style="display:none"></div>
+<script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
+  if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});
+  var s=document.querySelector('.slide');if(s&&s.scrollHeight>s.clientHeight+2)bad.push('SLIDE '+s.scrollHeight+'/'+s.clientHeight);
+  document.getElementById('diag').textContent='DIAG:'+(bad.length?bad.join(' | '):'OK');})();</script>
+</body></html>
