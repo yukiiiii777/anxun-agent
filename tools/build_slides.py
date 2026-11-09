@@ -15,7 +15,27 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "deliver"
 SLIDES = OUT / "slides"
 ASSETS = OUT / "assets"
-CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+def _find_browser() -> str:
+    """找一个可用的 Chromium 内核浏览器：Chrome 优先，其次 Edge。
+
+    写死 Chrome 路径在只装了 Edge 的机器上会直接失败（截图静默不出文件）。
+    可用 CHROME_PATH 环境变量强制指定。
+    """
+    cands = [
+        os.environ.get("CHROME_PATH", ""),
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    ]
+    for c in cands:
+        if c and Path(c).exists():
+            return c
+    return "chrome"
+
+
+CHROME = _find_browser()
 W, H = 1280, 720
 
 CSS = r"""
@@ -684,7 +704,7 @@ P20 = """
 def build() -> None:
     SLIDES.mkdir(parents=True, exist_ok=True)
     ASSETS.mkdir(parents=True, exist_ok=True)
-    (SLIDES / "style.css").write_text(CSS, encoding="utf-8")
+    (SLIDES / "style.css").write_text(CSS, encoding="utf-8", newline="\n")
 
     def uri(p: Path) -> str:
         # 相对 slides/ 目录，保证仓库 clone 后 HTML 仍能打开
@@ -736,7 +756,7 @@ def build() -> None:
             r'(<div class="(?:row|card|kpi)" style="[^"]*?)\bheight:(\d+px)',
             r'\1min-height:\2', html,
         )
-        (SLIDES / f"p{i:02d}.html").write_text(html, encoding="utf-8")
+        (SLIDES / f"p{i:02d}.html").write_text(html, encoding="utf-8", newline="\n")
 
     # 单个总览页（方便人直接翻）
     allpages = "\n".join(
@@ -747,7 +767,7 @@ def build() -> None:
         f'<!DOCTYPE html><meta charset="utf-8"><title>安巡 Agent · 20 页总览</title>'
         f'<body style="background:#E9EDF2;font-family:Microsoft YaHei;padding:20px">'
         f'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">{allpages}</div></body>',
-        encoding="utf-8",
+        encoding="utf-8", newline="\n",
     )
     print(f"生成 20 页 HTML → {SLIDES}")
 

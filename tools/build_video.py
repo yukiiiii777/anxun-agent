@@ -181,7 +181,7 @@ def write_script(durations: list[float], total: float) -> None:
         "  删掉同名 mp3 后重跑 `python tools/build_video.py`。",
         "",
     ]
-    (OUT / "旁白稿.md").write_text("\n".join(lines), encoding="utf-8")
+    (OUT / "旁白稿.md").write_text("\n".join(lines), encoding="utf-8", newline="\n")
 
 
 def main() -> None:

@@ -112,6 +112,11 @@ temp/
 # ---- 视频合成中间产物（约 70MB，绝不入库）----
 deliver/.video_work/
 
+# ---- 参赛成品必须入库（README 直接给出了路径，缺了就是死链）----
+# 重建要本机装 Chrome/Edge + edge-tts，评审机器不一定有；成品共约 11MB，直接给文件。
+!deliver/安巡Agent_PPT_1110.pptx
+!deliver/安巡Agent_演示视频_1110.mp4
+
 # ---- 幻灯片源里引用的截图与二维码（小，保留以便改 PPT）----
 !deliver/assets/desk_online.png
 !deliver/assets/qrcode.png
