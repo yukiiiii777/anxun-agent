@@ -590,8 +590,10 @@ async function uploadInspect(file){
     var card = {
       tone: toneOfLevel(g.level), verdicts: x.verdicts,
       risk: { R:g.R, L:g.L, S:g.S, level:g.level, deadline:g.deadline },
-      ticket: x.ticket, checks: x.checks, law: x.law
+      ticket: x.ticket, checks: x.checks, law: x.law,
+      _clean: x._clean
     };
+    if(x._clean){ card.tone = 'ok'; card.risk = null; }
     addMsg('assistant', head + body + '\n```anxun\n' + JSON.stringify(card) + '\n```\n');
     renderConvo(); toBottom(true);
   }catch(e){
@@ -860,6 +862,14 @@ function ticketNoFor(sceneId){
 function normalizeCard(card, sceneId, idx){
   if(!card || typeof card !== 'object') return card;
   var s = SCENES[sceneId] || SCENES.B;
+
+  // 放行场景（实测 0 违规）：不摆风险卡，也不补一个「假如违规」的等级
+  if(card._clean){
+    card.tone = 'ok';
+    card.risk = null;
+    card.ticket = null;
+    return card;
+  }
 
   var r = card.risk || {};
   var L = r.L, S = r.S;
