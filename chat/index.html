@@ -155,6 +155,8 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;backgrou
 .msg:hover .acts{opacity:1}
 .acts button{font-size:11.5px;color:var(--faint);padding:3px 7px;border-radius:6px}
 .acts button:hover{background:#EFEDE6;color:var(--sub)}
+.shot{display:block;max-width:min(100%,420px);max-height:220px;width:auto;border-radius:9px;
+  margin:0 0 9px;border:1px solid var(--line);background:#fff}
 .pending{color:var(--sub);font-size:13px;line-height:1.6;display:flex;align-items:center;gap:8px}.pending:before{content:"";width:12px;height:12px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--red);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .caret{display:inline-block;width:7px;height:15px;background:var(--red);vertical-align:-2px;
@@ -395,15 +397,15 @@ var SCENES = {
     id:'B', name:'2 号车间高处作业平台', short:'高处', tag:'高处作业',
     verdicts:[
       {p:'P1', state:'已佩戴', tone:'ok',   note:'安全帽置信度 0.96'},
-      {p:'P2', state:'未佩戴', tone:'bad',  note:'无安全帽框，距坠落面 6.2 m'},
-      {p:'P3', state:'未佩戴', tone:'bad',  note:'同框第二人，未系安全带（仅记录，不单独定级）'},
+      {p:'P2', state:'未佩戴', tone:'bad',  note:'头部区域内未检出安全帽框'},
+      {p:'P3', state:'未佩戴', tone:'bad',  note:'头部区域内未检出安全帽框'},
       {p:'P4', state:'待复核', tone:'warn', note:'置信度 0.31，刚过定论线，建议人工确认'}
     ],
     count:{ n:7, why:'近 30 天该平台同类违规 7 次' },
-    work:{ type:'高处作业', why:'高处作业 · 安全帽缺失（作业面距坠落高度 6.2 m）', height:6.2 },
+    work:{ type:'高处作业', why:'高处作业 · 按作业类型取 S' },
     ticket:{ no:'TK-B-0932', owner:'作业负责人', reviewer:'安全总监',
       action:'立即停止高处作业，人员撤离至地面，补发并正确佩戴安全帽后方可复工' },
-    checks:['即时叫停并撤离平台人员','补发安全帽 + 安全带复查','复工前安全交底签字'],
+    checks:['即时叫停并撤离平台人员','补发安全帽并复查佩戴','复工前安全交底签字'],
     law:[{code:'安全生产法 第四十五条',
       text:'生产经营单位必须为从业人员提供符合国家标准或者行业标准的劳动防护用品，并监督、教育从业人员按照使用规则佩戴、使用。'},
      {code:'GB 2811-2019 安全帽',
@@ -594,7 +596,7 @@ function applyModelScene(k, d){
 
   var st = {};
   x.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
-  SCENE_CTX[k] = '当前场景 ' + k + '：' + s.name + '，作业类型「' + x.work.type + '」。'
+  SCENE_CTX[k] = '当前区域：' + s.name + '，作业类型「' + x.work.type + '」。'
     + x.verdicts.length + ' 名人员：'
     + Object.keys(st).map(function(y){ return y + ' ' + st[y] + ' 人'; }).join('、')
     + '。近 30 天该区域同类违规 ' + x.count.n + ' 次'
@@ -621,6 +623,40 @@ function pickImage(){
   inp.click();
 }
 
+/* 上传图压成缩略图再进消息：原图 base64 几百 KB，直接塞 localStorage 几次就满。
+   用 createImageBitmap 而不是 Image()+onload：后者在某些环境（无头、部分移动端）
+   不触发 load 事件，会把整条上传链路挂住。再加 4 秒兜底，缩略图失败不影响判定。 */
+function makeThumb(file, maxW){
+  return new Promise(function(resolve){
+    var done = false;
+    function finish(v){ if(!done){ done = true; resolve(v || ''); } }
+    setTimeout(function(){ finish(''); }, 4000);
+    function draw(bmp){
+      try{
+        var scale = Math.min(1, (maxW || 380) / (bmp.width || 1));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(bmp.width * scale));
+        c.height = Math.max(1, Math.round(bmp.height * scale));
+        c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+        finish(c.toDataURL('image/jpeg', 0.7));
+      }catch(e){ finish(''); }
+    }
+    try{
+      if(window.createImageBitmap){
+        createImageBitmap(file).then(function(bmp){
+          draw(bmp);
+          if(bmp.close) bmp.close();
+        }).catch(function(){ finish(''); });
+      }else{
+        var url = URL.createObjectURL(file), img = new Image();
+        img.onload = function(){ draw(img); URL.revokeObjectURL(url); };
+        img.onerror = function(){ finish(''); URL.revokeObjectURL(url); };
+        img.src = url;
+      }
+    }catch(e){ finish(''); }
+  });
+}
+
 function readAsDataURL(file){
   return new Promise(function(resolve, reject){
     var fr = new FileReader();
@@ -635,6 +671,18 @@ async function uploadInspect(file){
   var regionId = REGION_OF_SCENE[S.scene] || 'A-03';
   try{
     toast('正在跑 best.pt…');
+    // 先把这张图摆进对话，用户才知道系统看的是哪张。
+    // 缩略图偶尔会失败（无头浏览器、异常编码），失败就用原图 dataURL 顶上，
+    // 上限 700 KB —— 再大就不进消息，免得把 localStorage 撑爆。
+    var thumb = await makeThumb(file, 380);
+    if(!thumb){
+      try{
+        var raw = await readAsDataURL(file);
+        if(raw && raw.length < 700000) thumb = raw;
+      }catch(e){}
+    }
+    addMsg('user', '上传图片实测：' + (file.name || '未命名') + '（区域 ' + regionId + '）', thumb);
+    renderConvo(); enterLast(); toBottom(true);
     var dataUrl = await readAsDataURL(file);
     var r = await fetch(apiUrl('/api/inspect'), {
       method:'POST', headers:{ 'Content-Type':'application/json' },
@@ -977,6 +1025,14 @@ var SYS = [
   '7) 你有四个工具：risk_factors（按现场事实推导 L 与 S）、grade_risk（按 L×S 算 R、等级、时限）、law_lookup（查条文原文）、create_ticket（开单，工单号由系统生成）。**凡涉及等级或时限，必须先调 risk_factors 拿 L/S，再调 grade_risk 拿 R；不许自己拍 L/S。** 引用条文前先调 law_lookup；开工单必须调 create_ticket。',
   '8) 卡片里 risk 只写 L 和 S（用 risk_factors 的返回值，附理由）；正文里引用 R 和等级时，必须用 grade_risk 返回的值。工单号用 create_ticket 返回的，不要自己编。',
   '9) 引用条文时，code 写成「法规名 第X条」或「GB 编号-年份」。law_lookup 返回「未收录」的条款，一律不要引用。',
+  '10) **只写本轮上下文里明确给出的事实**：区域名、人数与四态、L/S/R 与等级、工具返回的条文原文、近 30 天违规次数。',
+  '    没有给出的，一律不写、也不推断——不要补装备种类（安全带、手套、护目镜、口罩），',
+  '    不要补距离/高度/温度/时长等数值，不要补人名、部门、班次、时间地点。',
+  '    用户问到没有的数据，直接说「本轮判定里没有这一项」，不要用「大概」「通常」凑一个答案。',
+  '11) 判定范围只有头盔与反光背心两类。不要把安全带、手套、护目镜写进结论或工单，',
+  '12) 等级对外统一用紧急程度 A/B/C 表述：A 级=紧急（R≥13，2 小时内）、B 级=较急（R 9–12，24 小时内）、',
+  '    C 级=一般（R≤8，7 天内 / 30 天内）。可以说「A 级 · 紧急 · 红色」，但不要只甩颜色。',
+  '    哪怕场景是高处作业——模型没检这两类，写了就是编的。',
   '',
   '当你要给出一次完整研判（四态判定 + 定级 + 工单）时，在正文末尾输出一个 anxun 代码块，内容是一行 JSON：',
   '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"<create_ticket 返回的号，不要自己编>","owner":"作业负责人","reviewer":"安全总监","action":"立即停止作业并撤离"},"checks":["叫停并撤离"],"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
@@ -1005,9 +1061,9 @@ function applyThresholds(thr){
 /* 还没拿到实测结果时的兜底文案。措辞必须写明「示例」，
    否则模型会把 4 人假数据当成 best.pt 的判定结果说出去。 */
 var SCENE_CTX = {
-  A: '当前场景 A：3 号车间东侧通道，作业类型「普通作业」。以下为示例数据（非实测）：4 名人员：1 人未佩戴安全帽、1 人待复核、1 人无法判定、1 人已佩戴。近 30 天该通道同类违规 4 次。',
-  B: '当前场景 B：2 号车间高处作业平台，作业类型「高处作业」。以下为示例数据（非实测）：4 名人员：2 人未佩戴安全帽、1 人待复核、1 人已佩戴。近 30 天该平台同类违规 7 次。',
-  C: '当前场景 C：原料库装卸区，作业类型「车辆作业」。以下为示例数据（非实测）：4 名人员：1 人未佩戴安全帽、1 人无法判定（被货箱遮挡）、2 人已佩戴。近 30 天该区域同类违规 1 次。'
+  A: '当前区域：3 号车间东侧通道，作业类型「普通作业」。以下为示例数据（非实测）：4 名人员：1 人未佩戴安全帽、1 人待复核、1 人无法判定、1 人已佩戴。近 30 天该通道同类违规 4 次。',
+  B: '当前区域：2 号车间高处作业平台，作业类型「高处作业」。以下为示例数据（非实测）：4 名人员：2 人未佩戴安全帽、1 人待复核、1 人已佩戴。近 30 天该平台同类违规 7 次。',
+  C: '当前区域：原料库装卸区，作业类型「车辆作业」。以下为示例数据（非实测）：4 名人员：1 人未佩戴安全帽、1 人无法判定（被货箱遮挡）、2 人已佩戴。近 30 天该区域同类违规 1 次。'
 };
 
 /* ---------------- 状态 ---------------- */
@@ -1041,17 +1097,38 @@ function toast(msg){
   var t = $('#toast'); t.textContent = msg; t.classList.add('on');
   clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('on'); }, 2200);
 }
+/* 聊天记录放在 localStorage：
+   - 连 trace（工具调用轨迹）一起存，刷新后还能看到「risk_factors → L=4 · S=4」；
+   - localStorage 只有 5 MB 左右，超了先丢最老的会话，保证当前这条存得下；
+   - 生成过程中每 3 秒存一次（见 reply），刷新/切走不至于只剩半句。 */
+var STORE_LIMIT = 3.2 * 1024 * 1024;     // 留出余量，别把配额打满
 function save(){
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({
+    var payload = {
       scene: S.scene, active: S.active,
       convos: S.convos.map(function(c){
         return { id:c.id, title:c.title, ts:c.ts, msgs:c.msgs.map(function(m){
-          return { role:m.role, content:m.content, ts:m.ts, scene:m.scene, demo:m.demo };
+          return {
+            role:m.role, content:m.content, ts:m.ts, scene:m.scene, demo:m.demo,
+            img:m.img || null,
+            trace:(m.trace && m.trace.length) ? m.trace : null
+          };
         })};
       })
-    }));
-  }catch(e){}
+    };
+    var raw = JSON.stringify(payload);
+    while(raw.length > STORE_LIMIT && payload.convos.length > 1){
+      payload.convos.pop();               // convos 是新的在前，pop 丢最老的
+      raw = JSON.stringify(payload);
+    }
+    localStorage.setItem(STORE_KEY, raw);
+  }catch(e){
+    // 配额满 / 隐私模式禁用存储：不要静默失败，至少让用户知道这一轮没存上
+    if(!save._warned){
+      save._warned = true;
+      try{ toast('浏览器存不下更多聊天记录，已保留当前会话'); }catch(_){}
+    }
+  }
 }
 function load(){
   try{
@@ -1204,6 +1281,15 @@ function grade(L, S){
   return            { R:R, L:L, S:S, level:'蓝色', deadline:'30 天内',    tone:'info' };
 }
 
+/* 紧急程度 A/B/C —— 对外只讲这一套，比红橙黄蓝好记，
+   也不再把 A/B/C 当场景名：A 立即、B 当日、C 限期。由 R 唯一决定。 */
+function urgencyOf(R){
+  if(R == null) return null;
+  if(R >= 13) return { code:'A', name:'紧急', note:'立即处置', tone:'bad'  };
+  if(R >= 9)  return { code:'B', name:'较急', note:'当日处置', tone:'warn' };
+  return            { code:'C', name:'一般', note:'限期处置', tone:'gold' };
+}
+
 function pad3(n){ n = String(n); while(n.length < 3){ n = '0' + n; } return n; }
 function dateCode(){ var d = new Date(); return ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2); }
 
@@ -1268,7 +1354,7 @@ function pillOf(tone){
   var map = { ok:['已佩戴','t-ok'], bad:['未佩戴','t-bad'], warn:['待复核','t-warn'], mute:['无法判定','t-mute'] };
   return map[tone] || [tone, 't-mute'];
 }
-function compactCard(c){
+function compactCard(c, idx){
   if(!c) return '';
   var h = '<div class="pcard ' + (c.tone||'info') + ' chatcard">';
   h += '<div class="ph">研判结果<span class="eng">规则引擎计算</span><span class="r">R = L × S</span></div>';
@@ -1283,7 +1369,7 @@ function compactCard(c){
   if(c.risk){
     var r = c.risk;
     h += '<div class="cline"><b class="n ' + (c.tone||'info') + '">' + r.R + '</b>' +
-         '<span>' + esc(r.level) + ' · ' + esc(r.deadline) + ' · L=' + r.L + ' × S=' + r.S + '</span></div>';
+         '<span>' + (function(){ var u = urgencyOf(r.R); return u ? (u.code + ' 级 · ' + u.name + ' · ') : ''; })() + esc(r.level) + ' · ' + esc(r.deadline) + ' · L=' + r.L + ' × S=' + r.S + '</span></div>';
   }
   if(c.ticket){
     h += '<div class="kv"><span>工单</span><b class="tno">' + esc(c.ticket.no) + '</b></div>' +
@@ -1291,7 +1377,7 @@ function compactCard(c){
   }
   h += '<div style="margin-top:8px;display:flex;gap:6px">' +
        '<button class="chip" data-export="1">导出工单</button>' +
-       '<button class="chip" data-detail="1">右栏看全文</button></div>';
+       '<button class="chip" data-detail="' + (idx == null ? '' : idx) + '">右栏看全文</button></div>';
   h += '</div>';
   return h;
 }
@@ -1347,7 +1433,7 @@ function renderScenes(){
   box.innerHTML = Object.keys(SCENES).map(function(k){
     var s = SCENES[k];
     return '<button data-scene="' + k + '" class="' + (S.scene===k?'on':'') + '" title="' + esc(s.name) + '">' +
-      '<span class="k">' + k + '</span><span class="txt">' + esc(s.short) + '</span></button>';
+      '<span class="txt">' + esc(s.short) + '</span></button>';
   }).join('');
 }
 
@@ -1390,7 +1476,7 @@ function renderPanel(){
   }else{
   h += '<div class="pcard ' + g.tone + '"><div class="ph">风险定级<span class="eng">引擎计算</span><span class="r">R = L × S</span></div>' +
        '<div class="risk ' + g.tone + '"><div class="R" data-count="' + g.R + '">0</div>' +
-       '<div class="f"><b>' + esc(g.level) + ' · ' + esc(g.deadline) + '</b>L=' + g.L + ' · S=' + g.S + '</div></div>' +
+       '<div class="f"><b>' + (function(){ var u = urgencyOf(g.R); return u ? (u.code + ' 级 · ' + u.name + ' · ') : ''; })() + esc(g.level) + ' · ' + esc(g.deadline) + '</b>L=' + g.L + ' · S=' + g.S + '</div></div>' +
        '<div class="meter ' + g.tone + '"><i style="width:0" data-w="' + Math.min(100, g.R/25*100) + '"></i></div>' +
        '<div class="kv"><span>可能性 L</span><b>' + g.L + ' · ' + esc(g.Lwhy) + '</b></div>' +
        '<div class="kv"><span>严重性 S</span><b>' + g.S + ' · ' + esc(g.Swhy) + '</b></div>' +
@@ -1434,6 +1520,82 @@ function renderPanel(){
   $('#pbody').innerHTML = h;
   animateNumbers();
 }
+/* 用对话里的卡片渲染右栏 —— 点「右栏看全文」时走这里。
+   原来只 scrollTop(0)，右栏仍是「当前场景」的实时实测：
+   消息说的是 B 场景 / 上传图，右栏还是别的数据，看起来就是点了没反应。 */
+function renderPanelCard(card, sceneKey){
+  var s = SCENES[sceneKey] || SCENES[S.scene] || {};
+  var tone = card.tone || 'info';
+  var vs = card.verdicts || [];
+  var counts = { ok:0, warn:0, bad:0, mute:0 };
+  vs.forEach(function(v){ counts[v.tone] = (counts[v.tone]||0) + 1; });
+
+  var h = '';
+  h += '<div class="pcard ' + tone + '"><div class="ph">' + esc(s.name || '对话里的研判')
+     + '<span class="r">来自对话</span></div>'
+     + '<div style="display:flex;gap:6px;flex-wrap:wrap">'
+     + '<span class="pill t-ok">已佩戴 ' + counts.ok + '</span>'
+     + '<span class="pill t-warn">待复核 ' + counts.warn + '</span>'
+     + '<span class="pill t-bad">未佩戴 ' + counts.bad + '</span>'
+     + '<span class="pill t-mute">无法判定 ' + counts.mute + '</span>'
+     + '</div></div>';
+
+  h += '<div class="pcard ' + tone + '"><div class="ph">四态判定<span class="r">'
+     + vs.length + ' 人</span></div>';
+  vs.forEach(function(v){
+    var pf = pillOf(v.tone);
+    h += '<div class="vrow"><span class="p">' + esc(v.p) + '</span>'
+       + '<span class="s"><span class="pill ' + pf[1] + '">' + esc(v.state) + '</span></span>'
+       + '<span class="n">' + esc(v.note || '') + '</span></div>';
+  });
+  h += '</div>';
+
+  if(card.risk){
+    h += '<div class="pcard ' + tone + '"><div class="ph">风险定级<span class="eng">引擎计算</span><span class="r">R = L × S</span></div>'
+       + '<div class="risk ' + tone + '"><div class="R">' + card.risk.R + '</div>'
+       + '<div class="f"><b>' + (function(){ var u = urgencyOf(card.risk.R); return u ? (u.code + ' 级 · ' + u.name + ' · ') : ''; })() + esc(card.risk.level) + ' · ' + esc(card.risk.deadline) + '</b>'
+       + 'L=' + card.risk.L + ' · S=' + card.risk.S + '</div></div>'
+       + '<div class="meter ' + tone + '"><i style="width:' + Math.min(100, card.risk.R / 25 * 100) + '%"></i></div>'
+       + '<div class="kv"><span>分级依据</span><b>R=L×S（MIL-STD-882 矩阵）· L/S 取值见《安巡风险分级标准 v1.1》§2.1.1 / §2.2</b></div>'
+       + '</div>';
+  }else{
+    h += '<div class="pcard info"><div class="ph">风险定级<span class="r">本次无违规</span></div>'
+       + '<div style="padding:4px 2px 2px;color:var(--muted);font-size:12px;line-height:1.7">'
+       + '全部人员判定完成，无「未佩戴」，系统直接放行，不生成事件与工单。</div></div>';
+  }
+
+  if(card.ticket){
+    h += '<div class="pcard info"><div class="ph">整改工单<span class="r tno">' + esc(card.ticket.no || '') + '</span></div>';
+    if(card.ticket.owner) h += '<div class="kv"><span>责任人</span><b>' + esc(card.ticket.owner) + '</b></div>';
+    if(card.ticket.reviewer) h += '<div class="kv"><span>复查人</span><b>' + esc(card.ticket.reviewer) + '</b></div>';
+    if(card.ticket.action) h += '<div class="kv" style="display:block"><span style="display:block;margin-bottom:3px">整改要求</span><span>' + esc(card.ticket.action) + '</span></div>';
+    if((card.checks || []).length){
+      h += '<ul class="checks">' + card.checks.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+    }
+    h += '</div>';
+  }else{
+    h += '<div class="pcard info"><div class="ph">整改工单<span class="r">无需开单</span></div>'
+       + '<div style="padding:4px 2px 2px;color:var(--muted);font-size:12px">本次没有确认违规，按分级规则不产生工单。</div></div>';
+  }
+
+  if((card.law || []).length){
+    h += '<div class="pcard"><div class="ph">法规依据</div><div class="law">'
+       + card.law.map(function(l){
+           var hit = matchLaw(l.code);
+           var summary = hit && !hit.verbatim;
+           return '<b>' + esc(l.code) + '</b>'
+             + (summary ? ' <span class="pill t-warn" style="font-size:9.5px">摘要</span>' : '')
+             + '<q>' + esc(l.text) + '</q>';
+         }).join('')
+       + '</div></div>';
+  }
+
+  h += '<div class="pfoot"><b>来源</b>：对话记录里的这条研判，不是右栏当前场景的实时实测。'
+     + '点左侧 A/B/C 可切回实时结果；重新提问会生成新的卡片。</div>';
+
+  $('#pbody').innerHTML = h;
+}
+
 var _lastShownR = null;      // 上一次已经滚过的 R 值
 function animateNumbers(){
   var st = document.body.classList.contains('static');
@@ -1523,7 +1685,8 @@ function paintStreaming(m, idx){
   var head = (!text && m.streaming && m.hint)
     ? '<div class="pending">' + esc(m.hint) + '</div>'
     : md(text);
-  bubble.innerHTML = head + (card ? compactCard(card) : '')
+  bubble.innerHTML = (m.img ? '<img class="shot" src="' + m.img + '" alt="上传的现场图">' : '')
+    + head + (card ? compactCard(card, idx) : '')
     + (m.streaming ? '<span class="caret"></span>' : '');
 
   var tlen = (m.trace || []).length;
@@ -1544,7 +1707,7 @@ function emptyHTML(){
   var s = SCENES[S.scene];
   return '<div class="empty">' +
     '<h1>先把「告警」变成<span>「工单」</span></h1>' +
-    '<p>现在是场景 <b>' + s.id + ' · ' + esc(s.name) + '</b>（' + esc(s.tag) + '）。你可以直接问判定、定级、工单或法规，右侧面板会跟着联动。</p>' +
+    '<p>当前区域 <b>' + esc(s.name) + '</b>（' + esc(s.tag) + '）。你可以直接问判定、定级、工单或法规，右侧面板会跟着联动。</p>' +
     '<div class="sugg">' +
     '<button data-ask="risk"><span class="n">1</span>这个场景现在什么风险等级？凭什么？<span class="go">→</span></button>' +
     '<button data-ask="ticket"><span class="n">2</span>把没戴安全帽的这个人开一张整改工单<span class="go">→</span></button>' +
@@ -1579,6 +1742,7 @@ function msgHTML(m, i){
   var inner;
   if(isMe){
     inner = '<div class="body"><div class="name">我</div><div class="bubble">' +
+      (m.img ? '<img class="shot" src="' + m.img + '" alt="上传的现场图">' : '') +
       esc(m.content).replace(/\n/g,'<br>') + '</div></div>';
   }else{
     var card = findCard(m.content);
@@ -1589,7 +1753,8 @@ function msgHTML(m, i){
       '<div class="acts"><button data-copy="' + i + '">复制</button><button data-regen="1">重新生成</button></div>';
     inner = '<div class="body"><div class="name">安巡 Agent</div>' + traceHTML(m.trace) +
 
-      '<div class="bubble">' + md(text) + (card ? compactCard(card) : '') + caret + '</div>' + acts + '</div>';
+      '<div class="bubble">'
+        + md(text) + (card ? compactCard(card, i) : '') + caret + '</div>' + acts + '</div>';
   }
   return '<div class="msg ' + (isMe?'me':'ai') + '"><div class="av">' + (isMe?'我':'A') + '</div>' + inner + '</div>';
 }
@@ -1666,9 +1831,10 @@ function demoKind(q){
 }
 
 /* ---------------- 发送 / 流式 ---------------- */
-function addMsg(role, content){
+function addMsg(role, content, img){
   var c = ensureConvo();
   var m = { role: role, content: content, ts: Date.now(), scene: S.scene };
+  if(img) m.img = img;
   c.msgs.push(m);
   if(role === 'user' && (c.title === '新对话' || !c.title)){
     c.title = content.slice(0, 18) + (content.length > 18 ? '…' : '');
@@ -1693,6 +1859,9 @@ async function reply(q){
   if(c.msgs.length && c.msgs[c.msgs.length-1].role === 'assistant') return;
 
   S.busy = true; setBusy(true);
+
+  // 生成过程定时落盘：云端一次十几到几十秒，中途刷新/切标签不至于只留下半句
+  var autosave = setInterval(function(){ save(); }, 3000);
 
   var m = { role:'assistant', content:'', ts:Date.now(), streaming:true, scene:S.scene,
             demo:(S.mode !== 'live'), hint:'正在连接模型…' };
@@ -1749,6 +1918,7 @@ async function reply(q){
       acc = (S.transport === 'cloud') ? cloudErrText(e) : ('出错了：' + (e && e.message ? e.message : e));
     }
   }finally{
+    clearInterval(autosave);
     m.streaming = false;
     m.content = acc;
     S.busy = false; S.abort = null; setBusy(false);
@@ -2013,6 +2183,7 @@ function switchConvo(id){
 function newConvo(){
   var c = { id: uid(), title:'新对话', ts: Date.now(), msgs: [] };
   S.convos.unshift(c); S.active = c.id;
+  if(S.convos.length > 30) S.convos.length = 30;   // 只留最近 30 个会话
   save(); renderList(); renderConvo();
   $('#input').focus();
 }
@@ -2088,11 +2259,27 @@ document.addEventListener('click', function(e){
   if(exp){ exportTicket(); return; }
   var det = e.target.closest('[data-detail]');
   if(det){
-    if(window.innerWidth <= 1180){
-      $('#panel').classList.add('on'); $('#mask').classList.add('on');
+    // 用这条消息自己的卡片渲染右栏。原来只 scrollTop(0)，
+    // 右栏仍是「当前场景」的实测，和这条消息对不上，点了像没反应。
+    var idx = det.getAttribute('data-detail');
+    var msg = (idx !== '' && idx !== null) ? (convo(S.active) || {}).msgs[+idx] : null;
+    var card = msg ? findCard(msg.content) : null;
+    if(card){
+      card = normalizeCard(card, msg.scene || S.scene, +idx);
+      renderPanelCard(card, msg.scene || S.scene);
+      if(window.innerWidth <= 1180){
+        $('#panel').classList.add('on'); $('#mask').classList.add('on');
+      }else{
+        $('#pbody').scrollTop = 0;
+        toast('右栏已切到这条研判');
+      }
     }else{
-      $('#pbody').scrollTop = 0;
-      toast('右栏已展开完整研判');
+      if(window.innerWidth <= 1180){
+        $('#panel').classList.add('on'); $('#mask').classList.add('on');
+      }else{
+        $('#pbody').scrollTop = 0;
+      }
+      toast('这条消息里没有研判卡片');
     }
     return;
   }
