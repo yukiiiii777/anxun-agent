@@ -691,6 +691,11 @@ async function uploadInspect(file){
     var d = await r.json();
     if(!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
     var x = sceneFromApi(d);
+    // 左栏出了结果，右栏必须跟着换。以前这里只 addMsg + renderConvo，
+    // 右栏还停在样例图的判定上，看起来就是「左侧更新了、右侧没动」。
+    applyModelScene(S.scene, d);
+    renderPanel();
+
     var lr = L_from_count(x.count.n), sr = S_from_work(x.work.type);
     var g = grade(lr.L, sr.S);
     var ev = (d.events || [])[0];
