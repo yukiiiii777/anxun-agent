@@ -232,6 +232,7 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
 .meter.gold i{background:linear-gradient(90deg,#D8B451,#8A6A1F)}
 .meter.bad i{background:linear-gradient(90deg,#D2706A,#A32D2D)}
 .meter.info i{background:linear-gradient(90deg,#7FA9D4,#185FA5)}
+.kv b.fill{color:var(--faint);font-weight:500;letter-spacing:.4px}
 .kv{display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:5px 0;border-top:1px dashed #F0EEE7}
 .kv:first-of-type{border-top:0}
 .kv span:first-child{color:var(--faint);white-space:nowrap;flex:none}
@@ -377,7 +378,7 @@ var SCENES = {
     ],
     count:{ n:4, why:'近 30 天该通道同类违规 4 次' },
     work:{ type:'普通作业', why:'普通作业 · 安全帽缺失' },
-    ticket:{ no:'TK-A-0931', owner:'当班班组长', reviewer:'当班安全员',
+    ticket:{ no:'TK-A-0931', owner:'', reviewer:'当班安全员',
       action:'现场补发安全帽，核验同班组其余 6 人佩戴情况，回传整改照片' },
     checks:['补齐 6 顶安全帽并签字确认','当日 17:00 前回传整改照片','班前会重讲佩戴要求'],
     law:[{code:'安全生产法 第四十五条',
@@ -393,7 +394,7 @@ var SCENES = {
     ],
     count:{ n:7, why:'近 30 天该平台同类违规 7 次' },
     work:{ type:'高处作业', why:'高处作业 · 按作业类型取 S' },
-    ticket:{ no:'TK-B-0932', owner:'作业负责人', reviewer:'安全总监',
+    ticket:{ no:'TK-B-0932', owner:'', reviewer:'安全总监',
       action:'立即停止高处作业，人员撤离至地面，补发并正确佩戴安全帽后方可复工' },
     checks:['即时叫停并撤离平台人员','补发安全帽并复查佩戴','复工前安全交底签字'],
     law:[{code:'安全生产法 第四十五条',
@@ -411,7 +412,7 @@ var SCENES = {
     ],
     count:{ n:1, why:'近 30 天该区域同类违规 1 次' },
     work:{ type:'车辆作业', why:'车辆作业 · 安全帽缺失' },
-    ticket:{ no:'TK-C-0933', owner:'仓储值班主管', reviewer:'区域安全员',
+    ticket:{ no:'TK-C-0933', owner:'', reviewer:'区域安全员',
       action:'纳入本周安全提醒，装卸作业前增加佩戴确认环节' },
     checks:['班前会提醒并签到','装卸区入口加贴提示牌'],
     law:[{code:'安全生产法 第四十五条',
@@ -550,7 +551,9 @@ function sceneFromApi(d){
   if(t){
     out.ticket = {
       no: t.ticket_id,
-      owner: t.assignee || '当班班组长',
+      // 责任人留空：这张单要打印出来给现场签字，名字由使用方自己填。
+      // 服务端给的 assignee 是「区域负责人姓名」，直接印上去等于替某个人认了这条违规。
+      owner: '',
       reviewer: t.review_at ? '安全员（' + String(t.review_at).replace('T', ' ').slice(5, 16) + ' 复查）' : '安全员',
       action: t.requirement || '',
       grade: t.grade || '',
@@ -595,9 +598,9 @@ function applyModelScene(k, d){
     + (s.ticket && /^TK-/.test(String(s.ticket.no || ''))
         ? '规则引擎已按实测开出工单 ' + s.ticket.no
           + '（' + (s.ticket.grade || '') + '' + (s.ticket.risk ? ' · R=' + s.ticket.risk : '') + '），'
-          + '责任人 ' + (s.ticket.owner || '') + '；用户问工单就直接引用这个号，不要另编。'
+          + '工单号已开好，用户问工单就直接引用这个号，不要另编。'
         : '')
-    + '以上为 ' + modelName() + ' 实测结果（' + ((d.source || '').indexOf('scene') === 0 ? (d.source.split(':')[1] || '') : '上传图') + '），不是手写数据。';
+    + '以上为 ' + modelName() + ' 实测结果，不是手写数据。';
 }
 
 /* ---------------- 上传图片跑真模型 ---------------- */
@@ -671,7 +674,7 @@ async function uploadInspect(file){
         if(raw && raw.length < 700000) thumb = raw;
       }catch(e){}
     }
-    addMsg('user', '上传图片实测：' + (file.name || '未命名') + '（区域 ' + regionId + '）', thumb);
+    addMsg('user', '上传图片实测：' + (file.name || '未命名'), thumb);
     renderConvo(); enterLast(); toBottom(true);
     var dataUrl = await readAsDataURL(file);
     var r = await fetch(apiUrl('/api/inspect'), {
@@ -686,7 +689,7 @@ async function uploadInspect(file){
     var ev = (d.events || [])[0];
     var st = {};
     x.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
-    var head = '**上传图片实测**（区域 ' + regionId + ' · ' + modelName() + ' · ' + x.verdicts.length + ' 人）\n\n'
+    var head = '**上传图片实测**（' + modelName() + ' · ' + x.verdicts.length + ' 人）\n\n'
       + Object.keys(st).map(function(y){ return y + ' ' + st[y]; }).join('、') + '。\n\n';
     if(d.scene_check && d.scene_check.ok === false){
       head += '> 注意：' + (d.scene_check.reason || '该图疑似非作业全景')
@@ -891,6 +894,27 @@ function cleanModelText(t){
     .trim();
 }
 
+/* 坏输出判定：有些模型在工具调用出岔子之后会退化成「把参数一路念下去」，
+   例如 law_lookup」 law_lookup _article … _code … _query … 连着念上百个字，
+   或者把提示词里根本没出现过的指令抄回来。这种文本对用户没有任何信息量，
+   与其显示出来不如直接丢掉、升一档重试。 */
+function looksBroken(t){
+  if(!t) return false;
+  var head = t.slice(0, 2500);
+  var marks = (head.match(/\s_[a-z_]{2,}\s/g) || []).length;   // 念参数：_article _code _query
+  if(marks >= 6) return true;
+  if(head.indexOf('【工单】') >= 0) return true;                  // 凭空抄出一段指令
+  var compact = head.replace(/\s/g, '');
+  for(var len = 14; len <= 26; len += 6){
+    for(var i = 0; i + len * 3 <= compact.length; i += 3){
+      var seg = compact.substr(i, len);
+      var n = compact.split(seg).length - 1;
+      if(n >= 3) return true;                                    // 同一段重复 3 次以上
+    }
+  }
+  return false;
+}
+
 async function cloudAttempt(c, tier, signal, onDelta, onTrace){
   var messages = cloudMessages(c);
   var useTools = CLOUD.tools[tier.id] === true;
@@ -928,6 +952,11 @@ async function cloudAttempt(c, tier, signal, onDelta, onTrace){
     if(!clean.length){
       // 这一轮没调工具，acc 才是正文。先清洗，再按小段吐出去（保留打字感）。
       var txt = cleanModelText(acc);
+      if(looksBroken(txt)){
+        var bad = new Error('模型输出退化，换档重试');
+        bad.error = { code:'degenerate' };
+        throw bad;
+      }
       for(var ci = 0; ci < txt.length; ci += 28){
         emit(txt.slice(ci, ci + 28));
         await sleep(10);
@@ -1019,13 +1048,15 @@ var SYS = [
   '    没有给出的，一律不写、也不推断——不要补装备种类（安全带、手套、护目镜、口罩），',
   '    不要补距离/高度/温度/时长等数值，不要补人名、部门、班次、时间地点。',
   '    用户问到没有的数据，直接说「本轮判定里没有这一项」，不要用「大概」「通常」凑一个答案。',
-  '11) 判定范围只有头盔与反光背心两类。不要把安全带、手套、护目镜写进结论或工单，',
+  '11) 判定范围只有头盔与反光背心两类。不要把安全带、手套、护目镜写进结论或工单——',
+  '    哪怕场景是高处作业，模型没检这两类，写了就是编的。',
   '12) 等级对外统一用紧急程度 A/B/C 表述：A 级=紧急（R≥13，2 小时内）、B 级=较急（R 9–12，24 小时内）、',
   '    C 级=一般（R≤8，7 天内 / 30 天内）。可以说「A 级 · 紧急 · 红色」，但不要只甩颜色。',
-  '    哪怕场景是高处作业——模型没检这两类，写了就是编的。',
+  '13) 工单只说编号、等级、时限、整改要求。不要出现任何具体人名，也不要替某个岗位署名；',
+  '    用户没问就不要补充签字、盖章、经办人这类内容。',
   '',
   '当你要给出一次完整研判（四态判定 + 定级 + 工单）时，在正文末尾输出一个 anxun 代码块，内容是一行 JSON：',
-  '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"<create_ticket 返回的号，不要自己编>","owner":"作业负责人","reviewer":"安全总监","action":"立即停止作业并撤离"},"checks":["叫停并撤离"],"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
+  '{"tone":"bad","verdicts":[{"p":"P1","state":"已佩戴","tone":"ok","note":"置信度 0.93"}],"risk":{"R":16,"L":4,"S":4,"level":"红色","deadline":"2 小时内"},"ticket":{"no":"<create_ticket 返回的号，不要自己编>","action":"立即停止作业并撤离"},"checks":["叫停并撤离"],"law":[{"code":"安全生产法 第四十五条","text":"原文……"}]}',
   'tone 取 ok / warn / bad / info。这块会被前端渲染成卡片，正文里不要重复它的内容。'
 ];
 
@@ -1222,6 +1253,26 @@ function md(src){
 }
 
 /* ---------------- 结构化卡片 ---------------- */
+/* 模型偶尔不输出 anxun 代码块，正文里却已经在说工单号了。
+   这时没有卡片就没有「导出工单」按钮。用当前场景的实测结果补一张，
+   数据和右栏同源，不是另编的。 */
+function cardFromScene(sc){
+  var s = SCENES[sc];
+  if(!s || !s.ticket || !/^TK-/.test(String(s.ticket.no || ''))) return null;
+  var g = sceneRisk(sc);
+  if(!g) return null;
+  return {
+    tone: g.tone,
+    verdicts: (s.verdicts || []).map(function(v){
+      return { p:v.p, state:v.state, tone:v.tone, note:v.note };
+    }),
+    risk: { R:g.R, L:g.L, S:g.S, level:g.level, deadline:g.deadline },
+    ticket: { no:s.ticket.no, owner:'', action:s.ticket.action },
+    checks: s.checks || [],
+    law: s.law || []
+  };
+}
+
 function findCard(text){
   var m = text.match(/```anxun\s*\n([\s\S]*?)```/);
   if(!m) return null;
@@ -1368,11 +1419,10 @@ function compactCard(c, idx){
          '<span>' + (function(){ var u = urgencyOf(r.R); return u ? (u.code + ' 级 · ' + u.name + ' · ') : ''; })() + esc(r.level) + ' · ' + esc(r.deadline) + ' · L=' + r.L + ' × S=' + r.S + '</span></div>';
   }
   if(c.ticket){
-    h += '<div class="kv"><span>工单</span><b class="tno">' + esc(c.ticket.no) + '</b></div>' +
-         '<div class="kv"><span>责任人</span><b>' + esc(c.ticket.owner) + '</b></div>';
+    h += '<div class="kv"><span>工单</span><b class="tno">' + esc(c.ticket.no) + '</b></div>';
   }
   h += '<div style="margin-top:8px;display:flex;gap:6px">' +
-       '<button class="chip" data-export="1">导出工单</button>' +
+       '<button class="chip" data-export="1">导出工单（Word）</button>' +
        '<button class="chip" data-detail="' + (idx == null ? '' : idx) + '">右栏看全文</button></div>';
   h += '</div>';
   return h;
@@ -1403,14 +1453,14 @@ function cardHTML(c){
   if(c.ticket){
     var t = c.ticket;
     h += '<div style="margin-top:6px"><div class="kv"><span>工单号</span><b class="tno">' + esc(t.no) + '</b></div>' +
-         '<div class="kv"><span>责任人</span><b>' + esc(t.owner) + '</b></div>' +
+         
          '<div class="kv"><span>复查人</span><b>' + esc(t.reviewer) + '</b></div>' +
          '<div class="kv" style="display:block"><span style="display:block;margin-bottom:3px">整改要求</span><span>' + esc(t.action) + '</span></div></div>';
     if(c.checks && c.checks.length){
       h += '<ul class="checks">' + c.checks.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
     }
     h += '<div style="margin-top:9px;display:flex;gap:6px">' +
-         '<button class="chip" data-export="1">导出工单</button></div>';
+         '<button class="chip" data-export="1">导出工单（Word）</button></div>';
   }
   if(c.law && c.law.length){
     h += '<div style="margin-top:9px;font-size:12px;line-height:1.7">';
@@ -1472,7 +1522,7 @@ function renderPanel(){
 
   if(s.ticket){
     h += '<div class="pcard info"><div class="ph">整改工单<span class="r tno">' + esc(s.ticket.no || ticketNoFor(S.scene)) + '</span></div>' +
-         '<div class="kv"><span>责任人</span><b>' + esc(s.ticket.owner) + '</b></div>' +
+         
          '<div class="kv"><span>复查人</span><b>' + esc(s.ticket.reviewer) + '</b></div>' +
          '<ul class="checks">' + s.checks.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
   }else{
@@ -1552,7 +1602,7 @@ function renderPanelCard(card, sceneKey){
 
   if(card.ticket){
     h += '<div class="pcard info"><div class="ph">整改工单<span class="r tno">' + esc(card.ticket.no || '') + '</span></div>';
-    if(card.ticket.owner) h += '<div class="kv"><span>责任人</span><b>' + esc(card.ticket.owner) + '</b></div>';
+    
     if(card.ticket.reviewer) h += '<div class="kv"><span>复查人</span><b>' + esc(card.ticket.reviewer) + '</b></div>';
     if(card.ticket.action) h += '<div class="kv" style="display:block"><span style="display:block;margin-bottom:3px">整改要求</span><span>' + esc(card.ticket.action) + '</span></div>';
     if((card.checks || []).length){
@@ -1660,7 +1710,7 @@ function paintStreaming(m, idx){
   var el = nodes[nodes.length - 1];
   if(!el || !el.classList.contains('ai')){ renderConvo(); return; }
 
-  var card = findCard(m.content);
+  var card = m.card || findCard(m.content);
   if(card) card = normalizeCard(card, m.scene || S.scene, idx);
   var text = stripCard(cleanModelText(m.content));
   // 卡片还没写完时（```anxun 未闭合），别把 JSON 原文漏在正文里
@@ -1731,7 +1781,7 @@ function msgHTML(m, i){
       (m.img ? '<img class="shot" src="' + m.img + '" alt="上传的现场图">' : '') +
       esc(m.content).replace(/\n/g,'<br>') + '</div></div>';
   }else{
-    var card = findCard(m.content);
+    var card = m.card || findCard(m.content);
     if(card) card = normalizeCard(card, m.scene || S.scene, i);
     var text = stripCard(cleanModelText(m.content));
     var caret = m.streaming ? '<span class="caret"></span>' : '';
@@ -1907,6 +1957,11 @@ async function reply(q){
     clearInterval(autosave);
     m.streaming = false;
     m.content = acc;
+    // 正文提到工单号但没给卡片，补一张，保证「导出工单」按钮在
+    if(!findCard(m.content) && /TK-\d/.test(m.content)){
+      var gc = cardFromScene(m.scene || S.scene);
+      if(gc) m.card = gc;
+    }
     S.busy = false; S.abort = null; setBusy(false);
     renderConvo();
     toBottom(false);
@@ -1987,12 +2042,12 @@ function runTool(name, args){
     // 而右栏卡片显示的是 TK-2026…，同一个单两个号。
     var sysNo = (scene.ticket && /^TK-/.test(String(scene.ticket.no || '')))
       ? scene.ticket.no : ticketNoFor(sc);
+    // 不返回 owner / reviewer：模型看到这两个字段就会在正文里写「责任人：…」，
+    // 甚至自己编一个名字。工单上这栏由现场手填，工具就不该给出值。
     return {
       no: sysNo,
       scene: sc,
       level: a.level || rk.level,
-      owner: scene.ticket.owner,
-      reviewer: scene.ticket.reviewer,
       action: a.action || scene.ticket.action
     };
   }
@@ -2210,7 +2265,7 @@ document.addEventListener('click', function(e){
     var kind = ask.getAttribute('data-ask');
     var qs = {
       risk: '这个场景现在什么风险等级？L 和 S 分别怎么来的？',
-      ticket: '把没戴安全帽的这个人开一张整改工单，写清责任人和时限。',
+      ticket: '把没戴安全帽的这个人开一张整改工单，写清整改要求和时限。',
       law: '这条违规触犯了哪条法规？把原文念一下。'
     };
     $('#input').value = qs[kind] || '';
@@ -2266,35 +2321,265 @@ document.addEventListener('click', function(e){
   }
 });
 
-function exportTicket(){
-  var s = SCENES[S.scene];
-  var t = s.ticket;
-  var rk = sceneRisk(S.scene);
-  // 服务端已经发了 TK- 号就用它。原来一律用 ticketNoFor() 重拼，
-  // 结果屏幕上 TK-20261109231106-B-01-vest-01、导出文件却叫 GD-B-1109.md，
-  // 交给车间的纸单和系统里的单号对不上。
-  var no = (t && t.no) ? String(t.no) : ticketNoFor(S.scene);
-  var dueTxt = (t && t.due_at) ? String(t.due_at).replace('T', ' ').slice(5, 16) + ' 前完成'
-                               : rk.deadline;
-  var mdTxt = '# 整改工单 ' + no + '\n\n' +
-    '- 场景：' + s.name + '（' + s.tag + '）\n' +
-    '- 风险：' + rk.level + '（R=' + rk.R + '，L=' + rk.L + ' × S=' + rk.S + '）\n' +
-    '- 时限：' + dueTxt + '\n' +
-    '- 责任人：' + t.owner + '\n' +
-    '- 复查人：' + t.reviewer + '\n' +
-    '- 分级依据：R=L×S（MIL-STD-882 矩阵）；L/S 取值见《安巡风险分级标准 v1.1》§2.1.1 / §2.2\n\n' +
-    '## 整改要求\n\n' + t.action + '\n\n' +
-    '## 验收项\n\n' + s.checks.map(function(x){ return '- [ ] ' + x; }).join('\n') + '\n\n' +
-    '## 法规依据\n\n' + s.law.map(function(l){ return '> ' + l.code + '\n>\n> ' + l.text; }).join('\n\n') + '\n';
-  var blob = new Blob([mdTxt], { type:'text/markdown;charset=utf-8' });
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = no + '.md';
-  a.click();
-  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
-  toast('工单已导出');
+/* ---------------- 导出标准工单（.docx，纯前端生成） ----------------
+   一个 .docx 就是一个 zip；这里用「存储不压缩」的 zip，浏览器里百来行就能写出来，
+   不引任何第三方库、不走 CDN、不依赖后端，离线也能导出。
+   版式按常规《安全隐患整改通知单》：标题 → 基本信息表 → 违规明细 →
+   整改要求 → 验收项 → 法规依据 → 签署栏。 */
+var CRC_T = (function(){
+  var t = new Int32Array(256);
+  for(var n = 0; n < 256; n++){
+    var c = n;
+    for(var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c;
+  }
+  return t;
+})();
+function crc32(u8){
+  var c = -1;
+  for(var i = 0; i < u8.length; i++) c = (c >>> 8) ^ CRC_T[(c ^ u8[i]) & 0xFF];
+  return (c ^ -1) >>> 0;
+}
+function zipStore(entries){
+  var enc = new TextEncoder(), parts = [], central = [], offset = 0;
+  entries.forEach(function(e){
+    var name = enc.encode(e.name);
+    var data = e.text != null ? enc.encode(e.text) : e.data;
+    var crc = crc32(data), size = data.length;
+    var lh = new Uint8Array(30 + name.length), lv = new DataView(lh.buffer);
+    lv.setUint32(0, 0x04034b50, true); lv.setUint16(4, 20, true);
+    lv.setUint16(6, 0x0800, true); lv.setUint16(8, 0, true);
+    lv.setUint16(10, 0, true); lv.setUint16(12, 0x21, true);
+    lv.setUint32(14, crc, true); lv.setUint32(18, size, true); lv.setUint32(22, size, true);
+    lv.setUint16(26, name.length, true); lv.setUint16(28, 0, true);
+    lh.set(name, 30);
+    parts.push(lh, data);
+    var ch = new Uint8Array(46 + name.length), cv = new DataView(ch.buffer);
+    cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0x0800, true); cv.setUint16(10, 0, true); cv.setUint16(12, 0, true);
+    cv.setUint16(14, 0x21, true); cv.setUint32(16, crc, true);
+    cv.setUint32(20, size, true); cv.setUint32(24, size, true);
+    cv.setUint16(28, name.length, true); cv.setUint32(42, offset, true);
+    ch.set(name, 46);
+    central.push(ch);
+    offset += lh.length + size;
+  });
+  var cdSize = central.reduce(function(a, b){ return a + b.length; }, 0);
+  var end = new Uint8Array(22), ev = new DataView(end.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, entries.length, true); ev.setUint16(10, entries.length, true);
+  ev.setUint32(12, cdSize, true); ev.setUint32(16, offset, true);
+  return new Blob(parts.concat(central, [end]),
+    { type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 }
 
+function xesc(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function p2(n){ n = String(n); return n.length < 2 ? '0' + n : n; }
+
+function wRpr(o){
+  o = o || {};
+  return '<w:rPr><w:rFonts w:ascii="Times New Roman" w:eastAsia="宋体" w:hAnsi="Times New Roman"/>'
+    + (o.b ? '<w:b/>' : '')
+    + (o.color ? '<w:color w:val="' + o.color + '"/>' : '')
+    + '<w:sz w:val="' + (o.sz || 21) + '"/><w:szCs w:val="' + (o.sz || 21) + '"/>'
+    + (o.u ? '<w:u w:val="single"/>' : '') + '</w:rPr>';
+}
+function wP(text, o){
+  o = o || {};
+  // pPr 子元素顺序按 OOXML 规范：spacing → ind → jc（顺序错了 Word 会报文档损坏）
+  var pPr = '<w:pPr>'
+    + '<w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after || 0)
+    + '" w:line="' + (o.line || 300) + '" w:lineRule="auto"/>'
+    + (o.ind ? '<w:ind w:firstLine="' + o.ind + '"/>' : '')
+    + (o.align ? '<w:jc w:val="' + o.align + '"/>' : '')
+    + '</w:pPr>';
+  return '<w:p>' + pPr + '<w:r>' + wRpr(o) + '<w:t xml:space="preserve">' + xesc(text) + '</w:t></w:r></w:p>';
+}
+function wTc(text, o){
+  o = o || {};
+  return '<w:tc><w:tcPr><w:tcW w:w="' + (o.w || 2000) + '" w:type="dxa"/>'
+    + (o.span ? '<w:gridSpan w:val="' + o.span + '"/>' : '')
+    + (o.fill ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.fill + '"/>' : '')
+    + '<w:vAlign w:val="center"/></w:tcPr>'
+    + wP(text, { sz:o.sz || 19, b:o.b, align:o.align || 'left', line:260 })
+    + '</w:tc>';
+}
+function wTbl(rows, widths){
+  var grid = widths.map(function(w){ return '<w:gridCol w:w="' + w + '"/>'; }).join('');
+  var total = widths.reduce(function(a, b){ return a + b; }, 0);
+  var bd = '<w:tblBorders>'
+    + ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(function(k){
+        return '<w:' + k + ' w:val="single" w:sz="4" w:space="0" w:color="808080"/>';
+      }).join('') + '</w:tblBorders>';
+  return '<w:tbl><w:tblPr><w:tblW w:w="' + total + '" w:type="dxa"/><w:jc w:val="center"/>' + bd
+    + '<w:tblCellMar><w:top w:w="50" w:type="dxa"/><w:left w:w="100" w:type="dxa"/>'
+    + '<w:bottom w:w="50" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar>'
+    + '</w:tblPr><w:tblGrid>' + grid + '</w:tblGrid>' + rows.join('') + '</w:tbl>';
+}
+
+function buildTicketXml(d){
+  var W = [1500, 3300, 1500, 3300];
+  var info = [];
+  info.push('<w:tr>' + wTc('受检区域', {w:W[0], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.region, {w:W[1]}) + wTc('作业类型', {w:W[2], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.work, {w:W[3]}) + '</w:tr>');
+  info.push('<w:tr>' + wTc('风险等级', {w:W[0], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.grade, {w:W[1]}) + wTc('风险值', {w:W[2], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.rvalue, {w:W[3]}) + '</w:tr>');
+  info.push('<w:tr>' + wTc('整改时限', {w:W[0], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.due, {w:W[1]}) + wTc('判定方式', {w:W[2], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.method, {w:W[3]}) + '</w:tr>');
+  info.push('<w:tr>' + wTc('责任人', {w:W[0], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.owner, {w:W[1]}) + wTc('复查人', {w:W[2], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.reviewer, {w:W[3]}) + '</w:tr>');
+  info.push('<w:tr>' + wTc('下发时间', {w:W[0], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.issued, {w:W[1]}) + wTc('工单编号', {w:W[2], b:1, fill:'F2F2F2', align:'center'})
+    + wTc(d.no, {w:W[3]}) + '</w:tr>');
+
+  var VW = [700, 1100, 1500, 6300];
+  var rows = ['<w:tr>'
+    + wTc('序号', {w:VW[0], b:1, fill:'F2F2F2', align:'center'})
+    + wTc('人员', {w:VW[1], b:1, fill:'F2F2F2', align:'center'})
+    + wTc('判定结论', {w:VW[2], b:1, fill:'F2F2F2', align:'center'})
+    + wTc('判定依据', {w:VW[3], b:1, fill:'F2F2F2', align:'center'}) + '</w:tr>'];
+  d.verdicts.forEach(function(v, i){
+    rows.push('<w:tr>' + wTc(String(i + 1), {w:VW[0], align:'center'})
+      + wTc(v.p, {w:VW[1], align:'center'})
+      + wTc(v.state, {w:VW[2], align:'center'})
+      + wTc(v.note || '—', {w:VW[3], sz:18}) + '</w:tr>');
+  });
+
+  var SW = [3200, 3200, 3200];
+  var sign = '<w:tr>'
+    + wTc('检查人（签字）', {w:SW[0], b:1, fill:'F2F2F2', align:'center'})
+    + wTc('责任人（签字）', {w:SW[1], b:1, fill:'F2F2F2', align:'center'})
+    + wTc('复查人（签字）', {w:SW[2], b:1, fill:'F2F2F2', align:'center'}) + '</w:tr>'
+    + '<w:tr><w:trPr><w:trHeight w:val="900" w:hRule="atLeast"/></w:trPr>'
+    + wTc('', {w:SW[0]}) + wTc('', {w:SW[1]}) + wTc('', {w:SW[2]}) + '</w:tr>'
+    + '<w:tr>'
+    + wTc('日期：      年    月    日', {w:SW[0], sz:18})
+    + wTc('日期：      年    月    日', {w:SW[1], sz:18})
+    + wTc('日期：      年    月    日', {w:SW[2], sz:18}) + '</w:tr>';
+
+  var body = '';
+  body += wP('安全隐患整改通知单', { sz:36, b:1, align:'center', after:60 });
+  body += wP('编号：' + d.no + '　　紧急程度：' + d.urgency, { sz:19, align:'center', after:180 });
+  body += wTbl(info, W);
+  body += wP('', { sz:12, after:60 });
+
+  body += wP('一、违规事实', { sz:22, b:1, before:120, after:80 });
+  body += wP('本次共识别 ' + d.persons + ' 人，其中未佩戴 ' + d.bad + ' 人、待复核 '
+    + d.warn + ' 人、无法判定 ' + d.mute + ' 人。明细如下：', { sz:20, ind:420, after:80 });
+  body += wTbl(rows, VW);
+  body += wP('', { sz:12, after:60 });
+
+  body += wP('二、整改要求', { sz:22, b:1, before:120, after:80 });
+  body += wP(d.action, { sz:21, ind:420, after:120 });
+  body += wP('完成时限：' + d.due, { sz:21, ind:420, after:160 });
+
+  body += wP('三、验收项', { sz:22, b:1, before:120, after:80 });
+  var checks = d.checks.filter(function(x){ return !/^(时限|复查)[:：]/.test(String(x).trim()); });
+  if(!checks.length) checks = ['按整改要求完成并提交现场照片'];
+  checks.forEach(function(x, i){
+    body += wP('□ ' + (i + 1) + '. ' + x, { sz:21, ind:420, after:60 });
+  });
+  body += wP('', { sz:12, after:60 });
+
+  body += wP('四、法规依据', { sz:22, b:1, before:120, after:80 });
+  d.law.forEach(function(l){
+    body += wP(l.code, { sz:21, b:1, ind:420, after:20 });
+    body += wP('「' + l.text + '」', { sz:19, ind:420, after:80 });
+  });
+
+  body += wP('', { sz:12, after:60 });
+  body += wP('五、签署', { sz:22, b:1, before:120, after:80 });
+  body += wTbl([sign], SW);
+  body += wP('', { sz:12, after:60 });
+  body += wP('本通知单由安巡 Agent 依据 ' + d.model + ' 实测判定与《安巡风险分级标准 v1.2》自动生成；'
+    + 'R = L × S，L 取历史违规次数与本次违规人数的较高档，S 按作业类型取值。', { sz:17, color:'666666', after:0 });
+
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    + '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+    + '<w:body>' + body
+    + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>'
+    + '<w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1414" w:header="851" w:footer="992" w:gutter="0"/>'
+    + '<w:cols w:space="425"/><w:docGrid w:linePitch="312"/></w:sectPr>'
+    + '</w:body></w:document>';
+}
+
+function exportTicket(){
+  var s = SCENES[S.scene];
+  var t = s.ticket || {};
+  var rk = sceneRisk(S.scene) || { L:'-', S:'-', R:'-', level:'', deadline:'' };
+  var u = urgencyOf(rk.R) || { code:'', name:'' };
+  var no = (t.no) ? String(t.no) : ticketNoFor(S.scene);
+  var now = new Date();
+  var counts = { ok:0, warn:0, bad:0, mute:0 };
+  (s.verdicts || []).forEach(function(v){ counts[v.tone] = (counts[v.tone] || 0) + 1; });
+
+  var d = {
+    no: no,
+    region: s.name + '（' + (s.tag || '') + '）',
+    work: (s.work && s.work.type) || '—',
+    grade: (u.code ? u.code + ' 级 · ' + u.name + '（' : '') + (rk.level || '') + (u.code ? '）' : ''),
+    rvalue: 'R = ' + rk.R + '（L=' + rk.L + ' × S=' + rk.S + '）',
+    due: (t.due_at ? String(t.due_at).replace('T', ' ').slice(5, 16) + ' 前' : (rk.deadline || '—')),
+    method: 'AI 视觉识别 + 规则引擎（' + modelName() + '）',
+    owner: t.owner || '＿＿＿＿＿＿（签字）',
+    reviewer: t.reviewer || '安全员',
+    issued: now.getFullYear() + '-' + p2(now.getMonth() + 1) + '-' + p2(now.getDate())
+      + ' ' + p2(now.getHours()) + ':' + p2(now.getMinutes()),
+    urgency: u.code ? (u.code + ' 级 · ' + u.name) : (rk.level || '—'),
+    persons: (s.verdicts || []).length,
+    bad: counts.bad || 0, warn: counts.warn || 0, mute: counts.mute || 0,
+    action: t.action || '按现场实际情况整改',
+    checks: s.checks || [],
+    law: s.law || [],
+    verdicts: s.verdicts || [],
+    model: modelName()
+  };
+
+  var files = [
+    { name:'[Content_Types].xml', text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+      + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+      + '<Default Extension="xml" ContentType="application/xml"/>'
+      + '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+      + '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
+      + '</Types>' },
+    { name:'_rels/.rels', text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+      + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
+      + '</Relationships>' },
+    { name:'word/_rels/document.xml.rels', text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+      + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+      + '</Relationships>' },
+    { name:'word/styles.xml', text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+      + '<w:docDefaults><w:rPrDefault><w:rPr>'
+      + '<w:rFonts w:ascii="Times New Roman" w:eastAsia="宋体" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>'
+      + '<w:sz w:val="21"/><w:szCs w:val="21"/></w:rPr></w:rPrDefault>'
+      + '<w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="300" w:lineRule="auto"/></w:pPr></w:pPrDefault>'
+      + '</w:docDefaults>'
+      + '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>'
+      + '</w:styles>' },
+    { name:'word/document.xml', text: buildTicketXml(d) }
+  ];
+
+  var blob = zipStore(files);
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = no + '.docx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 3000);
+  toast('工单已导出：' + no + '.docx');
+}
 $('#stream').addEventListener('scroll', function(){
   $('#jump').classList.toggle('on', !atBottom());
 });
