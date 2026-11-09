@@ -321,6 +321,7 @@ section.panel{width:352px;flex:none;border-left:1px solid var(--line);background
           <button class="chip" data-ask="risk">判风险等级</button>
           <button class="chip" data-ask="ticket">生成整改工单</button>
           <button class="chip" data-ask="law">查法规原文</button>
+          <button class="chip" id="btnUpload" hidden>上传图片实测</button>
           <button class="stop" id="btnStop">■ 停止</button>
           <button class="send" id="btnSend" title="发送">↑</button>
         </div>
@@ -445,6 +446,187 @@ function sceneRisk(id){
     Lwhy: s.count.why + '（' + lr.note + '）',
     Swhy: s.work.why + '（' + sr.note + '）'
   };
+}
+
+/* ---------------- 真模型：POST /api/inspect ----------------
+   同源起 serve.py 时，右侧面板改成 best.pt 实测：
+   现场照片 -> 检测 -> 四态 -> 定级 -> 工单，全部来自模型链路。
+   服务没起（比如 GitHub Pages 静态托管）就保持手写示例，页面不报错。 */
+var MODEL = {
+  ready: false,
+  info: null,
+  map: { A:'R-02', B:'R-01', C:'R-03' },
+  cache: {},
+  busy: {}
+};
+
+function toneOfState(st){
+  if(st === '已佩戴') return 'ok';
+  if(st === '待复核') return 'warn';
+  if(st === '未佩戴') return 'bad';
+  return 'mute';
+}
+
+function reasonOf(items, worst){
+  var all = items || [];
+  var picked = all.filter(function(it){ return it.status === worst; });
+  if(!picked.length) picked = all;
+  return picked.map(function(it){
+    return (it.equip ? it.equip + '：' : '') + (it.reason || '');
+  }).join('；').slice(0, 90);
+}
+
+function toneOfLevel(lv){
+  if(lv === '红色') return 'bad';
+  if(lv === '橙色') return 'warn';
+  if(lv === '黄色') return 'gold';
+  return 'info';
+}
+
+/* 把 /api/inspect 的返回摊成页面认得的场景结构（不改 SCENES） */
+function sceneFromApi(d){
+  var persons = d.persons || [];
+  var n = (d.region && d.region.violation_30d) || 0;
+  var work = (d.region && d.region.scene) || '普通';
+  var t = (d.tickets || [])[0] || null;
+  var out = {
+    verdicts: persons.map(function(p, i){
+      return { p:'P' + (i + 1), state:p.worst || '-', tone:toneOfState(p.worst), note:reasonOf(p.items, p.worst) };
+    }),
+    count: { n:n, why:'近 30 天' + ((d.region && d.region.name) || '') + '同类违规 ' + n + ' 次' },
+    work: { type:work + '作业', why:work + '作业 · 按作业类型取 S' },
+    ticket: null, checks: [], law: [],
+    _model: true,
+    _clean: !(d.events && d.events.length),
+    _meta: {
+      scene: d.scene && d.scene.scene_id,
+      persons: persons.length,
+      ms: d.detector && d.detector.mean_ms,
+      backend: d.detector && d.detector.name,
+      thresholds: d.thresholds || null,
+      region: d.region && d.region.region_id,
+      source: d.source
+    }
+  };
+  if(t){
+    out.ticket = {
+      no: t.ticket_id,
+      owner: t.assignee || '当班班组长',
+      reviewer: t.review_at ? '安全员（' + String(t.review_at).replace('T', ' ').slice(5, 16) + ' 复查）' : '安全员',
+      action: t.requirement || ''
+    };
+    out.checks = [
+      t.requirement || '',
+      '时限：' + String(t.due_at || '').replace('T', ' ').slice(5, 16) + ' 前完成',
+      '复查：' + String(t.review_at || '').replace('T', ' ').slice(5, 16) + '（' + t.grade + ' · R=' + t.risk + '）'
+    ].filter(Boolean);
+    out.law = (t.legal || []).map(function(l){
+      return { code:[l.doc, l.clause].filter(Boolean).join(' '), text:l.point || '' };
+    });
+  }
+  return out;
+}
+
+function applyModelScene(k, d){
+  var s = SCENES[k];
+  if(!s || !d || !d.region) return;
+  var x = sceneFromApi(d);
+  for(var key in x) s[key] = x[key];
+
+  var st = {};
+  x.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
+  SCENE_CTX[k] = '当前场景 ' + k + '：' + s.name + '，作业类型「' + x.work.type + '」。'
+    + x.verdicts.length + ' 名人员：'
+    + Object.keys(st).map(function(y){ return y + ' ' + st[y] + ' 人'; }).join('、')
+    + '。近 30 天该区域同类违规 ' + x.count.n + ' 次。'
+    + '以上为 best.pt 实测结果（' + ((d.source || '').indexOf('scene') === 0 ? (d.source.split(':')[1] || '') : '上传图') + '），不是手写数据。';
+}
+
+/* ---------------- 上传图片跑真模型 ---------------- */
+var REGION_OF_SCENE = { A:'A-03', B:'B-01', C:'C-02' };
+
+function pickImage(){
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = function(){
+    if(inp.files && inp.files[0]) uploadInspect(inp.files[0]);
+  };
+  inp.click();
+}
+
+function readAsDataURL(file){
+  return new Promise(function(resolve, reject){
+    var fr = new FileReader();
+    fr.onload = function(){ resolve(String(fr.result || '')); };
+    fr.onerror = function(){ reject(new Error('读不了这个文件')); };
+    fr.readAsDataURL(file);
+  });
+}
+
+async function uploadInspect(file){
+  if(!MODEL.ready){ toast('模型服务没起来：先运行 python serve.py'); return; }
+  var regionId = REGION_OF_SCENE[S.scene] || 'A-03';
+  try{
+    toast('正在跑 best.pt…');
+    var dataUrl = await readAsDataURL(file);
+    var r = await fetch('/api/inspect', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ image_base64:dataUrl, region_id:regionId })
+    });
+    var d = await r.json();
+    if(!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+    var x = sceneFromApi(d);
+    var lr = L_from_count(x.count.n), sr = S_from_work(x.work.type);
+    var g = grade(lr.L, sr.S);
+    var ev = (d.events || [])[0];
+    var st = {};
+    x.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
+    var head = '**上传图片实测**（区域 ' + regionId + ' · best.pt · ' + x.verdicts.length + ' 人）\n\n'
+      + Object.keys(st).map(function(y){ return y + ' ' + st[y]; }).join('、') + '。\n\n';
+    var body = ev
+      ? '定级：R = ' + ev.L + ' × ' + ev.S + ' = **' + ev.R + '**，' + ev.grade + '，' + ev.action + '。\n'
+      : '**没有确认违规，直接放行**，不开工单。\n';
+    var card = {
+      tone: toneOfLevel(g.level), verdicts: x.verdicts,
+      risk: { R:g.R, L:g.L, S:g.S, level:g.level, deadline:g.deadline },
+      ticket: x.ticket, checks: x.checks, law: x.law
+    };
+    addMsg('assistant', head + body + '\n```anxun\n' + JSON.stringify(card) + '\n```\n');
+    renderConvo(); toBottom(true);
+  }catch(e){
+    toast('实测失败：' + (e.message || e));
+  }
+}
+
+async function refreshModelScene(k, silent){
+  var sid = MODEL.map[k];
+  if(!MODEL.ready || !sid || MODEL.busy[k]) return;
+  if(MODEL.cache[k]){
+    applyModelScene(k, MODEL.cache[k]);
+    if(S.scene === k) renderPanel();
+    return;
+  }
+  MODEL.busy[k] = true;
+  try{
+    var r = await fetch('/api/inspect', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ scene_id:sid })
+    });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    var d = await r.json();
+    if(d.error) throw new Error(d.error);
+    MODEL.cache[k] = d;
+    applyModelScene(k, d);
+    if(S.scene === k) renderPanel();
+    if(!silent) toast('已用 best.pt 重跑 ' + sid + '：' + ((d.persons || []).length) + ' 人 / ' + ((d.events || []).length) + ' 条违规');
+  }catch(e){
+    MODEL.ready = false;
+    paintStatus();
+    if(!silent) toast('模型服务不可用：' + (e.message || e) + '（已回到示例数据）');
+  }finally{
+    MODEL.busy[k] = false;
+  }
 }
 
 /* ---------------- 模型侧提示词（直连 / 代理 共用） ---------------- */
@@ -805,7 +987,8 @@ function renderPanel(){
        '<span class="pill t-mute">无法判定 ' + counts.mute + '</span>' +
        '</div></div>';
 
-  h += '<div class="pcard ' + g.tone + '"><div class="ph">四态判定<span class="r">4 人 · 示例数据</span></div>';
+  h += '<div class="pcard ' + g.tone + '"><div class="ph">四态判定<span class="r">' +
+       (s._model ? (s.verdicts.length + ' 人 · best.pt 实测') : ('4 人 · 示例数据')) + '</span></div>';
   s.verdicts.forEach(function(v){
     var p = pillOf(v.tone);
     h += '<div class="vrow"><span class="p">' + esc(v.p) + '</span>' +
@@ -814,6 +997,12 @@ function renderPanel(){
   });
   h += '</div>';
 
+  if(s._clean){
+    h += '<div class="pcard info"><div class="ph">风险定级<span class="r">本次无违规</span></div>' +
+         '<div style="padding:4px 2px 2px;color:var(--muted);font-size:12px;line-height:1.7">' +
+         '全部人员判定完成，无「未佩戴」，系统直接放行，不生成事件与工单。<br>' +
+         '若这里真发生违规：L=' + g.L + '（' + esc(g.Lwhy) + '）× S=' + g.S + '（' + esc(g.Swhy) + '）= ' + g.R + ' → ' + esc(g.level) + '。</div></div>';
+  }else{
   h += '<div class="pcard ' + g.tone + '"><div class="ph">风险定级<span class="eng">引擎计算</span><span class="r">R = L × S</span></div>' +
        '<div class="risk ' + g.tone + '"><div class="R" data-count="' + g.R + '">0</div>' +
        '<div class="f"><b>' + esc(g.level) + ' · ' + esc(g.deadline) + '</b>L=' + g.L + ' · S=' + g.S + '</div></div>' +
@@ -822,26 +1011,40 @@ function renderPanel(){
        '<div class="kv"><span>严重性 S</span><b>' + g.S + ' · ' + esc(g.Swhy) + '</b></div>' +
        '<div class="kv"><span>分级依据</span><b>R=L×S（MIL-STD-882 矩阵）· L/S 取值见 <a href="https://github.com/yukiiiii777/anxun-agent/blob/main/docs/%E5%AE%89%E5%B7%A1%E9%A3%8E%E9%99%A9%E5%88%86%E7%BA%A7%E6%A0%87%E5%87%86.md" target="_blank" rel="noopener noreferrer">《安巡风险分级标准 v1.0》</a> 第 2 节</b></div>' +
        '</div>';
+  }
 
-  h += '<div class="pcard info"><div class="ph">整改工单<span class="r tno">' + esc(ticketNoFor(S.scene)) + '</span></div>' +
-       '<div class="kv"><span>责任人</span><b>' + esc(s.ticket.owner) + '</b></div>' +
-       '<div class="kv"><span>复查人</span><b>' + esc(s.ticket.reviewer) + '</b></div>' +
-       '<ul class="checks">' + s.checks.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+  if(s.ticket){
+    h += '<div class="pcard info"><div class="ph">整改工单<span class="r tno">' + esc(s.ticket.no || ticketNoFor(S.scene)) + '</span></div>' +
+         '<div class="kv"><span>责任人</span><b>' + esc(s.ticket.owner) + '</b></div>' +
+         '<div class="kv"><span>复查人</span><b>' + esc(s.ticket.reviewer) + '</b></div>' +
+         '<ul class="checks">' + s.checks.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+  }else{
+    h += '<div class="pcard info"><div class="ph">整改工单<span class="r">无需开单</span></div>' +
+         '<div style="padding:4px 2px 2px;color:var(--muted);font-size:12px">本次没有确认违规，按分级规则不产生工单。</div></div>';
+  }
 
   h += '<div class="pcard"><div class="ph">法规依据</div><div class="law">' +
-       s.law.map(function(l){
-         var hit = matchLaw(l.code);
-         var summary = hit && !hit.verbatim;
-         return '<b>' + esc(l.code) + '</b>' +
-           (summary ? ' <span class="pill t-warn" style="font-size:9.5px">摘要</span>' : '') +
-           '<q>' + esc(l.text) + '</q>';
-       }).join('') +
-       '<div style="margin-top:8px;color:var(--faint);font-size:10.5px">带「摘要」标记的是条文要点摘录，非逐字原文；对外引用前请核对标准正文。</div>' +
+       (s.law && s.law.length
+         ? s.law.map(function(l){
+             var hit = matchLaw(l.code);
+             var summary = hit && !hit.verbatim;
+             return '<b>' + esc(l.code) + '</b>' +
+               (summary ? ' <span class="pill t-warn" style="font-size:9.5px">摘要</span>' : '') +
+               '<q>' + esc(l.text) + '</q>';
+           }).join('') +
+           '<div style="margin-top:8px;color:var(--faint);font-size:10.5px">带「摘要」标记的是条文要点摘录，非逐字原文；对外引用前请核对标准正文。</div>'
+         : '<div style="color:var(--muted);font-size:12px">本次无确认违规，不引用条文。</div>') +
        '</div></div>';
 
+  var thr = (s._meta && s._meta.thresholds) || null;
+  var confTxt = thr
+    ? ('本轮实跑口径：conf 定论 ' + thr.conf_final + ' / 转复核 ' + thr.conf_review + '（profile ' + esc(thr.profile || '') + '）')
+    : '演示用 conf 0.30 / 复核 0.20（四态齐全）';
   h += '<div class="pfoot"><b>统计口径</b>：有效样本 = 已佩戴 + 未佩戴；待复核与无法判定单列、不进分子分母，只进人工复核队列。<br>' +
-       '演示用 conf 0.30 / 复核 0.20（四态齐全）；对外报数用评测口径 conf 0.65：mAP 0.8654 · 误报 6.12% · 漏报 4.35% · 15.0 ms<br>' +
-       '数据来源：示例数据（人工构造，用于演示判定链路），非现场运行记录。</div>';
+       confTxt + '；对外报数用评测口径：mAP 0.8654 · 误报 6.12% · 漏报 4.35% · 15.0 ms<br>' +
+       (s._model
+         ? '数据来源：本机 best.pt 实测（' + esc((s._meta && s._meta.scene) || '') + '）' + ((s._meta && s._meta.ms) ? ' · ' + s._meta.ms + ' ms/帧' : '')
+         : '数据来源：示例数据（人工构造，用于演示判定链路），非现场运行记录') + '</div>';
 
   $('#pbody').innerHTML = h;
   animateNumbers();
@@ -956,6 +1159,17 @@ function toBottom(smooth){
 function demoAnswer(kind, s){
   var head = '';
   var rk = sceneRisk(s.id);
+
+  if(s._clean){
+    var st = {};
+    s.verdicts.forEach(function(v){ st[v.state] = (st[v.state] || 0) + 1; });
+    return '场景 **' + s.id + ' · ' + s.name + '**：best.pt 实测 ' + s.verdicts.length + ' 人，' +
+      Object.keys(st).map(function(k){ return k + ' ' + st[k]; }).join('、') + '。\n\n' +
+      '**没有确认违规，直接放行**——不生成事件、不开工单。这是误报率的现场体现：' +
+      '合规的人不该被拦下来复核；拦错了，班组很快就会把系统关掉。\n\n' +
+      '作为对照，如果这里真发生违规：L=' + rk.L + '（' + rk.Lwhy + '）× S=' + rk.S + '（' + rk.Swhy + '）= **' + rk.R + '**，' + rk.level + '，' + rk.deadline + '。\n';
+  }
+
   var card = {
     tone: rk.tone, verdicts: s.verdicts,
     risk: { R:rk.R, L:rk.L, S:rk.S, level:rk.level, deadline:rk.deadline },
@@ -963,7 +1177,7 @@ function demoAnswer(kind, s){
   };
 
   if(kind === 'law'){
-    var lawTxt = s.law.map(function(l){
+    var lawTxt = (s.law || []).map(function(l){
       return '**' + l.code + '**\n\n> ' + l.text;
     }).join('\n\n');
     return '场景 ' + s.id + '（' + s.name + '）适用条文：\n\n' + lawTxt +
@@ -990,7 +1204,7 @@ function demoAnswer(kind, s){
     rk.level + '，整改时限 **' + rk.deadline + '**。\n\n' +
     '- **L = ' + rk.L + '**：' + rk.Lwhy + '\n' +
     '- **S = ' + rk.S + '**：' + rk.Swhy + '\n' +
-    '- 判定：4 人里 ' + s.verdicts.filter(function(v){return v.tone==='bad';}).length + ' 人未佩戴，其余按四态分流\n\n' +
+    '- 判定：共 ' + s.verdicts.length + ' 人，未佩戴 ' + s.verdicts.filter(function(v){return v.tone==='bad';}).length + ' 人，其余按四态分流\n\n' +
     '为什么要分开写 L 和 S：同一顶没戴的安全帽，在通道里是 24 小时的橙色，在高处平台是 2 小时的红色——' +
     '**告警相同，责任不同**，差别全在 L 和 S 上；而 L 和 S 都不是模型拍的，是照规则表推出来的。\n\n' +
     '```anxun\n' + JSON.stringify(card) + '\n```\n';
@@ -1310,6 +1524,7 @@ function setScene(k){
   S.scene = k;
   renderScenes(); renderPanel(); save();
   if(!convo(S.active) || !convo(S.active).msgs.length) renderConvo();
+  if(MODEL.ready) refreshModelScene(k, true);
 }
 function switchConvo(id){
   S.active = id; save(); renderList(); renderConvo(); toBottom(false);
@@ -1435,10 +1650,11 @@ function paintStatus(){
   st.classList.remove('demo','live');
   if(S.transport === 'demo'){
     st.classList.add('demo');
-    txt.textContent = '演示模式 · anxun-demo';
+    txt.textContent = MODEL.ready ? '演示模式 · best.pt 实测判定' : '演示模式 · anxun-demo';
   }else{
     st.classList.add('live');
-    txt.textContent = '已连接 · ' + (S.transport === 'direct' ? '直连 ' : '') + S.model;
+    txt.textContent = '已连接 · ' + (S.transport === 'direct' ? '直连 ' : '') + S.model
+      + (MODEL.ready ? ' · best.pt' : '');
   }
 }
 function askKey(){
@@ -1461,6 +1677,11 @@ function askKey(){
   }catch(e){ toast('保存失败：浏览器禁用了本地存储'); }
   paintStatus();
 }
+
+$('#btnUpload').onclick = function(){
+  if(!MODEL.ready){ toast('模型服务没起来：先运行 python serve.py'); return; }
+  pickImage();
+};
 
 $('#status').onclick = function(){
   if(S.transport === 'proxy'){
@@ -1508,18 +1729,28 @@ async function boot(){
   if(S.key){
     S.transport = 'direct'; S.mode = 'live'; S.model = 'deepseek-chat';
     paintStatus();
-  }else{
-    try{
-      var r = await fetch('/api/health', { cache:'no-store' });
-      if(r.ok){
-        var j = await r.json();
-        if(j && j.ok && !j.mock){
-          S.transport = 'proxy'; S.mode = 'live'; S.model = j.model || 'deepseek-chat';
-          paintStatus();
-        }
-      }
-    }catch(e){ /* file:// 或纯静态托管：落到演示模式 */ }
   }
+
+  // 同源服务（serve.py）：有模型就把右侧面板切成实测，与对话走哪条路无关。
+  try{
+    var r = await fetch('/api/health', { cache:'no-store' });
+    if(r.ok){
+      var j = await r.json();
+      if(j && j.model_info && j.model_info.ready){
+        MODEL.ready = true;
+        MODEL.info = j.model_info;
+        if(j.chat_scene_map) MODEL.map = j.chat_scene_map;
+        paintStatus();
+        var bu = $('#btnUpload');
+        if(bu) bu.hidden = false;
+        refreshModelScene(S.scene, true);
+      }
+      if(!S.key && j && j.ok && !j.mock){
+        S.transport = 'proxy'; S.mode = 'live'; S.model = j.model || 'deepseek-chat';
+        paintStatus();
+      }
+    }
+  }catch(e){ /* file:// 或 GitHub Pages 静态托管：保留示例数据 */ }
 
   if(!restored){
     newConvo();
