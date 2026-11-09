@@ -137,7 +137,7 @@
 │   ├── 安巡Agent_提示词库.md
 │   └── 安巡风险分级标准.md       ← 等级口径唯一出处（v1.4）
 ├── src/anxun/                   ← 可运行代码（系统线：演示与 Agent 用）
-│   ├── rules_engine.py          PPE 判定 + 风险矩阵 + 工单生成（纯标准库，演示口径）
+│   ├── rules_engine.py          PPE 判定 + 处置等级 + 工单生成（纯标准库，演示口径）
 │   ├── demo.py                  端到端演示，零依赖
 │   ├── infer_api.py             检测模型 HTTP 封装（FastAPI）
 │   ├── train_yolo.py            双卡训练脚本
@@ -258,7 +258,7 @@ uvicorn infer_api:app --host 0.0.0.0 --port 8000
 | 模块 | 状态 | 备注 |
 |---|---|---|
 | 选题与方案设计 | ✅ 完成 | 三方对比后锁定 PPE 巡检 |
-| 规则引擎 | ✅ 代码完成 | `rules_engine.py` 已跑通四态 + 风险矩阵 + 工单 |
+| 规则引擎 | ✅ 代码完成 | `rules_engine.py` 已跑通四态 + A/B/C 处置等级 + 工单 |
 | 端到端演示 | ✅ 已上线 | 网页研判台 + `demo.py` 报告 / json / html |
 | 推理服务封装 | ✅ 代码完成 | `infer_api.py` 三接口就绪 |
 | 数据集 | ✅ 已就绪 | 3 源 5 集 1900 张公开集；**自采 0 张**（详见 `docs/11-项目盘点.md` P4-8） |
