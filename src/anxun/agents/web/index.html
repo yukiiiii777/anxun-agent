@@ -64,8 +64,8 @@
   .待复核{color:var(--amber);background:var(--amberbg)}
   .无法判定{color:var(--gray);background:var(--graybg)}
   .grade{display:inline-block;padding:1px 9px;border-radius:4px;font-size:12px;font-weight:600}
-  .g红色{color:#fff;background:#A32D2D}.g橙色{color:#fff;background:#C4701A}
-  .g黄色{color:#6A4B00;background:#F5D77A}.g蓝色{color:#fff;background:#3C6E9E}
+  .gA{color:#fff;background:#A32D2D}.gB{color:#fff;background:#C4701A}
+  .gC{color:#6A4B00;background:#F5D77A}
   .dots{display:inline-flex;gap:3px;vertical-align:middle}
   .dot{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.06)}
   .d已佩戴{background:#97C459}.d未佩戴{background:#E24B4A}.d待复核{background:#E8B04B}
@@ -172,25 +172,24 @@ function render(run){
       <td class="mono">${esc(e.event_id)}</td>
       <td>${esc(e.person)} · ${esc(e.equip_cn)}</td>
       <td>${esc(e.scene)}</td>
-      <td class="mono">${e.L}</td><td class="mono">${e.S}</td>
-      <td class="mono"><b>${e.R}</b></td>
-      <td><span class="${gradeCls(e.grade)}">${esc(e.grade)}</span></td>
+      <td class="mono"><b>${e.confirmed_total}</b> 人</td>
+      <td><span class="${gradeCls(e.grade)}">${esc(e.grade)} · ${esc(e.grade_name)}</span></td>
       <td>${esc(e.due_text)}</td>
     </tr>`).join("");
 
   const explains = rk.events.map(e => `
     <div style="margin-top:10px">
       <div class="mono muted">${esc(e.event_id)}</div>
-      <div>${esc(e.explain.L)}</div>
-      <div>${esc(e.explain.S)}</div>
-      <div><b>${esc(e.explain.R)}</b> → ${esc(e.explain.grade)}</div>
+      <div><b>${esc(e.explain.people)}</b></div>
+      <div>${esc(e.explain.grade)}</div>
+      <div class="muted">${esc(e.explain.note)}</div>
     </div>`).join("");
 
   const tickets = wo.tickets.map(t => `
     <div class="ticket">
       <div class="hd">
         <div><span class="mono">${esc(t.ticket_id)}</span>
-          <span class="${gradeCls(t.grade)}" style="margin-left:8px">${esc(t.grade)} · R=${t.risk}</span></div>
+          <span class="${gradeCls(t.grade)}" style="margin-left:8px">${esc(t.grade)} 级</span></div>
         <div class="muted">${esc(t.status)}</div>
       </div>
       <div class="bd">
@@ -248,7 +247,7 @@ function render(run){
         <div class="out">${esc(p.handoff_note)}</div></div>
       <div class="arrow">→</div>
       <div class="agent"><div class="t"><b>${esc(rk.agent)}</b><span class="role">${esc(rk.role)}</span></div>
-        <div class="out">R = L × S：${rk.events.map(e=>`${esc(e.equip_cn)} ${e.R}`).join(" · ") || "无"}</div>
+        <div class="out">按人数分档：${rk.events.map(e=>`${esc(e.equip_cn)} ${e.confirmed_total} 人 → ${esc(e.grade)}`).join(" · ") || "无"}</div>
         <div class="out">${esc(rk.handoff_note)}</div></div>
       <div class="arrow">→</div>
       <div class="agent hot"><div class="t"><b>${esc(wo.agent)}</b><span class="role">${esc(wo.role)}</span></div>
@@ -264,7 +263,7 @@ function render(run){
 
     <h2><span class="n">③</span>风险定级（同一违规，换场景换等级）</h2>
     ${rk.events.length ? `<table>
-      <tr><th>事件号</th><th>违规</th><th>场景</th><th>L</th><th>S</th><th>R</th><th>等级</th><th>时限</th></tr>
+      <tr><th>事件号</th><th>违规</th><th>场景</th><th>全场合计确认</th><th>等级</th><th>时限</th></tr>
       ${eventRows}
     </table>` : `<div class="warn">本机位无定论违规，链路终止于人工复核，不向下游派单。</div>`}
     ${explains ? `<div style="margin-top:12px">${explains}</div>` : ""}

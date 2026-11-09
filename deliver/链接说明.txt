@@ -22,9 +22,21 @@ https://anxun-desk.app.workbuddy.host/?sharecode=OLOGYZUPHO
 静态研判台  https://yukiiiii777.github.io/anxun-agent/chat/
 三场景演示  https://yukiiiii777.github.io/anxun-agent/demo/
 
-⚠ 这几个 GitHub Pages 页面是历史版本，定级口径仍为 v1.2
-  （含 R=L×S、红橙黄蓝与预填人名），与本次提交的 v1.4 口径不一致，
-  仅供链接打不开时证明系统存在，请勿用于答辩演示。
+────────────────────────────────────────
+二、备用入口（GitHub Pages 静态托管，无需登录）
+────────────────────────────────────────
+根落地页    https://yukiiiii777.github.io/anxun-agent/
+静态研判台  https://yukiiiii777.github.io/anxun-agent/chat/
+三场景演示  https://yukiiiii777.github.io/anxun-agent/demo/
+
+✓ 三个页面的定级口径均为 v1.4（A/B/C，无 R 值、无红橙黄蓝），与在线研判台一致。
+  三场景演示的数据由规则引擎预生成，同一输入永远同一输出，可当场重置复算。
+
+⚠ 静态托管只有页面、没有后端：
+  · 静态研判台的「上传图片实测」用不了（/api/inspect 不存在），对话也依赖
+    云服务鉴权。要现场演示判定与工单，请用第一节的在线研判台。
+  · 三场景演示里的责任人（李国强）、复查人（陈立）是区域配置里的示例姓名，
+    用来演示完整闭环。在线研判台的工单一律留空，不预填人名、地名与作业类型。
 
 ────────────────────────────────────────
 三、源码与核对材料

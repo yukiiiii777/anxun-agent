@@ -67,14 +67,14 @@
   <div class="eyebrow">第二届全国人工智能应用创新大赛　·　通用赛道　·　制造领域　·　本科生组</div>
   <h1>安巡 <span>Agent</span></h1>
   <p class="lede">
-    把摄像头画面变成可执行、可验收的整改工单。检测 → 四态判定 → R = L × S 定级 → 派单，
+    把摄像头画面变成可执行、可验收的整改工单。检测 → 四态判定 → A/B/C 处置等级 → 派单，
     全链路可跑，不做黑箱。
   </p>
 
   <div class="stats">
     <div class="stat"><b>0.8654</b>mAP@0.5</div>
-    <div class="stat"><b>6.12%</b>漏报率</div>
-    <div class="stat"><b>4.35%</b>误报率</div>
+    <div class="stat"><b>6.12%</b>误报率</div>
+    <div class="stat"><b>4.35%</b>漏报率</div>
     <div class="stat"><b>15.0</b>ms/帧</div>
     <div class="stat"><b>5</b>类 PPE</div>
   </div>
@@ -82,7 +82,7 @@
   <a class="enter" href="https://anxun-desk.app.workbuddy.host/?sharecode=OLOGYZUPHO">
     <div class="txt">
       <h2>进入在线研判台</h2>
-      <p>左侧提问，右侧实时看四态判定、L×S 定级与整改工单；任意图片可上传实测。
+      <p>左侧提问，右侧实时看四态判定、A/B/C 处置等级与整改工单；任意图片可上传实测。
         模型是部署好的 best.onnx，对话走云服务，打开就能用。</p>
     </div>
     <div class="go">→</div>
@@ -90,7 +90,7 @@
 
   <p class="local">
     也可以本地跑（自带权重，不依赖线上环境）：clone 仓库后 <code>python serve.py</code>，
-    打开 <code>127.0.0.1:8611</code>。没有显卡也能跑，ONNX CPU 约 23 ms/帧。
+    打开 <code>127.0.0.1:8611</code>。没有显卡也能跑，ONNX CPU 实测 36.5 ms/帧（p95 39.1）。
   </p>
 
   <footer>

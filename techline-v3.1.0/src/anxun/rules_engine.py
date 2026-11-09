@@ -50,7 +50,24 @@ from typing import Sequence
 #   3) 代码里 rules_engine.apply_profile("conservative")
 #
 # ⚠️ 换口径会改变业务指标，不会改变模型。要报数就用 measured，别混。
-CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "thresholds.json"
+def _find_config() -> Path:
+    """定位 thresholds.json，兼容两种目录结构。
+
+    - 技术线仓：techline-v3.1.0/src/anxun/rules_engine.py → parents[2]/config
+    - 扁平结构：src/anxun/rules_engine.py（agents 演示链路用）→ parents[2]/techline-v3.1.0/config
+
+    阈值只能有一份来源，所以这里只做「找到它」，不做任何默认值兜底：
+    两个候选都不存在时仍按第一个路径报错，避免悄悄跑回内置默认值。
+    """
+    base = Path(__file__).resolve().parents[2]
+    for cand in (base / "config" / "thresholds.json",
+                 base / "techline-v3.1.0" / "config" / "thresholds.json"):
+        if cand.exists():
+            return cand
+    return base / "config" / "thresholds.json"
+
+
+CONFIG_PATH = _find_config()
 
 _REQUIRED = ("conf_final", "conf_review", "head_region_ratio", "head_width_ratio",
              "min_person_area", "min_aspect", "equip")

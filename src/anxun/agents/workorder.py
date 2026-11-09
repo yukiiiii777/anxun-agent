@@ -8,7 +8,7 @@
 这一步是整条链上最容易被做薄的地方——很多方案停在一句「已通知负责人」。
 本 Agent 强制四件事：
 
-1. **时限按等级写死**，不放宽（红色 2 小时、橙色 24 小时、黄色 7 天、蓝色 30 天）。
+1. **时限按等级写死**，不放宽（A 级 2 小时、B 级 24 小时、C 级 7 天）。
 2. **整改要求必须是可验证动作**：物资数量 + 地点 + 留痕记录，缺一项判不合格。
 3. **复查人 ≠ 整改人**，且复查时间 = 整改完成次日。
 4. **逾期自动升级**：50% 提醒上级 → 100% 上报并标逾期 → 连续 3 次逾期升红重定级。
@@ -29,7 +29,7 @@ REVIEWER = "安全员 陈立"
 ESCALATE_TO = "部门安全负责人 周敏"
 PLANT_MANAGER = "厂长 郑海"
 
-SLA_HOURS = {"红色": 2, "橙色": 24, "黄色": 24 * 7, "蓝色": 24 * 30}
+SLA_HOURS = {"A": 2, "B": 24, "C": 24 * 7}
 PHASES = ("派单", "整改完成", "复查通过", "归档")
 
 
@@ -67,7 +67,7 @@ class WorkOrderAgent:
 
     @staticmethod
     def _default_now(events: list[dict]) -> datetime:
-        """默认时钟：第一条事件发生后 75 分钟（红色工单正好触发 50% 提醒）。"""
+        """默认时钟：第一条事件发生后 75 分钟（A 级工单正好触发 50% 提醒）。"""
         if not events:
             return datetime.now()
         return datetime.fromisoformat(events[0]["ts"]) + timedelta(minutes=75)
@@ -97,7 +97,7 @@ class WorkOrderAgent:
                 "to_50pct": ESCALATE_TO,
                 "at_100pct": due.isoformat(timespec="minutes"),
                 "to_100pct": PLANT_MANAGER,
-                "repeat_3": "连续 3 次逾期 → 升级为红色并重新定级",
+                "repeat_3": "连续 3 次逾期 → 升级为 A 级并重新定级",
             },
             "closure": self._phases(now, created, due, review, archive),
             "status": self._status(now, created, due, review, at_50),
@@ -185,6 +185,6 @@ class WorkOrderAgent:
     def _handoff(tickets: list[dict]) -> str:
         if not tickets:
             return "无事件可派单。"
-        red = [t for t in tickets if t["grade"] == "红色"]
-        return (f"派单 {len(tickets)} 张，其中红色 {len(red)} 张（时限 2 小时）；"
+        a = [t for t in tickets if t["grade"] == "A"]
+        return (f"派单 {len(tickets)} 张，其中 A 级 {len(a)} 张（时限 2 小时）；"
                 f"复查统一排到整改完成次日，复查人固定为 {REVIEWER}，与整改责任人分离。")

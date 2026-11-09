@@ -15,7 +15,7 @@ from .scenarios import SCENE_KEYS
 LINE = "=" * 78
 DASH = "-" * 78
 EQUIP_CN = {"helmet": "安全帽", "vest": "反光背心", "goggles": "防护眼镜"}
-GRADE_MARK = {"红色": "🔴", "橙色": "🟠", "黄色": "🟡", "蓝色": "🔵"}
+GRADE_MARK = {"A": "▲", "B": "●", "C": "○"}
 
 
 def _w(s: str) -> int:
