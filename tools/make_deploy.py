@@ -63,8 +63,8 @@ def main() -> int:
     args = ap.parse_args()
 
     out = Path(args.out).resolve()
-    if out == ROOT or ROOT.is_relative_to(out):
-        raise SystemExit("输出目录不能是仓库本身或它的上级")
+    if out == ROOT or out.is_relative_to(ROOT) or ROOT.is_relative_to(out):
+        raise SystemExit("输出目录不能在仓库里，也不能是仓库本身或它的上级")
     if args.clean and out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True, exist_ok=True)

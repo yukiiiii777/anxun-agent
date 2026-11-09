@@ -487,7 +487,14 @@ function toneOfLevel(lv){
 function sceneFromApi(d){
   var persons = d.persons || [];
   var n = (d.region && d.region.violation_30d) || 0;
+  // 区域的 scene 有时登记的是场所属性（如「消防通道」），不是作业类型。
+  // 这时按 risk_class 兜底，否则页面会落 S=2，而接口按 risk_class 算 3，两边又对不上。
+  var WORK_TYPES = ['普通', '车辆', '高处', '动火', '受限空间'];
   var work = (d.region && d.region.scene) || '普通';
+  if(WORK_TYPES.indexOf(work) < 0){
+    var rc = (d.region && d.region.risk_class) || '';
+    work = WORK_TYPES.indexOf(rc) >= 0 ? rc : work;
+  }
   var t = (d.tickets || [])[0] || null;
   var out = {
     verdicts: persons.map(function(p, i){
@@ -892,7 +899,10 @@ function normalizeCard(card, sceneId, idx){
     card._fallback = true;
   }
 
-  if(card.ticket) card.ticket.no = ticketNoFor(sceneId);
+  // 服务端开出来的工单号是 TK- 前缀，别用页面自己的 GD- 规则覆盖它
+  if(card.ticket && !/^TK-/.test(String(card.ticket.no || ''))){
+    card.ticket.no = ticketNoFor(sceneId);
+  }
 
   if(card.law && card.law.length){
     card.law = card.law.map(function(l){

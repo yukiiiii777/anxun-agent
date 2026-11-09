@@ -235,6 +235,25 @@ class Handler(BaseHTTPRequestHandler):
             traceback.print_exc()
             return self._json({"error": str(e)}, 500)
 
+    def do_HEAD(self):                                     # noqa: N802
+        """探活/代理预热会用 HEAD。原来没实现，直接 501，看着像服务坏了。"""
+        p = urlparse(self.path).path
+        target = None
+        if p in ("/", "/chat", "/chat/", "/index.html"):
+            target = ROOT / "chat" / "index.html"
+        elif p in ("/demo", "/demo/"):
+            target = ROOT / "demo" / "index.html"
+        if target and target.is_file():
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(target.stat().st_size))
+            self.end_headers()
+            return
+        code = 200 if p == "/api/health" else 404
+        self.send_response(code)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def do_OPTIONS(self):                                  # noqa: N802
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -322,8 +341,11 @@ class Handler(BaseHTTPRequestHandler):
             return {}
 
     def _static(self, path: str) -> None:
+        # 只允许读 assets/ 目录内的文件。原来只判 is_relative_to(ROOT)，
+        # 一个 /assets/../serve.py 就能把源码和 42 MB 的 onnx 读走。
+        assets = (ROOT / "assets").resolve()
         target = (ROOT / unquote(path).lstrip("/")).resolve()
-        if not target.is_relative_to(ROOT) or not target.is_file():
+        if not target.is_relative_to(assets) or not target.is_file():
             return self._json({"error": "forbidden"}, 403)
         self._file(target)
 
