@@ -588,7 +588,8 @@ function applyModelScene(k, d){
 
   // 页脚措辞跟着数据来源走：跑过模型就别再写「场景数据为示例」，那等于自打脸
   var tip = document.getElementById('tip');
-  if(tip) tip.textContent = '内容由模型生成，判定与工单以规则引擎输出为准 · 右侧为本机 best.pt 对样例图的实测结果；'
+  if(tip) tip.textContent = '内容由模型生成，判定与工单以规则引擎输出为准 · 右侧为 '
+    + ((MODEL.info && MODEL.info.name) || 'best.pt') + ' 对样例图的实测结果；'
     + '样例图为公开数据集素材（CC BY 4.0），非同厂现场记录';
 
   var st = {};
@@ -2135,7 +2136,7 @@ function paintStatus(){
   st.classList.remove('demo','live');
   if(S.cloudState === 'ready'){
     st.classList.add('live');
-    txt.textContent = '已连接 · 云端' + (MODEL.ready ? ' · best.pt' : '');
+    txt.textContent = '已连接 · 云端' + (MODEL.ready && MODEL.info && MODEL.info.name ? ' · ' + MODEL.info.name : '');
   }else if(S.cloudState === 'failed'){
     st.classList.add('demo');
     txt.textContent = '云端未连接 · 点此重试';

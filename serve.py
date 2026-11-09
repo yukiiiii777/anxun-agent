@@ -246,7 +246,8 @@ def health() -> dict:
         "inspect_ready": STATE["ready"],
         "model_info": {
             "ready": STATE["ready"],
-            "name": "best.pt",
+            # 后端是 onnx 时模型就是 best.onnx，写死 best.pt 会让页面标错文件名
+            "name": "best.onnx" if STATE["backend"].startswith("onnx") else "best.pt",
             "backend": STATE["backend"],
             "note": STATE["note"],
             "selfcheck": STATE["selfcheck"],
