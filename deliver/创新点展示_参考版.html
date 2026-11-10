@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>安巡 Agent · 创新点展示</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#e9edf2;font-family:"Microsoft YaHei","PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.page{position:relative;width:1280px;height:720px;overflow:hidden;
+  background:linear-gradient(115deg,rgba(255,255,255,.88) 0%,rgba(238,243,248,.72) 45%,rgba(255,255,255,.86) 100%),
+             linear-gradient(90deg,#cbd5e0 0%,#e9eef4 28%,#d5deea 58%,#eff3f7 100%)}
+.blur{position:absolute;background:rgba(255,255,255,.55);filter:blur(22px);border-radius:14px}
+.b1{left:0;top:180px;width:420px;height:130px;transform:rotate(-8deg)}
+.b2{left:760px;top:60px;width:520px;height:120px;transform:rotate(5deg)}
+.b3{left:300px;top:520px;width:700px;height:100px;transform:rotate(-3deg)}
+.tag{position:absolute;left:36px;top:20px;display:flex;align-items:center;gap:12px;font-size:23px;font-weight:700;color:#1a1a1a}
+.tag .dot{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 34% 28%,#f4736f,#c62828 72%);box-shadow:0 3px 9px rgba(198,40,40,.32)}
+nav{position:absolute;right:36px;top:26px;display:flex;gap:5px}
+nav span{background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 13px;font-size:17px;font-weight:700;color:#222}
+nav span.on{background:#c62828;color:#fff;border-color:#c62828}
+.banner{position:absolute;left:155px;top:96px;width:1020px;height:58px;background:#c62828;color:#fff;
+  font-size:29px;font-weight:700;letter-spacing:1px;display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(1.5% 0,98.5% 0,100% 100%,0 100%)}
+.sec{position:absolute;top:160px;height:48px;display:flex;align-items:center;gap:12px;padding:0 38px 0 24px;
+  background:#c62828;color:#fff;font-size:24px;font-weight:700;border-radius:10px 0 0 10px;
+  clip-path:polygon(0 0,calc(100% - 26px) 0,100% 50%,calc(100% - 26px) 100%,0 100%)}
+.sec .play{font-size:20px;color:#fff}
+.design{position:absolute;left:80px;top:220px;width:490px;height:400px;background:rgba(255,255,255,.95);
+  border:2px solid #d32f2f;border-radius:18px;padding:26px 28px;font-size:20px;line-height:1.85;color:#1a1a1a}
+.design b{color:#c62828}
+.mini{position:absolute;width:280px;height:192px;background:rgba(255,255,255,.95);border:2px solid #d32f2f;
+  border-radius:18px;padding:15px 18px}
+.mini h3{color:#c62828;font-size:20px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.num{display:inline-flex;width:26px;height:26px;border:2px solid #c62828;border-radius:50%;
+  align-items:center;justify-content:center;font-size:15px;flex:none}
+.mini ul{list-style:none}
+.mini li{font-size:16px;line-height:1.55;color:#1a1a1a;padding-left:14px;position:relative;margin-bottom:6px}
+.mini li::before{content:"•";position:absolute;left:0;color:#c62828}
+.mini li.hi{color:#c62828;font-weight:700}
+.summary{position:absolute;left:24px;top:636px;width:1232px;height:58px;background:#c62828;color:#fff;
+  font-size:24px;font-weight:700;letter-spacing:1px;display:flex;align-items:center;justify-content:center;
+  border-radius:6px;clip-path:polygon(0 0,100% 0,99.2% 100%,.8% 100%);box-shadow:0 4px 0 #9e1e1e}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="blur b1"></div><div class="blur b2"></div><div class="blur b3"></div>
+
+  <div class="tag"><span class="dot"></span>创新点展示</div>
+  <nav><span>背景简述</span><span>数据处理</span><span>分析过程</span><span class="on">独特创新</span><span>结果解释</span><span>结果呈现</span></nav>
+
+  <div class="banner">安巡 Agent —— 把摄像头画面变成可执行的整改工单</div>
+
+  <div class="sec" style="left:80px;width:300px"><span class="play">▶</span>设计特点</div>
+  <div class="sec" style="left:595px;width:300px"><span class="play">▶</span>创新优化</div>
+
+  <div class="design">
+    本系统基于<b>自训五类目标检测模型</b>与<b>确定性规则引擎</b>，实现了 PPE 穿戴识别、四态判定、时序聚合、风险分级与工单生成。安全员<b>无需逐帧盯屏</b>，系统把 34.8 秒视频里的 <b>195 条逐帧告警收敛为 13 个事件</b>，输出带处置时限、法规依据与签署位的整改通知单，<b>让巡检真正落得下</b>。
+  </div>
+
+  <div class="mini" style="left:595px;top:220px">
+    <h3><span class="num">1</span>交付形态创新</h3>
+    <ul><li class="hi">告警升级为可签署工单</li><li>等级 / 时限 / 依据 / 签署位</li><li class="hi">195 → 13，降噪 93.33%</li></ul>
+  </div>
+  <div class="mini" style="left:595px;top:428px">
+    <h3><span class="num">2</span>定级有据</h3>
+    <ul><li>等级只看本次确认未佩戴人数</li><li>规则引擎给值，模型不拍脑袋</li><li class="hi">同一输入连跑三次结果一致</li></ul>
+  </div>
+  <div class="mini" style="left:891px;top:220px">
+    <h3><span class="num">3</span>可解释的克制</h3>
+    <ul><li>四态判定 + 三道无效性保护</li><li>查不到法条就明说，不编条款号</li><li>不预填责任人、地名、验收项</li></ul>
+  </div>
+  <div class="mini" style="left:891px;top:428px">
+    <h3><span class="num">4</span>工程化落地</h3>
+    <ul><li>检测 / 规则 / 编排三层解耦</li><li>单模型 + ONNX，工控机可跑</li><li class="hi">换模型不动业务逻辑</li></ul>
+  </div>
+
+  <div class="summary">通过安巡 Agent，把厂区巡检的输出由「一条告警」升级为「一张可签署、可追责的整改工单」</div>
+</div>
+</body>
+</html>

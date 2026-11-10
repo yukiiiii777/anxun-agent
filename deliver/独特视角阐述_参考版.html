@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>安巡 Agent · 独特视角阐述（跨学科交叉）</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#e9edf2;font-family:"Microsoft YaHei","PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.page{position:relative;width:1280px;height:720px;overflow:hidden;background:#f7f9fc}
+.sheet{position:absolute;inset:12px;background:linear-gradient(118deg,#ffffff 0%,#f3f6fa 46%,#ffffff 100%);border:1px solid #e3e8ef}
+.grid{position:absolute;inset:12px;background-image:linear-gradient(rgba(190,203,218,.20) 1px,transparent 1px),linear-gradient(90deg,rgba(190,203,218,.20) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.12) 70%)}
+.glow{position:absolute;border-radius:50%;filter:blur(38px)}
+.g1{left:-60px;top:120px;width:340px;height:240px;background:rgba(229,115,115,.13)}
+.g2{right:-40px;top:80px;width:420px;height:220px;background:rgba(100,150,210,.12)}
+.wave{position:absolute;left:12px;bottom:12px;width:1256px;height:190px;z-index:1}
+.head{position:absolute;left:36px;top:24px;display:flex;align-items:center;gap:12px;z-index:5}
+.logo{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 32% 26%,#f4736f,#b71c1c 76%);box-shadow:0 3px 10px rgba(183,28,28,.30);display:flex;align-items:center;justify-content:center;color:#fff;font-size:25px;font-weight:700;border:2px solid #fff}
+.head h1{font-size:22px;font-weight:700;color:#20242b;letter-spacing:.5px;line-height:1.15}
+.head .bar{width:312px;height:9px;margin-top:5px;background:#c62828;clip-path:polygon(0 0,100% 0,97% 100%,0 100%)}
+nav{position:absolute;right:34px;top:30px;display:flex;gap:7px;z-index:5}
+nav span{background:#fff;border:1.5px solid #e0b9b9;border-radius:20px;padding:8px 15px;font-size:16px;font-weight:700;color:#5b3131;box-shadow:0 2px 5px rgba(120,60,60,.10)}
+nav span.on{background:#c62828;color:#fff;border-color:#c62828;box-shadow:0 3px 8px rgba(198,40,40,.28)}
+.banner{position:absolute;left:150px;top:98px;width:1030px;height:56px;z-index:4;
+  background:linear-gradient(90deg,#e85d58,#d13a3a 55%,#b71c1c);color:#fff;font-size:27px;font-weight:700;
+  letter-spacing:1px;display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(1.2% 0,98.8% 0,100% 100%,0 100%);text-shadow:0 1px 2px rgba(120,0,0,.35)}
+.banner-line{position:absolute;left:160px;top:156px;width:1010px;height:2px;background:#8e1616;opacity:.75;z-index:4}
+.sec{position:absolute;top:176px;height:46px;z-index:4;display:flex;align-items:center;gap:12px;padding-left:22px;
+  background:linear-gradient(90deg,#f0736f,#d34545);color:#fff;font-size:21px;font-weight:700;letter-spacing:1px;
+  border-radius:9px 0 0 9px;clip-path:polygon(0 0,calc(100% - 24px) 0,100% 50%,calc(100% - 24px) 100%,0 100%);
+  box-shadow:0 2px 6px rgba(190,60,60,.20)}
+.sec .play{font-size:17px;opacity:.95}
+.pain{position:absolute;left:54px;top:232px;width:262px;height:326px;z-index:3;background:rgba(255,255,255,.97);
+  border-radius:16px;box-shadow:0 3px 12px rgba(80,90,110,.12);padding:22px 20px}
+.pain ul{list-style:none}
+.pain li{font-size:18px;font-weight:700;color:#c62828;line-height:1.35;padding-left:20px;position:relative;margin-bottom:24px;letter-spacing:.5px}
+.pain li:last-child{margin-bottom:0}
+.pain li::before{content:"";position:absolute;left:0;top:8px;width:10px;height:10px;border-radius:50%;background:#d32f2f}
+.sol{position:absolute;left:332px;top:232px;width:312px;height:82px;z-index:3;background:rgba(255,255,255,.97);
+  border:1.8px solid #d84a4a;border-radius:13px;display:flex;align-items:center;gap:12px;padding:0 14px;
+  box-shadow:0 2px 7px rgba(190,70,70,.09)}
+.sol .num{width:32px;height:32px;flex:none;border:2px solid #c62828;border-radius:50%;color:#c62828;
+  font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.sol .tx b{display:block;font-size:18px;color:#20242b;line-height:1.25}
+.sol .tx span{display:block;font-size:13.5px;color:#6b4a4a;margin-top:4px;line-height:1.3}
+.arch{position:absolute;left:660px;top:176px;width:572px;height:400px;z-index:3;background:rgba(255,255,255,.97);
+  border:1.5px solid #dfe5ee;border-radius:10px;box-shadow:0 3px 12px rgba(80,90,110,.10);padding:12px 14px 8px}
+.arch h2{text-align:center;font-size:17px;color:#1d3b6b;letter-spacing:.5px}
+.arch p{text-align:center;font-size:12px;color:#7a8697;margin-top:2px}
+.summary{position:absolute;left:36px;bottom:22px;width:1208px;z-index:6;text-align:center;color:#fff;
+  font-size:21px;font-weight:700;letter-spacing:1px;text-shadow:0 1px 3px rgba(110,0,0,.45)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="sheet"></div><div class="grid"></div>
+  <div class="glow g1"></div><div class="glow g2"></div>
+
+  <svg class="wave" viewBox="0 0 1256 190" preserveAspectRatio="none">
+    <defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e8605d"/><stop offset=".55" stop-color="#cf3030"/><stop offset="1" stop-color="#a81414"/>
+    </linearGradient></defs>
+    <path d="M0 118 C 210 62, 390 150, 628 96 C 860 44, 1050 74, 1256 30 L1256 190 L0 190 Z" fill="url(#wg)"/>
+    <path d="M0 138 C 230 92, 420 168, 660 118 C 900 68, 1080 96, 1256 58 L1256 190 L0 190 Z" fill="#8f1010" opacity=".28"/>
+  </svg>
+
+  <div class="head">
+    <div class="logo">安</div>
+    <div><h1>独特视角阐述 · 跨学科交叉与应用融合</h1><div class="bar"></div></div>
+  </div>
+  <nav><span>背景简述</span><span>问题理解</span><span>技术方案</span><span class="on">独特视角</span><span>作品总结</span></nav>
+
+  <div class="banner">安巡 Agent —— 四门学科，只回答一个问题：这一单多久内必须处理完</div>
+  <div class="banner-line"></div>
+
+  <div class="sec" style="left:54px;width:262px"><span class="play">▶</span>单一学科局限</div>
+  <div class="sec" style="left:332px;width:312px"><span class="play">▶</span>交叉解决方案</div>
+
+  <div class="pain">
+    <ul>
+      <li>只做检测，止于告警</li>
+      <li>只谈准确率，误报堆屏</li>
+      <li>定级凭经验，同图异判</li>
+      <li>依据靠记忆，难援引</li>
+      <li>闭环靠人盯，无签署</li>
+    </ul>
+  </div>
+
+  <div class="sol" style="top:232px"><div class="num">1</div><div class="tx"><b>计算机视觉</b><span>把画面变成可计算的五类目标框</span></div></div>
+  <div class="sol" style="top:322px"><div class="num">2</div><div class="tx"><b>安全工程</b><span>把「戴没戴」变成国标可依的判据</span></div></div>
+  <div class="sol" style="top:412px"><div class="num">3</div><div class="tx"><b>法规与标准化</b><span>把判定挂上可逐条核对的条款原文</span></div></div>
+  <div class="sol" style="top:502px"><div class="num">4</div><div class="tx"><b>管理科学 PDCA</b><span>把结果收进带时限、可签署的闭环</span></div></div>
+
+  <div class="arch">
+    <h2>学科交叉 · 汇流架构</h2>
+    <p>四门学科各答一问，汇入同一条证据链，最终只服务一张工单</p>
+    <svg width="542" height="336" viewBox="0 0 542 336">
+      <defs>
+        <linearGradient id="rb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e85d58"/><stop offset="1" stop-color="#b71c1c"/></linearGradient>
+        <marker id="ar" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="#c62828"/></marker>
+      </defs>
+      <g font-family="Microsoft YaHei, PingFang SC, sans-serif">
+        <g>
+          <rect x="4" y="4" width="126" height="46" rx="8" fill="#eef4fd" stroke="#7ba0d0"/>
+          <text x="67" y="23" text-anchor="middle" font-size="13" font-weight="700" fill="#1d3b6b">计算机视觉</text>
+          <text x="67" y="40" text-anchor="middle" font-size="10.5" fill="#5e7797">看见 → 五类检测框</text>
+          <rect x="142" y="4" width="126" height="46" rx="8" fill="#fdf0f0" stroke="#d98a8a"/>
+          <text x="205" y="23" text-anchor="middle" font-size="13" font-weight="700" fill="#9e2020">安全工程</text>
+          <text x="205" y="40" text-anchor="middle" font-size="10.5" fill="#a16565">合规 → 国标判据</text>
+          <rect x="280" y="4" width="126" height="46" rx="8" fill="#eef4fd" stroke="#7ba0d0"/>
+          <text x="343" y="23" text-anchor="middle" font-size="13" font-weight="700" fill="#1d3b6b">法规与标准化</text>
+          <text x="343" y="40" text-anchor="middle" font-size="10.5" fill="#5e7797">依据 → 条款原文</text>
+          <rect x="418" y="4" width="120" height="46" rx="8" fill="#fdf0f0" stroke="#d98a8a"/>
+          <text x="478" y="23" text-anchor="middle" font-size="13" font-weight="700" fill="#9e2020">管理科学</text>
+          <text x="478" y="40" text-anchor="middle" font-size="10.5" fill="#a16565">闭环 → PDCA</text>
+        </g>
+        <g stroke="#c62828" stroke-width="1.4" fill="none" marker-end="url(#ar)">
+          <path d="M67 50 L67 68"/><path d="M205 50 L205 68"/><path d="M343 50 L343 68"/><path d="M478 50 L478 68"/>
+          <path d="M67 68 L478 68" stroke="#e0a6a6" marker-end="none"/>
+          <path d="M271 68 L271 88"/>
+        </g>
+        <g>
+          <rect x="4" y="92" width="170" height="54" rx="8" fill="#fff" stroke="#c9d6e8"/>
+          <text x="89" y="113" text-anchor="middle" font-size="13" font-weight="700" fill="#1d3b6b">感知层</text>
+          <text x="89" y="132" text-anchor="middle" font-size="10.5" fill="#5e7797">五类框 · 15.0ms（GPU）</text>
+          <rect x="186" y="92" width="170" height="54" rx="8" fill="#fff" stroke="#c9d6e8"/>
+          <text x="271" y="113" text-anchor="middle" font-size="13" font-weight="700" fill="#1d3b6b">判定层</text>
+          <text x="271" y="132" text-anchor="middle" font-size="10.5" fill="#5e7797">四态 + 连续 3 帧聚合</text>
+          <rect x="368" y="92" width="170" height="54" rx="8" fill="#fff" stroke="#c9d6e8"/>
+          <text x="453" y="113" text-anchor="middle" font-size="13" font-weight="700" fill="#1d3b6b">决策层</text>
+          <text x="453" y="132" text-anchor="middle" font-size="10.5" fill="#5e7797">按确认人数唯一映射等级</text>
+        </g>
+        <g stroke="#c62828" stroke-width="1.4" fill="none" marker-end="url(#ar)">
+          <path d="M89 146 L89 164"/><path d="M271 146 L271 164"/><path d="M453 146 L453 164"/>
+          <path d="M89 164 L453 164" stroke="#e0a6a6" marker-end="none"/>
+          <path d="M271 164 L271 182"/>
+        </g>
+        <rect x="4" y="186" width="534" height="46" rx="8" fill="url(#rb)"/>
+        <text x="271" y="206" text-anchor="middle" font-size="13.5" font-weight="700" fill="#fff">编排层 · 法规白名单检索 + 可解释的克制（查不到即明说）</text>
+        <text x="271" y="223" text-anchor="middle" font-size="10.5" fill="#ffe4e4">等级由规则给出，模型不生成结论；不确定转人工，不硬判</text>
+        <path d="M271 232 L271 248" stroke="#c62828" stroke-width="1.4" fill="none" marker-end="url(#ar)"/>
+        <rect x="4" y="252" width="534" height="44" rx="8" fill="#fff" stroke="#d84a4a" stroke-width="1.6"/>
+        <text x="271" y="271" text-anchor="middle" font-size="13" font-weight="700" fill="#9e2020">输出：《安全隐患整改通知单》</text>
+        <text x="271" y="288" text-anchor="middle" font-size="10.5" fill="#a16565">≥3 人 A 级 2 小时 · 1–2 人 B 级 24 小时 · 仅待复核 C 级 7 天 · 全合规不出单</text>
+        <text x="271" y="318" text-anchor="middle" font-size="11.5" font-weight="700" fill="#5b6b80">签署 → 整改 → 复查 → 归档　｜　技术只负责「看见」，学科交叉负责「办完」</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="summary">融合优势：单学科只给出片段，四层对齐后才给出唯一可复现、可签署、可追责的结论</div>
+</div>
+</body>
+</html>

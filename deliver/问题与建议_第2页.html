@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>安巡 Agent · 问题与建议（二）复核结论回流与评测可信度</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#e9edf2;font-family:"Microsoft YaHei","PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.page{position:relative;width:1280px;height:720px;overflow:hidden;background:#f7f9fc}
+.sheet{position:absolute;inset:12px;background:linear-gradient(118deg,#ffffff 0%,#f4f7fb 48%,#ffffff 100%);border:1px solid #e3e8ef}
+.grid{position:absolute;inset:12px;background-image:linear-gradient(rgba(190,203,218,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(190,203,218,.18) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.10) 72%)}
+.glow{position:absolute;border-radius:50%;filter:blur(38px)}
+.g1{left:-70px;top:130px;width:360px;height:250px;background:rgba(229,115,115,.12)}
+.g2{right:-50px;top:70px;width:430px;height:230px;background:rgba(100,150,210,.12)}
+.wave{position:absolute;left:12px;bottom:12px;width:1256px;height:150px;z-index:1}
+.head{position:absolute;left:40px;top:26px;display:flex;align-items:center;gap:12px;z-index:5}
+.logo{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 32% 26%,#f4736f,#b71c1c 76%);box-shadow:0 3px 10px rgba(183,28,28,.30);display:flex;align-items:center;justify-content:center;color:#fff;font-size:25px;font-weight:700;border:2px solid #fff}
+.head h1{font-size:22px;font-weight:700;color:#20242b;letter-spacing:.5px;line-height:1.15}
+.head .bar{width:300px;height:9px;margin-top:6px;background:#c62828;clip-path:polygon(0 0,100% 0,97% 100%,0 100%)}
+nav{position:absolute;right:34px;top:30px;display:flex;gap:7px;z-index:5}
+nav span{background:#fff;border:1.5px solid #e0b9b9;border-radius:20px;padding:8px 15px;font-size:16px;font-weight:700;color:#5b3131;box-shadow:0 2px 5px rgba(120,60,60,.10)}
+nav span.on{background:#c62828;color:#fff;border-color:#c62828;box-shadow:0 3px 8px rgba(198,40,40,.28)}
+.banner{position:absolute;left:150px;top:100px;width:1030px;height:56px;z-index:4;
+  background:linear-gradient(90deg,#ef9390,#dc4c4a 42%,#b71c1c);color:#fff;font-size:25px;font-weight:700;
+  letter-spacing:.5px;display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(1.2% 0,98.8% 0,100% 100%,0 100%);text-shadow:0 1px 3px rgba(120,0,0,.45)}
+.banner-line{position:absolute;left:160px;top:158px;width:1010px;height:2px;background:#8e1616;opacity:.7;z-index:4}
+.sec{position:absolute;height:48px;z-index:4;display:flex;align-items:center;gap:12px;padding-left:22px;
+  background:linear-gradient(90deg,#f0736f,#d34545);color:#fff;font-size:23px;font-weight:700;letter-spacing:1px;
+  border-radius:9px 0 0 9px;clip-path:polygon(0 0,calc(100% - 24px) 0,100% 50%,calc(100% - 24px) 100%,0 100%);
+  box-shadow:0 2px 6px rgba(190,60,60,.20)}
+.sec .play{font-size:17px;opacity:.95}
+.txt{position:absolute;width:480px;z-index:3;background:rgba(255,255,255,.97);border-radius:14px;
+  box-shadow:0 3px 12px rgba(80,90,110,.14);padding:18px 20px;font-size:16px;line-height:1.66;color:#8e1b1b;font-weight:700}
+.txt b{color:#b71c1c}
+.win{position:absolute;width:520px;z-index:3;background:#fff;border:1.5px solid #ccd6e3;border-radius:8px;
+  box-shadow:0 4px 14px rgba(70,85,110,.16);overflow:hidden}
+.win .bar{height:28px;background:#eef2f7;border-bottom:1px solid #d9e1eb;display:flex;align-items:center;gap:6px;padding:0 11px}
+.win .dots{display:flex;gap:4px}
+.win .dots i{width:8px;height:8px;border-radius:50%;display:block}
+.win .fname{font-family:Consolas,Monaco,monospace;font-size:11.5px;color:#4a5568;margin-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win .tag{margin-left:auto;font-size:10.5px;color:#a33;background:#fdeaea;border:1px solid #f0c5c5;border-radius:9px;padding:1px 7px;white-space:nowrap}
+.win .body{padding:13px 15px 10px}
+.mtable{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+.mtable th{background:#f3f6fa;color:#5b6779;font-size:11.5px;font-weight:700;padding:4px 8px;text-align:left;border-bottom:1px solid #dfe5ee}
+.mtable td{padding:5px 8px;border-bottom:1px solid #edf1f6;color:#2b3038;font-family:Consolas,"Microsoft YaHei",monospace}
+.mtable td.hi{color:#b71c1c;font-weight:700}
+.callout{background:#fdecec;border-left:3px solid #d84a4a;padding:5px 9px;font-size:12px;color:#9e2020;line-height:1.45;margin-bottom:6px}
+.flow{display:flex;align-items:center;gap:4px;margin:3px 0 7px;flex-wrap:wrap}
+.flow span{background:#f5f7fa;border:1px solid #dfe5ee;border-radius:6px;padding:6px 8px;font-size:11.5px;color:#39424f;white-space:nowrap}
+.flow span.hot{background:#fdecec;border:1.5px solid #d84a4a;color:#a11616;font-weight:700}
+.flow i{color:#c62828;font-style:normal;font-size:13px}
+.note{font-size:11px;color:#8792a2;border-top:1px dashed #dfe5ee;padding-top:5px;margin-top:2px;line-height:1.35}
+.summary{position:absolute;left:36px;bottom:18px;width:1208px;z-index:6;text-align:center;color:#fff;
+  font-size:16px;font-weight:700;letter-spacing:.5px;text-shadow:0 1px 3px rgba(110,0,0,.45)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="sheet"></div><div class="grid"></div>
+  <div class="glow g1"></div><div class="glow g2"></div>
+
+  <svg class="wave" viewBox="0 0 1256 150" preserveAspectRatio="none">
+    <defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e8605d"/><stop offset=".55" stop-color="#cf3030"/><stop offset="1" stop-color="#a81414"/>
+    </linearGradient></defs>
+    <path d="M0 84 C 210 38, 400 112, 628 68 C 860 24, 1050 50, 1256 14 L1256 150 L0 150 Z" fill="url(#wg)"/>
+    <path d="M0 104 C 230 64, 420 128, 660 86 C 900 46, 1080 70, 1256 38 L1256 150 L0 150 Z" fill="#8f1010" opacity=".26"/>
+  </svg>
+
+  <div class="head">
+    <div class="logo">安</div>
+    <div><h1>问题与建议（二）· 复核结论回流与评测可信度</h1><div class="bar"></div></div>
+  </div>
+  <nav><span>背景简述</span><span>赛题分析</span><span class="on">技术方案</span><span>测试验证</span><span>作品总结</span></nav>
+
+  <div class="banner">问题二：复核结论未回流，经验层仍靠人工维护</div>
+  <div class="banner-line"></div>
+
+  <div class="sec" style="left:55px;top:186px;width:310px"><span class="play">▶</span>问题分析</div>
+  <div class="txt" style="left:90px;top:244px;height:152px">
+    「待复核 / 无法判定」转人工后，<b>结论未结构化回写</b>，经验层靠人工整理：误报归因表仍是 <b>v3.0.0 权重、0.59 阈值</b>的旧快照，未随 v3.1.0 重算。独立评测集仅 <b>100 张</b>，漏报 4.35%（4/92，已检出人员口径）的 95% 区间上界 <b>10.7%</b> 仍越线，只能说点估计达标。
+  </div>
+
+  <div class="sec" style="left:55px;top:412px;width:310px"><span class="play">▶</span>优化建议</div>
+  <div class="txt" style="left:90px;top:470px;height:174px">
+    把回流做成流程：C 级核实结论按样本 ID <b>回写样本库</b>，定期触发增量训练与阈值校准；换权重时由 CI 自动重跑 <b>attr_fp.py / metric_ci.py</b>，产出带版本号的归因快照；评测集扩到 <b>≥300 张</b>压窄区间。全部落在评测工具链与规则层，<b>不改模型结构、不增加现场部署成本</b>。
+  </div>
+
+  <div class="win" style="left:660px;top:186px;height:226px">
+    <div class="bar"><div class="dots"><i style="background:#ef6a6a"></i><i style="background:#efc06a"></i><i style="background:#7bc47f"></i></div>
+      <div class="fname">data/metrics_ci.json · Wilson 95% 区间</div><div class="tag">实测数据</div></div>
+    <div class="body">
+      <table class="mtable">
+        <tr><th>指标</th><th>点估计</th><th>95% 区间</th><th>目标</th></tr>
+        <tr><td>漏报率</td><td class="hi">4/92 = 4.35%</td><td class="hi">1.7% – 10.7%</td><td>≤ 5%</td></tr>
+        <tr><td>独立评测集</td><td>100 张</td><td colspan="2">每例约 1 个百分点</td></tr>
+      </table>
+      <div class="callout">上界 10.7% 越线 → 点估计达标 ≠ 稳定达标；漏报为 matched 口径。</div>
+      <div class="note">据 docs/指标置信区间.md 整理。</div>
+    </div>
+  </div>
+
+  <div class="win" style="left:660px;top:422px;height:230px">
+    <div class="bar"><div class="dots"><i style="background:#ef6a6a"></i><i style="background:#efc06a"></i><i style="background:#7bc47f"></i></div>
+      <div class="fname">data/fp_attribution.json · 经验层回流闭环</div><div class="tag">优化方案</div></div>
+    <div class="body">
+      <div class="flow"><span class="hot">人工复核 ✕ 当前断点</span><i>→</i><span>样本库（带版本号）</span><i>→</i><span>增量训练 / 阈值校准</span></div>
+      <div class="flow"><span>重跑 attr_fp.py</span><i>→</i><span>重算 metric_ci.py</span><i>→</i><span class="hot">经验层自动更新</span></div>
+      <div class="callout">归因表仍为 v3.0.0 / 0.59 阈值旧快照，v3.1.0 未重算，经验层未随运行生长。</div>
+      <div class="note">复用现有评测脚本，补回写接口与扩集标注即可，不重训可验证。</div>
+    </div>
+  </div>
+
+  <div class="summary">可行性：补一处回写接口、接一次 CI、扩一批评测图，经验层即可由人工维护转为自动生长</div>
+</div>
+</body>
+</html>

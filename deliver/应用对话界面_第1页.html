@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>安巡 Agent · 应用对话界面（研判台）</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#e9edf2;font-family:"Microsoft YaHei","PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.page{position:relative;width:1280px;height:720px;overflow:hidden;background:#fafbfd}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(190,203,218,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(190,203,218,.15) 1px,transparent 1px);background-size:40px 40px;mask-image:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.06) 78%)}
+.glow{position:absolute;border-radius:50%;filter:blur(45px)}
+.g1{left:-80px;top:120px;width:340px;height:250px;background:rgba(229,115,115,.10)}
+.g2{right:-60px;top:60px;width:420px;height:240px;background:rgba(100,150,210,.10)}
+.head{position:absolute;left:40px;top:26px;display:flex;align-items:center;gap:13px;z-index:6}
+.logo{width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 32% 26%,#f58b86,#c62828 72%);box-shadow:0 3px 10px rgba(183,28,28,.30);border:2px solid #fff}
+.head h1{font-size:22px;font-weight:700;color:#20242b;letter-spacing:.5px;line-height:1.1}
+.head .bar{width:250px;height:8px;margin-top:7px;background:#c62828;clip-path:polygon(0 0,100% 0,96% 100%,0 100%)}
+nav{position:absolute;right:28px;top:30px;display:flex;gap:6px;z-index:6}
+nav span{background:#fff;border:1.5px solid #e3bdbd;border-radius:20px;padding:8px 13px;font-size:15px;font-weight:700;color:#5b3131;box-shadow:0 2px 5px rgba(120,60,60,.10)}
+nav span.on{background:#c62828;color:#fff;border-color:#c62828;box-shadow:0 3px 8px rgba(198,40,40,.28)}
+.banner{position:absolute;left:160px;top:98px;width:960px;height:56px;z-index:5;
+  background:linear-gradient(90deg,#f3a4a0,#dc5450 40%,#b71c1c);color:#fff;font-size:25px;font-weight:700;
+  letter-spacing:.6px;display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(1.2% 0,98.8% 0,100% 100%,0 100%);text-shadow:0 1px 3px rgba(120,0,0,.45)}
+.banner-line{position:absolute;left:170px;top:155px;width:940px;height:2px;background:#9b1c1c;opacity:.6;z-index:5}
+.card{position:absolute;left:38px;width:372px;background:#fff;border:1.5px solid #dde4ed;border-radius:12px;
+  box-shadow:0 3px 13px rgba(80,90,110,.13);padding:15px 18px;z-index:4}
+.c1{top:174px;height:230px}.c2{top:416px;height:240px}
+.ct{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.ct i{width:9px;height:9px;border-radius:50%;background:#c62828;display:block}
+.ct h2{font-size:16.5px;font-weight:700;color:#242a33;letter-spacing:.3px}
+.ct .tag{margin-left:auto;font-size:10.5px;color:#9e2020;background:#fdecec;border:1px solid #f0c5c5;border-radius:9px;padding:2px 8px;white-space:nowrap}
+.desc{font-size:14.2px;line-height:1.72;color:#8e1b1b;font-weight:700;text-align:justify}
+.desc b{color:#b71c1c}
+.src{font-size:10.8px;color:#8894a5;border-top:1px dashed #dfe5ee;padding-top:7px;margin-top:9px;line-height:1.35}
+.guide{display:flex;flex-direction:column;gap:7px}
+.g{display:flex;align-items:flex-start;gap:9px;font-size:12.7px;line-height:1.42;color:#3c4654}
+.g .n{width:19px;height:19px;flex:none;border-radius:50%;background:#c62828;color:#fff;font-size:11.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;margin-top:1px}
+.g b{color:#b71c1c}
+.shot{position:absolute;left:426px;top:174px;width:816px;height:449px;z-index:4;background:#fff;
+  border:1.5px solid #d3dce7;border-radius:9px;box-shadow:0 4px 16px rgba(70,85,110,.17);overflow:hidden}
+.shot img{width:100%;height:100%;object-fit:fill;display:block}
+.box{position:absolute;border:1.6px solid rgba(198,40,40,.92);border-radius:4px;background:rgba(198,40,40,.045);pointer-events:none}
+.box .num{position:absolute;left:-1px;top:-1px;width:21px;height:21px;border-radius:50%;background:#c62828;color:#fff;
+  font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  border:1.5px solid #fff;box-shadow:0 1px 4px rgba(120,0,0,.3);transform:translate(-1px,-1px)}
+.kpi{position:absolute;left:426px;top:628px;width:816px;height:60px;z-index:4;background:#fff;border:1.5px solid #d3dce7;
+  border-radius:9px;box-shadow:0 3px 11px rgba(70,85,110,.12);display:flex;align-items:stretch;overflow:hidden}
+.kpi .k{flex:1;padding:6px 10px;border-right:1px solid #e7ecf2;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.kpi .k:last-child{border-right:0}
+.kpi .l{font-size:10.5px;color:#8792a2;white-space:nowrap}
+.kpi .v{font-size:11.8px;line-height:1.25;color:#b71c1c;font-weight:700;overflow:hidden}
+.foot{position:absolute;left:40px;right:34px;bottom:12px;z-index:6;display:flex;justify-content:space-between;
+  font-size:10.8px;color:#8792a2;letter-spacing:.2px}
+.foot b{color:#b71c1c}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="grid"></div><div class="glow g1"></div><div class="glow g2"></div>
+
+  <div class="head">
+    <div class="logo"></div>
+    <div><h1>应用对话界面 · 安巡 Agent 研判台</h1><div class="bar"></div></div>
+  </div>
+  <nav><span>背景简述</span><span>数据处理</span><span>分析过程</span><span>独特创新</span><span>结果解释</span><span class="on">结果呈现</span></nav>
+
+  <div class="banner">一帧画面，问成一张工单 —— 研判台对话界面导览</div>
+  <div class="banner-line"></div>
+
+  <div class="card c1">
+    <div class="ct"><i></i><h2>应用描述</h2><span class="tag">约 110 字</span></div>
+    <div class="desc">研判台把监控画面接入<b>自训五类模型与规则引擎</b>，用对话承接安全员追问：左侧新建会话并上传现场图，中部直接问风险等级、工单与法规原文，右侧实时给出四态判定、逐人置信度与 A/B/C 处置时限，生成带依据、留签署位的整改通知单。低置信样本转人工，<b>不硬判、不预填责任人</b>。</div>
+  </div>
+
+  <div class="card c2">
+    <div class="ct"><i></i><h2>界面导览 · 五处标注</h2><span class="tag">与右图编号对应</span></div>
+    <div class="guide">
+      <div class="g"><span class="n">1</span><div><b>会话栏</b>：新建对话、上传现场照片替换样例画面</div></div>
+      <div class="g"><span class="n">2</span><div><b>对话区</b>：三条预置提问，直接问判定、工单与法规</div></div>
+      <div class="g"><span class="n">3</span><div><b>输入区</b>：一句话发起，四个按钮直达对应工具</div></div>
+      <div class="g"><span class="n">4</span><div><b>实时研判</b>：四态计数、P1/P2 逐人判据与置信度</div></div>
+      <div class="g"><span class="n">5</span><div><b>处置闭环</b>：A/B/C 时限、整改工单、法规原文</div></div>
+    </div>
+    <div class="src">右侧结果与对话同源：等级按本次确认未佩戴人数由规则给出，条款按白名单检索、查不到即明说。</div>
+  </div>
+
+  <div class="shot">
+    <img src="assets/desk_ui_clean.png" alt="安巡 Agent 研判台对话界面">
+    <div class="box" style="left:.8%;top:6.8%;width:16.1%;height:17.5%"><span class="num">1</span></div>
+    <div class="box" style="left:25.1%;top:23.5%;width:44.7%;height:22.5%"><span class="num">2</span></div>
+    <div class="box" style="left:24.7%;top:83.1%;width:45.5%;height:12.8%"><span class="num">3</span></div>
+    <div class="box" style="left:79.2%;top:7.8%;width:20.2%;height:36.3%"><span class="num">4</span></div>
+    <div class="box" style="left:79.2%;top:44.9%;width:20.2%;height:54.2%"><span class="num">5</span></div>
+  </div>
+
+  <div class="kpi">
+    <div class="k"><span class="l">四态实测计数</span><span class="v">已佩戴 1 · 待复核 0<br>未佩戴 1 · 无法判定 0</span></div>
+    <div class="k"><span class="l">处置等级</span><span class="v">B 级 · 当日处置 · 24 小时内</span></div>
+    <div class="k"><span class="l">逐人判据</span><span class="v">P1 置信度 0.87<br>P2 未检出装备框</span></div>
+    <div class="k"><span class="l">可核对输出</span><span class="v">整改工单<br>GB 39800.1-2020 原文</span></div>
+  </div>
+
+  <div class="foot"><span>界面为线上研判台 v1.1 实测（已连接 · 云端 best.onnx）；红框与编号为后加标注，左下角无关文字已清除。</span><span>安巡 Agent · 应用对话界面 <b>01 / 01</b></span></div>
+</div>
+</body>
+</html>

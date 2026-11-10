@@ -121,6 +121,10 @@ deliver/.video_work/
 !deliver/assets/desk_online.png
 !deliver/assets/qrcode.png
 
+# ---- 官方提交包命名含学校与姓名，匿名评审，不入库 ----
+# 仓库只保留上面两个匿名成品；字幕以脱敏名 安巡Agent_字幕_*.srt 入库。
+制造-*
+
 # ---- 例外：交付目录里的运行时权重必须入库（v2.0.0）----
 # 没有权重，clone 下来的仓库跑不动：verify_all 掉一截、HTTP 服务起不来、指标无法复现。
 # 体积约 114MB，单文件最大 42.6MB，在 GitHub 100MB 硬限制内。

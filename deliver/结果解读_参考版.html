@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>安巡 Agent · 结果解读（预测结果与应用价值）</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#e9edf2;font-family:"Microsoft YaHei","PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.page{position:relative;width:1280px;height:720px;overflow:hidden;background:#f7f9fc}
+.sheet{position:absolute;inset:12px;background:linear-gradient(118deg,#ffffff 0%,#f4f7fb 48%,#ffffff 100%);border:1px solid #e3e8ef}
+.grid{position:absolute;inset:12px;background-image:linear-gradient(rgba(190,203,218,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(190,203,218,.18) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.10) 72%)}
+.glow{position:absolute;border-radius:50%;filter:blur(38px)}
+.g1{left:-70px;top:130px;width:360px;height:250px;background:rgba(229,115,115,.12)}
+.g2{right:-50px;top:70px;width:430px;height:230px;background:rgba(100,150,210,.12)}
+.wave{position:absolute;left:12px;bottom:12px;width:1256px;height:172px;z-index:1}
+.head{position:absolute;left:40px;top:26px;display:flex;align-items:center;gap:12px;z-index:5}
+.logo{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 32% 26%,#f4736f,#b71c1c 76%);box-shadow:0 3px 10px rgba(183,28,28,.30);display:flex;align-items:center;justify-content:center;color:#fff;font-size:25px;font-weight:700;border:2px solid #fff}
+.head h1{font-size:23px;font-weight:700;color:#20242b;letter-spacing:1px;line-height:1.15}
+.head .bar{width:250px;height:9px;margin-top:6px;background:#c62828;clip-path:polygon(0 0,100% 0,96% 100%,0 100%)}
+nav{position:absolute;right:34px;top:30px;display:flex;gap:7px;z-index:5}
+nav span{background:#fff;border:1.5px solid #e0b9b9;border-radius:20px;padding:8px 15px;font-size:16px;font-weight:700;color:#5b3131;box-shadow:0 2px 5px rgba(120,60,60,.10)}
+nav span.on{background:#c62828;color:#fff;border-color:#c62828;box-shadow:0 3px 8px rgba(198,40,40,.28)}
+.banner{position:absolute;left:150px;top:100px;width:1030px;height:56px;z-index:4;
+  background:linear-gradient(90deg,#ef9390,#dc4c4a 42%,#b71c1c);color:#fff;font-size:27px;font-weight:700;
+  letter-spacing:1px;display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(1.2% 0,98.8% 0,100% 100%,0 100%);text-shadow:0 1px 3px rgba(120,0,0,.45)}
+.banner-line{position:absolute;left:160px;top:158px;width:1010px;height:2px;background:#8e1616;opacity:.7;z-index:4}
+.card{position:absolute;width:520px;height:180px;z-index:3;background:rgba(255,255,255,.97);
+  border-radius:14px;box-shadow:0 3px 12px rgba(80,90,110,.13);padding:15px 20px 12px}
+.card h2{font-size:17.5px;font-weight:700;color:#d13a3a;letter-spacing:.3px;margin-bottom:9px}
+.card ul{list-style:none}
+.card li{font-size:14.5px;line-height:1.5;color:#2b3038;padding-left:15px;position:relative;margin-bottom:6px}
+.card li:last-child{margin-bottom:0}
+.card li::before{content:"";position:absolute;left:1px;top:9px;width:6px;height:6px;border-radius:50%;background:#d13a3a}
+.card li b{color:#b71c1c}
+.kpi{position:absolute;top:562px;width:350px;height:86px;z-index:3;background:rgba(255,255,255,.98);
+  border:1.6px solid #e0a6a6;border-radius:14px;box-shadow:0 3px 10px rgba(150,60,60,.14);
+  display:flex;align-items:center;gap:14px;padding:0 18px}
+.kpi .ico{width:50px;height:50px;flex:none;border:2.5px solid #c62828;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.kpi .big{font-size:29px;font-weight:700;color:#b71c1c;line-height:1.05;letter-spacing:.5px}
+.kpi .sub{font-size:12.5px;color:#6b4a4a;margin-top:5px;line-height:1.25}
+.summary{position:absolute;left:36px;bottom:20px;width:1208px;z-index:6;text-align:center;color:#fff;
+  font-size:17px;font-weight:700;letter-spacing:1px;text-shadow:0 1px 3px rgba(110,0,0,.45)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="sheet"></div><div class="grid"></div>
+  <div class="glow g1"></div><div class="glow g2"></div>
+
+  <svg class="wave" viewBox="0 0 1256 172" preserveAspectRatio="none">
+    <defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e8605d"/><stop offset=".55" stop-color="#cf3030"/><stop offset="1" stop-color="#a81414"/>
+    </linearGradient></defs>
+    <path d="M0 96 C 210 46, 400 128, 628 78 C 860 28, 1050 58, 1256 18 L1256 172 L0 172 Z" fill="url(#wg)"/>
+    <path d="M0 118 C 230 74, 420 146, 660 100 C 900 54, 1080 80, 1256 44 L1256 172 L0 172 Z" fill="#8f1010" opacity=".26"/>
+  </svg>
+
+  <div class="head">
+    <div class="logo">安</div>
+    <div><h1>结果解读 · 预测结果与应用价值</h1><div class="bar"></div></div>
+  </div>
+  <nav><span>背景简述</span><span>赛题分析</span><span>技术方案</span><span>测试验证</span><span class="on">作品总结</span></nav>
+
+  <div class="banner">安巡 Agent —— 从一帧画面的四态判定，到现场办得完的一张工单</div>
+  <div class="banner-line"></div>
+
+  <div class="card" style="left:88px;top:178px">
+    <h2>预测结果怎么读：四态 + 时序</h2>
+    <ul>
+      <li>已佩戴 / 未佩戴给出定论，进入分级</li>
+      <li>待复核 / 无法判定<b>单列人工核实，不硬判</b></li>
+      <li>连续 3 帧结论一致才聚合成事件，单帧不出单</li>
+    </ul>
+  </div>
+
+  <div class="card" style="left:672px;top:178px">
+    <h2>从告警到事件：降噪 93.33%</h2>
+    <ul>
+      <li>34.8 秒单路视频、28 人次触发 <b>195 条逐帧告警</b></li>
+      <li>时序聚合后仅 <b>13 个事件</b>，不再逐帧刷屏</li>
+      <li>通知由「会被划走」变成「必须办完」</li>
+    </ul>
+  </div>
+
+  <div class="card" style="left:88px;top:372px">
+    <h2>A / B / C 分级：处置时限可当场重算</h2>
+    <ul>
+      <li>只看本次确认未佩戴人数：<b>≥3 人 A 级 2 小时、1–2 人 B 级 24 小时</b></li>
+      <li>仅待复核 C 级 7 天核实，全合规不出单</li>
+      <li>实测：二楼平台 1 人→B、装卸区 8 人→A、通道→不出单</li>
+    </ul>
+  </div>
+
+  <div class="card" style="left:672px;top:372px">
+    <h2>可签署、可追责：落到管理闭环</h2>
+    <ul>
+      <li>等级由规则给出、模型不生成结论，<b>同一输入三次一致</b></li>
+      <li>工单挂可点开核对的条款原文，查不到即明说</li>
+      <li>输出带时限与签署位的通知单，进入整改—复查—归档</li>
+    </ul>
+  </div>
+
+  <div class="kpi" style="left:88px">
+    <div class="ico"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#c62828" stroke-width="2"><circle cx="13" cy="13" r="10"/><path d="M13 7 L13 13 L17 16" stroke-linecap="round"/></svg></div>
+    <div><div class="big">0.8654</div><div class="sub">mAP@0.5 · 100 张独立评测集</div></div>
+  </div>
+  <div class="kpi" style="left:465px">
+    <div class="ico"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#c62828" stroke-width="2"><circle cx="13" cy="13" r="10"/><circle cx="13" cy="13" r="5"/><circle cx="13" cy="13" r="1.5" fill="#c62828" stroke="none"/></svg></div>
+    <div><div class="big">93.33%</div><div class="sub">逐帧告警降噪 · 195 → 13 个事件</div></div>
+  </div>
+  <div class="kpi" style="left:842px">
+    <div class="ico"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#c62828" stroke-width="2" stroke-linejoin="round"><path d="M15 2 L6 15 L12 15 L10 24 L20 10 L14 10 Z"/></svg></div>
+    <div><div class="big">15.0ms</div><div class="sub">GPU 单帧时延 · ONNX CPU 36.5ms</div></div>
+  </div>
+
+  <div class="summary">应用价值：把「看见」变成有等级、有时限、有依据、可签署的处置结论，而非又一条被划走的告警</div>
+</div>
+</body>
+</html>

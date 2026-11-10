@@ -2,7 +2,7 @@
 """用 20 页幻灯片 + 中文 TTS 旁白合成参赛视频（MP4 ≤6 分钟 ≤300MB）。
 
 画面与 PPT 逐页一致；旁白按页生成，每页停留时长由该段音频决定。
-输出：deliver/安巡Agent_演示视频_1110.mp4、deliver/旁白稿.md
+输出：deliver/制造-上海中侨职业技术大学-张璟瑜-安巡Agent.mp4、deliver/旁白稿.md
 """
 from __future__ import annotations
 
@@ -16,6 +16,9 @@ from pathlib import Path
 import edge_tts
 import imageio_ffmpeg
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from make_subtitles import build_subtitles  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "deliver"
 SLIDES = OUT / "slides"
@@ -24,11 +27,12 @@ FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 VOICE = "zh-CN-YunxiNeural"
 RATE = "+12%"
 GAP = 0.32  # 每页讲完后的停顿（秒）
+SUBTITLES = True  # 烧录硬字幕；置 False 可退回无字幕版本
 
 NARRATION = [
     "安巡 Agent，厂区安全巡检多智能体系统。把摄像头画面，变成可执行的整改工单。",
     "别人做的是告警，我们做的是工单。告警只是一条通知，工单是一个责任。系统由三个人分三条线完成：技术线负责模型与指标，系统线负责判定与研判台，材料线负责提交与答辩。参考来源包括两个公开数据集、安全生产法与两项国家标准，均在页面上单列。",
-    "法规要求必须监督从业人员正确佩戴劳动防护用品，但一名安全员要管多个车间，每班巡查只有两次、十五分钟。检查的人一走，帽子就摘了。监控只推一条告警，没有等级、没有时限、没有人负责。",
+    "法规要求必须监督从业人员正确佩戴劳动防护用品，但一名安全员要管多个车间，每班巡查只有两次、十五分钟。检查的人一走，帽子就摘了。监控只推一条告警，没有等级、没有时限、没有人负责。页面下方是国务院「人工智能+」行动意见与安全生产法主席令的官方原文截图。",
     "主训练集来自 Chapian ppe v3，采用 CC BY 4.0 授权，两千四百五十一张训练、两百七十二张验证。九类原始标签重映射为五类：人、安全帽、裸头、反光背心、未穿背心。我们剔除了与评测集重名的一百六十五张图像，防止数据泄漏。",
     "第二渠道是一百张独立评测图像，全程不参与训练，也不参与选轮次。四个对外指标全部在它上面测。同源不同集，跨域泛化未验证，这一点我们在局限页主动说明。",
     "知识库分四层：法规、标准、操作和经验。每条法规存原文、不存改写，引用前必须由 law lookup 检索，查不到就写未检索到。因为一条错误的法规引用，足以让整张整改单失去效力。",
@@ -43,8 +47,8 @@ NARRATION = [
     "三十四点八秒单路视频，逐帧触发一百九十五条告警，经连续三帧聚合去重，只剩十三件真正要办的事，降噪百分之九十三点三三。判定覆盖百分之七十六点九二，合规率百分之五十七点一四，待复核与无法判定单列、不进分母。巡检覆盖十六倍是排班假设推演，不是实测，我们单独标注。",
     "主动说六条局限：自采数据零张；评测集只有一百张，每一例约一个百分点；背心类 mAP 约零点六六三，明显更弱；护目镜与手套只留接口；现场素材无真实整改过程；研判台现场需联网。装完美的作品，一戳就破。",
     "隐私上，工人影像不落地、不进提交包；误报信任上，置信度三档、连续三帧、小目标拦截三道保护，宁可转人工也不硬判；责任边界上，系统只做辅助判定，责任人、复查人、验收项一律留空由现场手填。",
-    "这是线上研判台的真实界面，不是设计稿。上传真图片后，右侧四态统计、B 级当日处置、二十四小时时限、整改工单和法规依据，全部由规则引擎与 ONNX 模型实算，工具调用轨迹可以逐条点开核对。",
-    "三组提示词示例覆盖 B 级、A 级和不出单。等级、时限、工单号都不交给大模型：必须先调 grade risk，引用条文先调 law lookup，开工单必调 create ticket。右侧是 Agent 可访问链接和二维码，二维码包含完整 sharecode，裸域名会返回四零三。",
+    "这是线上研判台真实交互的整屏截图。左侧是真实发出的提问和云端 Agent 的实时回复，右侧四态统计、B 级二十四小时、整改工单和法规依据，全部由规则引擎与 ONNX 模型实算。",
+    "三组提示词全部来自线上研判台真实对话截图，覆盖 B 级、A 级和不出单。黑气泡是输入，白气泡是实时回复。等级、时限、工单号都不交给大模型，必须先调 grade risk。右侧是可访问链接与二维码，含完整 sharecode。",
     "下一步先把判定做稳，再把闭环接进企业台账，最后扩到更多装备与多路摄像头。我们没把系统说成已经替企业管好了安全。它现在做到的是：把一次看见，变成一件有人签、有时限、能复查的事。感谢评审。",
 ]
 
@@ -113,7 +117,8 @@ def build_audio(wavs: list[Path]) -> tuple[Path, list[float], float]:
     return out, durations, total
 
 
-def build_video(audio: Path, durations: list[float], total: float) -> Path:
+def build_video(audio: Path, durations: list[float], total: float,
+                ass: Path | None) -> Path:
     frames = WORK / "frames.txt"
     lines = []
     for i, d in enumerate(durations, 1):
@@ -125,17 +130,29 @@ def build_video(audio: Path, durations: list[float], total: float) -> Path:
     frames.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     silent = WORK / "silent.mp4"
+    vf = ("scale=1280:720:force_original_aspect_ratio=decrease,"
+          "pad=1280:720:(ow-iw)/2:(oh-ih)/2")
+    cwd = None
+    if ass and ass.exists():
+        # concat 图片序列每页仅 1 帧，必须先补到 25fps 再叠字幕；
+        # 否则 libass 只在页起始那一帧渲染，整页会复制无字幕帧。
+        # ass 用相对文件名 + cwd，避开 Windows 路径冒号转义。
+        vf += f",fps=25,ass={ass.name},format=yuv420p"
+        cwd = str(ass.parent)
+        log("  已烧录中文字幕（硬字幕，任意播放器可见）")
+    else:
+        vf += ",format=yuv420p"
     cmd = [
         FFMPEG, "-y", "-loglevel", "error",
         "-f", "concat", "-safe", "0", "-i", str(frames),
-        "-vf", "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p",
+        "-vf", vf,
         "-r", "25", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
         "-pix_fmt", "yuv420p", str(silent),
     ]
-    subprocess.run(cmd, check=True, capture_output=True)
+    subprocess.run(cmd, check=True, capture_output=True, cwd=cwd)
     log(f"  无声画面: {silent.stat().st_size / 1048576:.1f} MB")
 
-    out = OUT / "安巡Agent_演示视频_1110.mp4"
+    out = OUT / "制造-上海中侨职业技术大学-张璟瑜-安巡Agent.mp4"
     cmd = [
         FFMPEG, "-y", "-loglevel", "error",
         "-i", str(silent), "-i", str(audio),
@@ -150,9 +167,10 @@ def write_script(durations: list[float], total: float) -> None:
     lines = [
         "# 安巡 Agent · 6 分钟视频旁白稿",
         "",
-        "> 与 `安巡Agent_演示视频_1110.mp4` 逐页对应，画面即 PPT 第 1–20 页。",
+        "> 与 `制造-上海中侨职业技术大学-张璟瑜-安巡Agent.mp4` 逐页对应，画面即 PPT 第 1–20 页。",
         "> 当前音轨由中文 TTS 合成；如需真人录音，按页替换后重新合成即可。",
         f"> 总时长约 {int(total // 60)} 分 {int(total % 60):02d} 秒（官方上限 6 分钟）。",
+        "> 视频已烧录中文字幕；外挂字幕：制造-上海中侨职业技术大学-张璟瑜-安巡Agent.srt。",
         "",
         "| 页 | 停留 | 旁白 |",
         "|---|---|---|",
@@ -185,16 +203,18 @@ def write_script(durations: list[float], total: float) -> None:
 
 
 def main() -> None:
-    log("1/4 生成中文旁白…")
+    log("1/5 生成中文旁白…")
     wavs = asyncio.run(make_voice())
-    log("2/4 拼接音轨…")
+    log("2/5 拼接音轨…")
     audio, durations, total = build_audio(wavs)
     log(f"  旁白总长 {total:.1f}s = {int(total // 60)} 分 {int(total % 60):02d} 秒")
     if total > 358:
         raise RuntimeError(f"旁白 {total:.1f}s 超过 6 分钟上限，请精简文案或提高 RATE")
-    log("3/4 合成画面与音轨…")
-    out = build_video(audio, durations, total)
-    log("4/4 写旁白稿…")
+    log("3/5 生成逐句字幕…")
+    ass = build_subtitles(NARRATION, durations) if SUBTITLES else None
+    log("4/5 合成画面与音轨…")
+    out = build_video(audio, durations, total, ass)
+    log("5/5 写旁白稿…")
     write_script(durations, total)
     log(f"\n视频: {out}  {out.stat().st_size / 1048576:.2f} MB  {total:.1f}s")
     log(f"旁白稿: {OUT / '旁白稿.md'}")

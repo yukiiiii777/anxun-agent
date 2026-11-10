@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>安巡 Agent · 风险识别与应对（二）误判与责任外溢</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#e9edf2;font-family:"Microsoft YaHei","PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.page{position:relative;width:1280px;height:720px;overflow:hidden;background:#f2f4f7}
+.frame{position:absolute;inset:13px;border:1px solid #d8dee6;background:#fff;overflow:hidden}
+.photo{position:absolute;inset:0;background:url("assets/bg_site.jpg") center 44%/cover no-repeat}
+.veil{position:absolute;inset:0;background:linear-gradient(100deg,rgba(255,255,255,.88) 0%,rgba(255,255,255,.78) 46%,rgba(255,255,255,.66) 100%)}
+.topwash{position:absolute;left:0;right:0;top:0;height:170px;background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(255,255,255,0))}
+.head{position:absolute;left:44px;top:28px;display:flex;align-items:center;gap:13px;z-index:6}
+.logo{width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 32% 26%,#f58b86,#c62828 72%);box-shadow:0 3px 10px rgba(183,28,28,.30);border:2px solid #fff}
+.head h1{font-size:23px;font-weight:700;color:#20242b;letter-spacing:.6px;line-height:1.1}
+.head .bar{width:250px;height:8px;margin-top:7px;background:#c62828;clip-path:polygon(0 0,100% 0,96% 100%,0 100%)}
+nav{position:absolute;right:28px;top:32px;display:flex;gap:6px;z-index:6}
+nav span{background:rgba(255,255,255,.96);border:1.5px solid #e3bdbd;border-radius:20px;padding:8px 13px;font-size:15px;font-weight:700;color:#5b3131;box-shadow:0 2px 5px rgba(120,60,60,.10)}
+nav span.on{background:#c62828;color:#fff;border-color:#c62828;box-shadow:0 3px 8px rgba(198,40,40,.28)}
+.banner{position:absolute;left:160px;top:100px;width:960px;height:56px;z-index:5;
+  background:linear-gradient(90deg,#f3a4a0,#dc5450 40%,#b71c1c);color:#fff;font-size:25px;font-weight:700;
+  letter-spacing:.6px;display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(1.2% 0,98.8% 0,100% 100%,0 100%);text-shadow:0 1px 3px rgba(120,0,0,.45)}
+.banner-line{position:absolute;left:170px;top:157px;width:940px;height:2px;background:#9b1c1c;opacity:.62;z-index:5}
+.sec{position:absolute;left:62px;width:302px;height:50px;z-index:5;display:flex;align-items:center;gap:13px;padding-left:22px;
+  background:linear-gradient(90deg,#f07a75,#d04545);color:#fff;font-size:23px;font-weight:700;letter-spacing:1px;
+  border-radius:9px 0 0 9px;clip-path:polygon(0 0,calc(100% - 24px) 0,100% 50%,calc(100% - 24px) 100%,0 100%);
+  box-shadow:0 2px 6px rgba(190,60,60,.22)}
+.sec .play{width:24px;height:24px;border:2px solid rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:11px;padding-left:2px}
+.s1{top:178px}.s2{top:404px}
+.txt{position:absolute;left:110px;width:474px;z-index:4;background:rgba(255,255,255,.97);border-radius:13px;
+  box-shadow:0 3px 13px rgba(80,90,110,.16);padding:16px 20px;font-size:16.5px;line-height:1.62;color:#8e1b1b;font-weight:700;text-align:justify}
+.txt b{color:#b71c1c}
+.t1{top:242px;height:142px}.t2{top:468px;height:184px}
+.panel{position:absolute;left:614px;width:602px;z-index:4;background:rgba(255,255,255,.955);border:1.5px solid #d3dce7;border-radius:10px;
+  box-shadow:0 4px 16px rgba(70,85,110,.18);padding:12px 16px 10px;overflow:hidden}
+.pa{top:184px;height:244px}.pb{top:436px;height:216px}
+.ph{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.ph .dot{width:9px;height:9px;border-radius:50%;background:#c62828;flex:none}
+.ph h2{font-size:16px;font-weight:700;color:#242a33;letter-spacing:.3px}
+.ph .tag{margin-left:auto;font-size:11px;color:#9e2020;background:#fdecec;border:1px solid #f0c5c5;border-radius:9px;padding:2px 9px;white-space:nowrap}
+.body{display:flex;gap:14px;align-items:flex-start}
+.body img{width:237px;height:158px;object-fit:fill;border:1px solid #e2e8f0;border-radius:6px;background:#fff;flex:none}
+.kpis{flex:1;display:flex;flex-direction:column;gap:7px}
+.kpi{background:#f7f9fc;border:1px solid #e2e8f0;border-radius:7px;padding:7px 10px;display:flex;align-items:center;gap:10px}
+.kpi .v{font-family:Consolas,"Microsoft YaHei",monospace;font-size:17px;font-weight:700;color:#b71c1c;min-width:92px}
+.kpi .d{font-size:11.8px;color:#4a5568;line-height:1.35}
+.kpi.warn{background:#fdecec;border-color:#f0c5c5}.kpi.warn .v{font-size:15px}
+.note{font-size:10.8px;color:#7c8798;border-top:1px dashed #dfe5ee;padding-top:5px;margin-top:4px;line-height:1.32}
+.gates{display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:nowrap}
+.gate{flex:1;text-align:center;background:#f1f6f2;border:1px solid #cfe1d5;border-radius:6px;padding:6px 3px;font-size:11.3px;color:#1e6b45;font-weight:700;white-space:nowrap}
+.arrow{font-size:13px;color:#8c98a8;flex:none}
+.gate.end{flex:1.25;background:#fdecec;border-color:#f0c5c5;color:#9e2020}
+.foot{position:absolute;right:34px;bottom:17px;z-index:6;font-size:11.5px;color:#7b8593;letter-spacing:.3px}
+.foot b{color:#b71c1c}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="frame">
+    <div class="photo"></div><div class="veil"></div><div class="topwash"></div>
+
+    <div class="head">
+      <div class="logo"></div>
+      <div><h1>风险识别与应对（二）· 误判与责任外溢</h1><div class="bar"></div></div>
+    </div>
+    <nav><span>背景简述</span><span>数据处理</span><span>分析过程</span><span>独特创新</span><span class="on">结果解释</span><span>结果呈现</span></nav>
+
+    <div class="banner">判定不确定性 —— 错误工单与责任错配的阻断</div>
+    <div class="banner-line"></div>
+
+    <div class="sec s1"><span class="play">▶</span>风险识别</div>
+    <div class="txt t1">100 张独立评测中漏报 4 例（4.35%），95% 区间上界 10.7% 仍越线。低置信、小目标与遮挡样本若被<b>硬判为定论</b>，会把不确定的结果写成带时限的处置要求，造成错误追责或漏整改。</div>
+
+    <div class="sec s2"><span class="play">▶</span>应对策略</div>
+    <div class="txt t2">以<b>确定性闸门</b>阻断外溢：置信度三档、面积与高宽比拦截，连续 3 帧结论一致才聚合成事件；待复核与无法判定单列 C 级 7 天内核实，不进定论。等级由规则唯一给出、可当场重算，工单保留签署位，人工确认后方进入追责流程。</div>
+
+    <div class="panel pa">
+      <div class="ph"><span class="dot"></span><h2>误判来源 · 100 张独立评测混淆矩阵</h2><span class="tag">实测原图</span></div>
+      <div class="body">
+        <img src="assets/confusion_matrix.png" alt="100 张独立评测混淆矩阵">
+        <div class="kpis">
+          <div class="kpi"><span class="v">4 / 92</span><span class="d">漏报 4.35%<br>已检出人员口径</span></div>
+          <div class="kpi"><span class="v">6 / 98</span><span class="d">误报 6.12%<br>目标 ≤ 10%</span></div>
+          <div class="kpi warn"><span class="v">1.7–10.7%</span><span class="d">漏报 95% Wilson 区间<br>上界越 5% 目标线</span></div>
+        </div>
+      </div>
+      <div class="note">来源：techline-v3.1.0 / data/metrics_real.json · rules_profile v3 · conf 0.65 · 中心点判据；mAP@0.5 0.8654。</div>
+    </div>
+
+    <div class="panel pb">
+      <div class="ph"><span class="dot"></span><h2>漏报率 4.35% 的可信边界</h2><span class="tag">点估计达标 ≠ 稳定达标</span></div>
+      <svg width="568" height="86" viewBox="0 0 568 86">
+        <line x1="40" y1="46" x2="540" y2="46" stroke="#c3ccd8" stroke-width="2"/>
+        <rect x="110.8" y="29" width="375" height="34" rx="5" fill="#c62828" opacity=".16"/>
+        <line x1="110.8" y1="25" x2="110.8" y2="67" stroke="#c62828" stroke-width="1.5"/>
+        <line x1="485.8" y1="25" x2="485.8" y2="67" stroke="#c62828" stroke-width="2"/>
+        <line x1="248.3" y1="20" x2="248.3" y2="71" stroke="#1e6b45" stroke-width="2" stroke-dasharray="5 4"/>
+        <circle cx="221.3" cy="46" r="6.5" fill="#1f2937" stroke="#fff" stroke-width="2"/>
+        <text x="221.3" y="18" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1f2937">4.35%</text>
+        <text x="248.3" y="82" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1e6b45">目标 5%</text>
+        <text x="485.8" y="18" text-anchor="middle" font-size="11.5" font-weight="700" fill="#b71c1c">上界 10.7%</text>
+        <text x="110.8" y="82" text-anchor="middle" font-size="10.5" fill="#7c8798">1.7%</text>
+        <text x="40" y="66" text-anchor="middle" font-size="10" fill="#8792a2">0%</text>
+        <text x="540" y="66" text-anchor="middle" font-size="10" fill="#8792a2">12%</text>
+        <text x="300" y="46" text-anchor="middle" font-size="11.5" font-weight="700" fill="#9e2020">95% 置信区间</text>
+      </svg>
+      <div class="gates">
+        <div class="gate">置信度三档</div><span class="arrow">→</span>
+        <div class="gate">面积 / 高宽比拦截</div><span class="arrow">→</span>
+        <div class="gate">连续 3 帧聚合</div><span class="arrow">→</span>
+        <div class="gate end">不确定转 C 级人工核实</div>
+      </div>
+      <div class="note">风险落点：上界 10.7% 说明漏判不可忽略；三道闸门显式输出「看不清」，避免不确定结论变成可追责工单。</div>
+    </div>
+
+    <div class="foot">安巡 Agent · 风险识别与应对 <b>02 / 02</b>　｜　图表：项目真实评测原图 · Wilson 区间（95%）</div>
+  </div>
+</div>
+</body>
+</html>

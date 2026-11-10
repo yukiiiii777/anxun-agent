@@ -3,31 +3,31 @@
 <body><div class="slide">
   <div class="head"><div class="chapter"><i></i>第 6 章 · 应用结果呈现</div>
     <div class="brand">安巡 Agent · 第二届全国人工智能应用创新大赛 · 通用赛道 · 制造领域</div></div>
-  <h1>真实研判台，不是设计稿</h1><div class="sub">上传真图片 → 四态判定 → A/B/C 定级 → 导出 Word 通知单</div>
+  <h1>真实研判台，不是设计稿</h1><div class="sub">真实提问 → 云端 Agent 实时回复 → 右栏规则引擎实算定级与工单</div>
   <div class="rule"></div>
   <div class="body">
 <div class="row" style="min-height:330px">
   <div class="card" style="flex:1.55;padding:10px;display:flex;flex-direction:column">
-    <div style="font-size:12.5px;font-weight:800;margin:2px 0 6px 4px">在线研判台 · 真实界面（2026-11-10 截取）</div>
+    <div style="font-size:12.5px;font-weight:800;margin:2px 0 6px 4px">在线研判台 · 真实交互（2026-11-10 实跑截取）</div>
     <div class="imgframe" style="height:268px;max-height:268px;flex:none"><img src="../assets/desk_online.png"></div>
   </div>
   <div class="card compact" style="flex:1">
     <h3>这一屏能证明什么</h3>
-    <ul><li>左侧对话、右侧实时研判，<b>不是预置回答</b>。</li>
-        <li>右栏顶部四态统计：已佩戴 / 待复核 / 未佩戴 / 无法判定。</li>
-        <li>处置等级卡片直接给 <b>B 级 · 当日处置 · 24 小时内</b>，并写明分档规则。</li>
-        <li>整改工单、法规依据可点开追到条号与原文。</li></ul>
-    <div class="small" style="margin-top:8px">底部标注：判定与工单以规则引擎输出为准，右侧由 best.onnx 对帧图实算。</div>
+    <ul><li>左侧是<b>真实发出的一句提问</b>与云端 Agent 的<b>实时回复</b>，不是预置回答。</li>
+        <li>回复前先调 <b>grade_risk</b>：等级与时限由规则引擎给，模型不自己拍。</li>
+        <li>右栏四态统计、<b>B 级 · 24 小时内</b>、工单号与法规依据，均由 best.onnx 对样例图实算。</li>
+        <li>工单可导出 1 页 Word 通知单，条文可点开追到条号。</li></ul>
+    <div class="small" style="margin-top:8px">判定与工单以规则引擎输出为准；右侧为模型实测，样例图为公开数据集素材（CC BY 4.0）。</div>
     <div class="note red" style="margin-top:9px">现场必须联网：研判台已无离线降级，连不上会明说「云端未连接」。<b>另备录屏。</b></div>
   </div>
 </div>
 <div class="row" style="margin-top:14px;min-height:88px">
   <div class="card col" style="padding:12px 16px"><h3 style="font-size:14px">上传真图片</h3><p style="font-size:12px">上传后由 ONNX 模型实算，四态与等级走 /api/inspect，工单号由系统生成。</p></div>
   <div class="card col" style="padding:12px 16px"><h3 style="font-size:14px">导出 Word 通知单</h3><p style="font-size:12px">《安全隐患整改通知单》1 页，含基本信息 / 违规事实 / 整改要求 / 法规依据 / 签署栏。</p></div>
-  <div class="card col" style="padding:12px 16px"><h3 style="font-size:14px">工具轨迹可查</h3><p style="font-size:12px">grade_risk → A/B/C 与时限、law_lookup → 条文原文，均可逐条点开核对。</p></div>
+  <div class="card col" style="padding:12px 16px"><h3 style="font-size:14px">工具轨迹可查</h3><p style="font-size:12px">risk_factors / grade_risk → A/B/C 与时限、law_lookup → 条文原文，均可逐条点开核对。</p></div>
 </div>
 </div>
-  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>18 / 20</span></div>
+  <div class="foot"><span>安巡 Agent · 制造领域　|　应用成果展示</span><span>18 / 20</span></div>
 </div><div id="diag" style="display:none"></div>
 <script>(function(){var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){
   if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);});

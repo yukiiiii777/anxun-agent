@@ -131,7 +131,7 @@ def page(idx: int, chapter: str, title: str, sub: str, body: str, accent: str) -
   <h1>{title}</h1><div class="sub">{sub}</div>
   <div class="rule"></div>
   <div class="body">{body}</div>
-  <div class="foot"><span>上海中侨职业技术大学 · 人工智能学院　|　本科生组</span><span>{idx:02d} / 20</span></div>
+  <div class="foot"><span>安巡 Agent · 制造领域　|　应用成果展示</span><span>{idx:02d} / 20</span></div>
 </div><div id="diag" style="display:none"></div>
 <script>(function(){{var bad=[];document.querySelectorAll('.card,.body,.kpi').forEach(function(e){{
   if(e.scrollHeight>e.clientHeight+2) bad.push((e.className||'?').split(' ')[0]+' '+e.scrollHeight+'/'+e.clientHeight);}});
@@ -159,8 +159,8 @@ COVER = """<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
   <div class="line"></div>
   <div class="desc">厂区安全巡检多智能体系统<br>把摄像头画面变成<span style="color:#F0A468;font-weight:800">可执行的整改工单</span></div>
 </div>
-<div class="badge">第二届全国人工智能应用创新大赛<br><b style="color:#DCE9F4">通用赛道 · 制造领域 · 本科生组</b></div>
-<div class="meta">上海中侨职业技术大学　人工智能学院<br>3 名队员 + 1 名指导老师　·　2026 年 11 月</div>
+<div class="badge">第二届全国人工智能应用创新大赛<br><b style="color:#DCE9F4">通用赛道 · 制造领域</b></div>
+<div class="meta">厂区安全巡检多智能体系统<br>2026 年 11 月</div>
 </div></body></html>"""
 
 P02 = """
@@ -175,24 +175,27 @@ P02 = """
     <p>摄像头已经装好了，但「看到未戴安全帽」之后，没人负责把它变成一张限期整改、可签署、可追责的通知单。</p>
   </div>
 </div>
-<div class="row" style="margin-top:16px;height:170px">
+<div class="row" style="margin-top:16px;height:152px">
   <div class="card col"><h3><span class="n">1</span>技术线</h3><p>五类 PPE 权重训练、评测集构建、指标实测与误差归因；提供 ONNX 推理服务。</p><div class="small">交付：best.onnx · metrics_real.json · 技术页 P10–13</div></div>
   <div class="card col"><h3><span class="n">2</span>系统线</h3><p>判定与定级的确定性实现、三智能体编排、研判台前后端与 Word 工单导出。</p><div class="small">交付：规则引擎 · 研判台 · 分级标准 v1.4</div></div>
-  <div class="card col"><h3><span class="n">3</span>材料线</h3><p>赛事口径核对、20 页 PPT、6 分钟视频、提交包与答辩预案。</p><div class="small">交付：PPT · MP4 · 链接说明</div></div>
+  <div class="card col"><h3><span class="n">3</span>材料线</h3><p>资料整理、20 页 PPT、6 分钟视频与提交包。</p><div class="small">交付：PPT · MP4 · 链接说明</div></div>
 </div>
-<div class="card" style="margin-top:16px;padding:16px 22px">
+<div class="card" style="margin-top:16px;padding:14px 20px;display:flex;gap:18px;align-items:center">
+  <div style="flex:1">
   <h3 style="margin-bottom:8px">参考来源（单列）</h3>
   <div class="smalltxt" style="line-height:1.9">
   <b>数据</b>　Chapian/ppev3（Roboflow <span class="mono" style="padding:1px 5px">ppe-detection-9p0pu</span> v3，CC BY 4.0）· Chapian/PPE_detection（CC BY 4.0）　|
   <b>法规</b>　《中华人民共和国安全生产法》（2021 年第三次修正）第四十一、四十五、四十六、五十七条　|
   <b>标准</b>　GB 2811-2019《头部防护 安全帽》· GB 39800.1-2020《个体防护装备配备规范 第 1 部分：总则》　|
-  <b>框架</b>　Ultralytics YOLOv8s · ONNX Runtime · FastAPI</div>
+  <b>框架</b>　Ultralytics YOLOv8s · ONNX Runtime · FastAPI</div></div>
+  <div style="width:82px;flex:none;text-align:center">
+    <div class="imgframe" style="height:108px;padding:3px"><img src="../assets/policy_gazette.png" style="width:100%;height:100%;object-fit:contain"></div>
+    <div class="smalltxt" style="margin-top:4px;font-size:9.5px">国务院公报<br>2025 第 25 号</div></div>
 </div>
-<div class="note blue">按交付物分工，不按环节分工；三条线的接口是「检测框 JSON / 事件 JSON / 素材清单」，互不等待。</div>
 """
 
 P03 = """
-<div class="row" style="height:290px">
+<div class="row" style="height:248px">
   <div class="card col" style="border-top:4px solid #2E7D5B">
     <h3>法规是刚性的</h3>
     <ul>
@@ -213,15 +216,19 @@ P03 = """
     <div class="small">195 条逐帧告警里，真正需要处理的只有 13 个事件。</div>
   </div>
 </div>
-<div class="row" style="margin-top:18px;height:96px">
-  <div class="card col" style="text-align:center;padding-top:20px"><div class="kpi" style="border:0;box-shadow:none;padding:0">
-    <div class="v" style="font-size:30px">30 <span style="font-size:16px">分钟/班</span></div><div class="l">人工巡查覆盖</div></div></div>
-  <div class="card col" style="text-align:center;padding-top:20px"><div class="kpi" style="border:0;box-shadow:none;padding:0">
-    <div class="v" style="font-size:30px">195 <span style="font-size:16px">条</span></div><div class="l">34.8 秒视频产生的逐帧告警</div></div></div>
-  <div class="card col" style="text-align:center;padding-top:20px"><div class="kpi" style="border:0;box-shadow:none;padding:0">
-    <div class="v" style="font-size:30px">13 <span style="font-size:16px">个</span></div><div class="l">去重后真正要办的事件</div></div></div>
+<div class="row" style="margin-top:12px;height:152px">
+  <div class="card col" style="padding:8px 10px">
+    <div class="imgframe" style="height:96px;padding:3px"><img src="../assets/policy_aiplus.png" style="width:100%;height:100%;object-fit:cover;object-position:top center"></div>
+    <div style="font-size:11.5px;line-height:1.5;color:#44586C;margin-top:6px"><b>政策背景</b>　国务院《关于深入实施「人工智能+」行动的意见》<b>国发〔2025〕11号</b></div>
+    <div class="smalltxt">中国政府网 · 国务院文件原文页截图</div>
+  </div>
+  <div class="card col" style="padding:8px 10px">
+    <div class="imgframe" style="height:96px;padding:3px"><img src="../assets/policy_chairman.png" style="width:100%;height:100%;object-fit:cover;object-position:top center"></div>
+    <div style="font-size:11.5px;line-height:1.5;color:#44586C;margin-top:6px"><b>法规依据</b>　《中华人民共和国安全生产法》2021 年第三次修正 · <b>主席令第八十八号</b></div>
+    <div class="smalltxt">中国政府网 · 主席令原文页截图</div>
+  </div>
 </div>
-<div class="note">不是工人不怕，是<b>没人盯得住</b>；也不是没有摄像头，是<b>没人把画面变成一件要办的事</b>。</div>
+<div class="note">两份文件均可在中央政府门户按文号检索原文；条文由研判台 <span class="mono" style="padding:1px 5px">law_lookup</span> 逐条引用，查不到写「未检索到」。</div>
 """
 
 P04 = """
@@ -305,7 +312,7 @@ P06 = """
     <h3>为什么要做白名单</h3>
     <p>大模型会把「大概有这么一条」说得像真的。工业场景里一条错误的法规引用，
        足以让整张整改单失去效力。</p>
-    <div class="small">提交前逐字核对原文；法规模板、标准号、数据集出处必须能指认来源。</div>
+    <div class="small">法规条文、标准号与数据集出处均可指认原文，引用前逐条核对。</div>
   </div>
 </div>
 <div class="note">知识库不是给模型「补充常识」，是给结论<b>一个可被追责的出处</b>。</div>
@@ -567,7 +574,7 @@ P15 = """
       <tr><td>0.8654 / 6.12% / 4.35%</td><td><span class="tag c">实测</span></td></tr>
       <tr class="hl"><td>巡检覆盖 16×</td><td><span class="tag b">推演</span></td></tr></table>
     <div class="small" style="margin-top:10px">16× 来自「人工每班 2 次 × 15 分钟 vs 单路连续 8 小时」的<b>排班假设</b>，
-       不是实测；放出来必须标注，评委一问基线才不会塌。</div>
+       不是实测，故与实测值分栏列出，避免口径混淆。</div>
   </div>
 </div>
 <div class="note blue">价值量化不写「节省多少万元」这类无法核对的估算，只写能从数据里复算出来的三件事：
@@ -585,8 +592,7 @@ P16 = """
   <div class="card col"><h3>⑤ 现场素材有限</h3><p>价值量化基于 34.8 秒单路视频、无真实整改过程，因此<b>不体现「违规→合规」的整改耗时</b>。</p></div>
   <div class="card col"><h3>⑥ 离线依赖</h3><p>研判台已取消离线降级，现场需联网；已准备录屏备份与二维码备用入口。</p></div>
 </div>
-<div class="note">主动把局限摆出来，是因为这些数字<b>评委一问就要重跑</b>。
-装完美的作品一戳就破；能说清边界的作品，才像真的做过。</div>
+<div class="note">列出局限是为了说清结果的适用边界；后续优化按「先补数据、再补类别、最后扩场景」推进。</div>
 """
 
 P17 = """
@@ -609,76 +615,70 @@ P17 = """
   <div class="small" style="margin-top:12px">「无法判定」与「待复核」不得被时序聚合成「待复核」以外的任何结论——
      这是规则引擎里专门修过的一个 bug，失效状态不允许被改写成违规。</div>
 </div>
-<div class="note blue">答辩口径：系统不自动指派责任人，<b>它把该由谁签字、什么时候验收的位置留出来</b>。</div>
+<div class="note blue">系统不自动指派责任人，<b>它把该由谁签字、什么时候验收的位置留出来</b>。</div>
 """
 
 P18_TMPL = """
 <div class="row" style="height:330px">
   <div class="card" style="flex:1.55;padding:10px;display:flex;flex-direction:column">
-    <div style="font-size:12.5px;font-weight:800;margin:2px 0 6px 4px">在线研判台 · 真实界面（2026-11-10 截取）</div>
+    <div style="font-size:12.5px;font-weight:800;margin:2px 0 6px 4px">在线研判台 · 真实交互（2026-11-10 实跑截取）</div>
     <div class="imgframe" style="height:268px;max-height:268px;flex:none"><img src="{IMG_DESK}"></div>
   </div>
   <div class="card compact" style="flex:1">
     <h3>这一屏能证明什么</h3>
-    <ul><li>左侧对话、右侧实时研判，<b>不是预置回答</b>。</li>
-        <li>右栏顶部四态统计：已佩戴 / 待复核 / 未佩戴 / 无法判定。</li>
-        <li>处置等级卡片直接给 <b>B 级 · 当日处置 · 24 小时内</b>，并写明分档规则。</li>
-        <li>整改工单、法规依据可点开追到条号与原文。</li></ul>
-    <div class="small" style="margin-top:8px">底部标注：判定与工单以规则引擎输出为准，右侧由 best.onnx 对帧图实算。</div>
+    <ul><li>左侧是<b>真实发出的一句提问</b>与云端 Agent 的<b>实时回复</b>，不是预置回答。</li>
+        <li>回复前先调 <b>grade_risk</b>：等级与时限由规则引擎给，模型不自己拍。</li>
+        <li>右栏四态统计、<b>B 级 · 24 小时内</b>、工单号与法规依据，均由 best.onnx 对样例图实算。</li>
+        <li>工单可导出 1 页 Word 通知单，条文可点开追到条号。</li></ul>
+    <div class="small" style="margin-top:8px">判定与工单以规则引擎输出为准；右侧为模型实测，样例图为公开数据集素材（CC BY 4.0）。</div>
     <div class="note red" style="margin-top:9px">现场必须联网：研判台已无离线降级，连不上会明说「云端未连接」。<b>另备录屏。</b></div>
   </div>
 </div>
 <div class="row" style="margin-top:14px;height:88px">
   <div class="card col" style="padding:12px 16px"><h3 style="font-size:14px">上传真图片</h3><p style="font-size:12px">上传后由 ONNX 模型实算，四态与等级走 /api/inspect，工单号由系统生成。</p></div>
   <div class="card col" style="padding:12px 16px"><h3 style="font-size:14px">导出 Word 通知单</h3><p style="font-size:12px">《安全隐患整改通知单》1 页，含基本信息 / 违规事实 / 整改要求 / 法规依据 / 签署栏。</p></div>
-  <div class="card col" style="padding:12px 16px"><h3 style="font-size:14px">工具轨迹可查</h3><p style="font-size:12px">grade_risk → A/B/C 与时限、law_lookup → 条文原文，均可逐条点开核对。</p></div>
+  <div class="card col" style="padding:12px 16px"><h3 style="font-size:14px">工具轨迹可查</h3><p style="font-size:12px">risk_factors / grade_risk → A/B/C 与时限、law_lookup → 条文原文，均可逐条点开核对。</p></div>
 </div>
 """
 
 P19_TMPL = """
-<div class="row" style="height:264px">
-  <div class="card col" style="padding:12px 14px">
-    <div class="tag b">示例一</div><h3 style="font-size:13px;margin-top:7px;margin-bottom:6px">提示词</h3>
-    <div class="mono" style="font-size:11.5px">把这张图的违规开一张整改工单，说清楚等级和依据。</div>
-    <h3 style="font-size:13px;margin-top:8px;margin-bottom:6px">输入</h3><div class="smalltxt">确认未佩戴 1 人 · 待复核 0 人</div>
-    <h3 style="font-size:13px;margin-top:8px;margin-bottom:6px">输出</h3>
-    <div class="big" style="font-size:16px;color:#C98A16">B 级 · 24 小时内</div>
-    <div class="smalltxt" style="margin-top:6px">四态判定 → grade_risk → 工单卡片；责任人留空</div>
+<div class="row" style="height:250px">
+  <div class="card col" style="padding:11px 12px">
+    <div class="tag b">示例一 · 真实对话</div>
+    <div class="imgframe" style="margin-top:8px;padding:4px"><img src="{IMG_CHAT_B}" style="width:100%"></div>
+    <div class="big" style="font-size:16px;color:#C98A16;margin-top:8px">B 级 · 24 小时内</div>
+    <div class="smalltxt" style="margin-top:3px">1 人未佩戴 → 输出等级、依据与工单号</div>
   </div>
-  <div class="card col" style="padding:12px 14px">
-    <div class="tag a">示例二</div><h3 style="font-size:13px;margin-top:7px;margin-bottom:6px">提示词</h3>
-    <div class="mono" style="font-size:11.5px">同一批权重，装卸区这一帧呢？为什么等级变了？</div>
-    <h3 style="font-size:13px;margin-top:8px;margin-bottom:6px">输入</h3><div class="smalltxt">确认未佩戴 8 人 · 待复核 1 人</div>
-    <h3 style="font-size:13px;margin-top:8px;margin-bottom:6px">输出</h3>
-    <div class="big" style="font-size:16px;color:#B03A48">A 级 · 2 小时内</div>
-    <div class="smalltxt" style="margin-top:6px">差别只在人数；待复核转人工，不进违规统计</div>
+  <div class="card col" style="padding:11px 12px">
+    <div class="tag a">示例二 · 真实对话</div>
+    <div class="imgframe" style="margin-top:8px;padding:4px"><img src="{IMG_CHAT_A}" style="width:100%"></div>
+    <div class="big" style="font-size:16px;color:#B03A48;margin-top:8px">A 级 · 2 小时内</div>
+    <div class="smalltxt" style="margin-top:3px">8 人未佩戴 → 人数决定档位，不看作业类型</div>
   </div>
-  <div class="card col" style="padding:12px 14px">
-    <div class="tag c">示例三</div><h3 style="font-size:13px;margin-top:7px;margin-bottom:6px">提示词</h3>
-    <div class="mono" style="font-size:11.5px">这一帧有违规吗？需要开工单吗？</div>
-    <h3 style="font-size:13px;margin-top:8px;margin-bottom:6px">输入</h3><div class="smalltxt">确认未佩戴 0 人 · 3 人全部已佩戴</div>
-    <h3 style="font-size:13px;margin-top:8px;margin-bottom:6px">输出</h3>
-    <div class="big" style="font-size:16px;color:#2E7D5B">不出单</div>
-    <div class="smalltxt" style="margin-top:6px">grade_risk 未返回等级，未调用 create_ticket</div>
+  <div class="card col" style="padding:11px 12px">
+    <div class="tag c">示例三 · 真实对话</div>
+    <div class="imgframe" style="margin-top:8px;padding:4px"><img src="{IMG_CHAT_NONE}" style="width:100%"></div>
+    <div class="big" style="font-size:16px;color:#2E7D5B;margin-top:8px">不出单</div>
+    <div class="smalltxt" style="margin-top:3px">全员已佩戴 → 不生成事件与工单</div>
   </div>
 </div>
-<div class="row" style="margin-top:10px;height:124px">
+<div class="row" style="margin-top:10px;height:112px">
   <div class="card" style="flex:1.55;padding:12px 16px;display:flex;gap:16px;align-items:center">
-    <div class="imgframe" style="width:104px;height:104px;flex:none"><img src="{IMG_QR}" style="width:100%"></div>
-    <div><h3 style="font-size:15px">Agent 可访问链接（官方硬要求）</h3>
-      <div class="mono" style="font-size:11px;margin-top:8px">https://anxun-desk.app.workbuddy.host/?sharecode=OLOGYZUPHO</div>
-      <div class="small" style="margin-top:8px">⚠️ 二维码与链接必须含完整 <b>?sharecode=OLOGYZUPHO</b>，裸域名返回 403。<br>
+    <div class="imgframe" style="width:96px;height:96px;flex:none"><img src="{IMG_QR}" style="width:100%"></div>
+    <div><h3 style="font-size:15px">Agent 在线访问链接</h3>
+      <div class="mono" style="font-size:11px;margin-top:7px">https://anxun-desk.app.workbuddy.host/?sharecode=OLOGYZUPHO</div>
+      <div class="small" style="margin-top:7px">⚠️ 二维码与链接必须含完整 <b>?sharecode=OLOGYZUPHO</b>，裸域名返回 403。<br>
         已在非本人设备验证；现场联网 + 录屏备份。</div></div>
   </div>
-  <div class="card" style="flex:1;padding:14px 18px">
-    <h3 style="font-size:15px">提示词设计要点</h3>
-    <p style="font-size:12.5px">系统提示词共 14 条，核心是<b>等级、时限、工单号都不交给大模型</b>：
-       必先调 grade_risk，引用条文先调 law_lookup，开工单必调 create_ticket。</p>
-    <div class="small" style="margin-top:8px">完整三组提示词 → 输入 → 输出见仓库 docs/12-Agent提示词示例.md</div>
+  <div class="card" style="flex:1;padding:12px 16px">
+    <h3 style="font-size:15px">提示词与工具调用</h3>
+    <p style="font-size:12.5px">黑色气泡是真实输入，白色气泡是云端 Agent 实时回复，蓝色小字是工具调用轨迹。
+       <b>等级、时限、工单号都不交给大模型</b>：必先调 grade_risk，开工单必调 create_ticket。</p>
+    <div class="small" style="margin-top:7px">三组提示词与输出逐字版见仓库 docs/12-Agent提示词示例.md，可复现。</div>
   </div>
 </div>
-<div class="note blue" style="margin-top:8px">三组覆盖 B / A / 不出单；C 档（仅待复核 → 7 天内核实）为规则补充，
-未在三组实测场景中出现，<b>不冒充实测</b>。</div>
+<div class="note blue" style="margin-top:8px">三张截图均为 2026-11-10 在线研判台实跑截取，未做后期合成；
+三组覆盖 B / A / 不出单。C 档（仅待复核 → 7 天内核实）为规则补充，未在三组实测场景中出现，<b>不冒充实测</b>。</div>
 """
 
 P20 = """
@@ -704,7 +704,7 @@ P20 = """
 def build() -> None:
     SLIDES.mkdir(parents=True, exist_ok=True)
     ASSETS.mkdir(parents=True, exist_ok=True)
-    (SLIDES / "style.css").write_text(CSS, encoding="utf-8", newline="\n")
+    (SLIDES / "style.css").write_text(CSS, encoding="utf-8")
 
     def uri(p: Path) -> str:
         # 相对 slides/ 目录，保证仓库 clone 后 HTML 仍能打开
@@ -715,6 +715,9 @@ def build() -> None:
         "IMG_PR": uri(ROOT / "techline-v3.1.0/docs/figs/pr_curve.png"),
         "IMG_DESK": uri(ASSETS / "desk_online.png"),
         "IMG_QR": uri(ASSETS / "qrcode.png"),
+        "IMG_CHAT_B": uri(ASSETS / "chat_b.png"),
+        "IMG_CHAT_A": uri(ASSETS / "chat_a.png"),
+        "IMG_CHAT_NONE": uri(ASSETS / "chat_none.png"),
     }
     P11 = P11_TMPL.format(**vals)
     P18 = P18_TMPL.format(**vals)
@@ -722,7 +725,7 @@ def build() -> None:
 
     entries = [
         (None, None, None, COVER, C[1]),
-        (1, "作品背景与说明", "别人做告警，我们做工单", "三人分工、一句话定位与参考来源", P02, C[1]),
+        (1, "作品背景与说明", "别人做告警，我们做工单", "一句话定位、交付分工与参考来源", P02, C[1]),
         (1, "场景痛点", "法规是刚性的，执行是虚化的", "摄像头已经装好了，缺的是把画面变成一件要办的事", P03, C[1]),
         (2, "数据来源一 · 主训练集", "2,451 张训练图像，全部可追溯", "Chapian/ppev3 · CC BY 4.0 · 9 类重映射为 5 类", P04, C[2]),
         (2, "数据来源二 · 独立评测集", "100 张，全程不参与训练与选轮次", "四个对外指标的唯一报数出口", P05, C[2]),
@@ -736,10 +739,10 @@ def build() -> None:
         (4, "创新点与跨学科视角", "看得见 → 判得准 → 落得下", "安全工程 × 计算机视觉 × 管理学 PDCA", P13, C[4]),
         (5, "结果解读", "同一张图换区域，等级不变", "v1.4 分档 · 线上接口实测四场景", P14, C[5]),
         (5, "价值量化", "195 条告警，只留下 13 件该办的事", "降噪 93.33%；实测与推演分栏，不拿假设冒充结果", P15, C[5]),
-        (5, "问题与优化建议", "主动承认六条局限", "评委一问就要重跑的数字，不如现在就摆出来", P16, C[5]),
+        (5, "问题与优化建议", "六条局限与优化建议", "把结果的适用边界与改进路径一并列出", P16, C[5]),
         (5, "风险识别与应对", "隐私、误报信任、责任边界", "三道无效性保护，以及一条不越界的叙事红线", P17, C[5]),
-        (6, "应用对话界面", "真实研判台，不是设计稿", "上传真图片 → 四态判定 → A/B/C 定级 → 导出 Word 通知单", P18, C[6]),
-        (6, "三组提示词示例 + Agent 链接", "官方硬要求：提示词、输出、可访问链接", "三组覆盖 B / A / 不出单；二维码含完整 sharecode", P19, C[6]),
+        (6, "应用对话界面", "真实研判台，不是设计稿", "真实提问 → 云端 Agent 实时回复 → 右栏规则引擎实算定级与工单", P18, C[6]),
+        (6, "成果展示", "成果展示：三组真实对话与 Agent 在线链接", "提示词、实时输出与访问入口 · 覆盖 B / A / 不出单 · 二维码含完整 sharecode", P19, C[6]),
         (6, "结尾与展望", "把一次「看见」，变成一件办得完的事", "先做稳判定，再接通闭环，最后扩场景", P20, C[6]),
     ]
 
@@ -756,7 +759,7 @@ def build() -> None:
             r'(<div class="(?:row|card|kpi)" style="[^"]*?)\bheight:(\d+px)',
             r'\1min-height:\2', html,
         )
-        (SLIDES / f"p{i:02d}.html").write_text(html, encoding="utf-8", newline="\n")
+        (SLIDES / f"p{i:02d}.html").write_text(html, encoding="utf-8")
 
     # 单个总览页（方便人直接翻）
     allpages = "\n".join(
@@ -767,7 +770,7 @@ def build() -> None:
         f'<!DOCTYPE html><meta charset="utf-8"><title>安巡 Agent · 20 页总览</title>'
         f'<body style="background:#E9EDF2;font-family:Microsoft YaHei;padding:20px">'
         f'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">{allpages}</div></body>',
-        encoding="utf-8", newline="\n",
+        encoding="utf-8",
     )
     print(f"生成 20 页 HTML → {SLIDES}")
 
@@ -802,8 +805,16 @@ def make_pptx() -> Path:
             str(SLIDES / f"p{i:02d}.png"), 0, 0,
             width=prs.slide_width, height=prs.slide_height,
         )
-    out = OUT / "安巡Agent_PPT_1110.pptx"
-    prs.save(out)
+    out = OUT / "制造-上海中侨职业技术大学-张璟瑜-安巡Agent.pptx"
+    tmp = OUT / ".pptx_build_tmp.pptx"
+    prs.save(tmp)
+    try:
+        os.replace(tmp, out)
+    except OSError as e:
+        fallback = OUT / "制造-上海中侨职业技术大学-张璟瑜-安巡Agent_v2.pptx"
+        os.replace(tmp, fallback)
+        print(f"警告：原 PPT 被其他程序占用（{e}），已输出备用文件 {fallback.name}")
+        return fallback
     return out
 
 

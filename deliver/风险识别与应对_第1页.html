@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>安巡 Agent · 风险识别与应对（一）数据安全</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#e9edf2;font-family:"Microsoft YaHei","PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.page{position:relative;width:1280px;height:720px;overflow:hidden;background:#f2f4f7}
+.frame{position:absolute;inset:13px;border:1px solid #d8dee6;background:#fff;overflow:hidden}
+.photo{position:absolute;inset:0;background:url("assets/bg_site.jpg") center 44%/cover no-repeat}
+.veil{position:absolute;inset:0;background:linear-gradient(100deg,rgba(255,255,255,.88) 0%,rgba(255,255,255,.78) 46%,rgba(255,255,255,.66) 100%)}
+.topwash{position:absolute;left:0;right:0;top:0;height:170px;background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(255,255,255,0))}
+.head{position:absolute;left:44px;top:28px;display:flex;align-items:center;gap:13px;z-index:6}
+.logo{width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 32% 26%,#f58b86,#c62828 72%);box-shadow:0 3px 10px rgba(183,28,28,.30);border:2px solid #fff}
+.head h1{font-size:23px;font-weight:700;color:#20242b;letter-spacing:.6px;line-height:1.1}
+.head .bar{width:250px;height:8px;margin-top:7px;background:#c62828;clip-path:polygon(0 0,100% 0,96% 100%,0 100%)}
+nav{position:absolute;right:28px;top:32px;display:flex;gap:6px;z-index:6}
+nav span{background:rgba(255,255,255,.96);border:1.5px solid #e3bdbd;border-radius:20px;padding:8px 13px;font-size:15px;font-weight:700;color:#5b3131;box-shadow:0 2px 5px rgba(120,60,60,.10)}
+nav span.on{background:#c62828;color:#fff;border-color:#c62828;box-shadow:0 3px 8px rgba(198,40,40,.28)}
+.banner{position:absolute;left:160px;top:100px;width:960px;height:56px;z-index:5;
+  background:linear-gradient(90deg,#f3a4a0,#dc5450 40%,#b71c1c);color:#fff;font-size:25px;font-weight:700;
+  letter-spacing:.6px;display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(1.2% 0,98.8% 0,100% 100%,0 100%);text-shadow:0 1px 3px rgba(120,0,0,.45)}
+.banner-line{position:absolute;left:170px;top:157px;width:940px;height:2px;background:#9b1c1c;opacity:.62;z-index:5}
+.sec{position:absolute;left:62px;width:302px;height:50px;z-index:5;display:flex;align-items:center;gap:13px;padding-left:22px;
+  background:linear-gradient(90deg,#f07a75,#d04545);color:#fff;font-size:23px;font-weight:700;letter-spacing:1px;
+  border-radius:9px 0 0 9px;clip-path:polygon(0 0,calc(100% - 24px) 0,100% 50%,calc(100% - 24px) 100%,0 100%);
+  box-shadow:0 2px 6px rgba(190,60,60,.22)}
+.sec .play{width:24px;height:24px;border:2px solid rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:11px;padding-left:2px}
+.s1{top:178px}.s2{top:404px}
+.txt{position:absolute;left:110px;width:474px;z-index:4;background:rgba(255,255,255,.97);border-radius:13px;
+  box-shadow:0 3px 13px rgba(80,90,110,.16);padding:16px 20px;font-size:16.5px;line-height:1.62;color:#8e1b1b;font-weight:700;text-align:justify}
+.txt b{color:#b71c1c}
+.t1{top:242px;height:142px}.t2{top:468px;height:184px}
+.panel{position:absolute;left:614px;width:602px;z-index:4;background:rgba(255,255,255,.955);border:1.5px solid #d3dce7;border-radius:10px;
+  box-shadow:0 4px 16px rgba(70,85,110,.18);padding:12px 16px 10px;overflow:hidden}
+.pa{top:184px;height:220px}.pb{top:418px;height:234px}
+.ph{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.ph .dot{width:9px;height:9px;border-radius:50%;background:#c62828;flex:none}
+.ph h2{font-size:16px;font-weight:700;color:#242a33;letter-spacing:.3px}
+.ph .tag{margin-left:auto;font-size:11px;color:#9e2020;background:#fdecec;border:1px solid #f0c5c5;border-radius:9px;padding:2px 9px;white-space:nowrap}
+.note{font-size:10.8px;color:#7c8798;border-top:1px dashed #dfe5ee;padding-top:5px;margin-top:4px;line-height:1.32}
+table{width:100%;border-collapse:collapse;font-size:12.6px}
+th{background:#f3f6fa;color:#5b6779;font-size:11.5px;font-weight:700;padding:6px 8px;text-align:left;border-bottom:1px solid #dfe5ee}
+td{padding:6px 8px;border-bottom:1px solid #edf1f6;color:#2b3038;line-height:1.35}
+td.no{color:#b71c1c;font-weight:700}td.yes{color:#1e6b45;font-weight:700}
+.foot{position:absolute;right:34px;bottom:17px;z-index:6;font-size:11.5px;color:#7b8593;letter-spacing:.3px}
+.foot b{color:#b71c1c}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="frame">
+    <div class="photo"></div><div class="veil"></div><div class="topwash"></div>
+
+    <div class="head">
+      <div class="logo"></div>
+      <div><h1>风险识别与应对（一）· 数据安全</h1><div class="bar"></div></div>
+    </div>
+    <nav><span>背景简述</span><span>数据处理</span><span>分析过程</span><span>独特创新</span><span class="on">结果解释</span><span>结果呈现</span></nav>
+
+    <div class="banner">厂区视频数据 —— 采集边界与最小必要传输</div>
+    <div class="banner-line"></div>
+
+    <div class="sec s1"><span class="play">▶</span>风险识别</div>
+    <div class="txt t1">监控画面包含人员面部、着装与行动轨迹，属可识别的现场数据。演示链路需调用云端模型，若<b>原图与提示词随请求出厂</b>，即产生越权采集、链路留存与二次使用风险。</div>
+
+    <div class="sec s2"><span class="play">▶</span>应对策略</div>
+    <div class="txt t2">按<b>最小必要</b>收敛链路：厂内边缘节点完成推理，仅上传人数、四态计数与等级等结构化事件，原始画面不出厂；传输加密、按角色授权、留存设期限并保留审计日志。工单不预置人员身份库，责任人与验收项留空由现场手填。</div>
+
+    <div class="panel pa">
+      <div class="ph"><span class="dot"></span><h2>数据出厂边界 · 链路设计</h2><span class="tag">原始画面不出厂</span></div>
+      <svg width="568" height="120" viewBox="0 0 568 120">
+        <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#8c98a8"/></marker></defs>
+        <rect x="0" y="0" width="248" height="106" rx="8" fill="#eef7f1" stroke="#bcdcc8"/>
+        <text x="12" y="18" font-size="11" font-weight="700" fill="#1e6b45">厂内 · 边缘侧</text>
+        <rect x="14" y="30" width="98" height="56" rx="7" fill="#fff" stroke="#c9d8ce"/>
+        <text x="63" y="53" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2b3038">摄像头采集</text>
+        <text x="63" y="72" text-anchor="middle" font-size="10.5" fill="#7c8798">原始视频帧</text>
+        <line x1="114" y1="58" x2="136" y2="58" stroke="#8c98a8" stroke-width="2" marker-end="url(#ar)"/>
+        <rect x="140" y="30" width="96" height="56" rx="7" fill="#fff" stroke="#c9d8ce"/>
+        <text x="188" y="53" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2b3038">端侧推理</text>
+        <text x="188" y="72" text-anchor="middle" font-size="10.5" fill="#7c8798">best.onnx</text>
+        <line x1="268" y1="5" x2="268" y2="106" stroke="#c62828" stroke-width="2" stroke-dasharray="6 5"/>
+        <text x="268" y="117" text-anchor="middle" font-size="10.5" font-weight="700" fill="#b71c1c">出厂边界</text>
+        <rect x="288" y="0" width="280" height="106" rx="8" fill="#fdf1f1" stroke="#eecccc"/>
+        <text x="300" y="18" font-size="11" font-weight="700" fill="#9e2020">云端 · 仅必要字段</text>
+        <rect x="300" y="30" width="118" height="56" rx="7" fill="#fff" stroke="#e3cccc"/>
+        <text x="359" y="53" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2b3038">结构化事件</text>
+        <text x="359" y="72" text-anchor="middle" font-size="10.5" fill="#7c8798">人数 / 四态 / 等级</text>
+        <line x1="420" y1="58" x2="440" y2="58" stroke="#8c98a8" stroke-width="2" marker-end="url(#ar)"/>
+        <rect x="444" y="30" width="112" height="56" rx="7" fill="#fff" stroke="#e3cccc"/>
+        <text x="500" y="53" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2b3038">对话 · 工单</text>
+        <text x="500" y="72" text-anchor="middle" font-size="10.5" fill="#7c8798">条款 / 时限 / 签署位</text>
+        <text x="300" y="97" font-size="10.5" fill="#9e2020">画面不出厂，身份不入库</text>
+      </svg>
+      <div class="note">实测：端侧 ONNX CPU 36.5ms/帧，本地 serve.py 可推理；线上演示走云端，边界策略部分已实现。</div>
+    </div>
+
+    <div class="panel pb">
+      <div class="ph"><span class="dot"></span><h2>数据最小化清单</h2><span class="tag">按企业数据安全制度执行</span></div>
+      <table>
+        <tr><th style="width:36%">数据项</th><th style="width:44%">处理方式</th><th style="width:20%">出厂</th></tr>
+        <tr><td>原始视频帧 / 人脸</td><td>厂内推理后立即丢弃，不落盘</td><td class="no">否</td></tr>
+        <tr><td>框坐标 · 人数 · 四态计数</td><td>聚合成去标识的结构化事件</td><td class="yes">必要字段</td></tr>
+        <tr><td>工单责任人 / 验收项</td><td>留空，由现场手填并签署</td><td class="no">不预置</td></tr>
+        <tr><td>调用与导出日志</td><td>传输加密、按角色授权、留存设期限</td><td class="yes">审计用</td></tr>
+      </table>
+      <div class="note">风险落点：可识别信息一旦进入提示词或日志即脱离厂区控制；收敛后即使链路被截获也不含原图与身份。</div>
+    </div>
+
+    <div class="foot">安巡 Agent · 风险识别与应对 <b>01 / 02</b>　｜　素材：项目真实场景图 · techline-v3.1.0 实测指标</div>
+  </div>
+</div>
+</body>
+</html>

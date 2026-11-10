@@ -265,8 +265,8 @@ uvicorn infer_api:app --host 0.0.0.0 --port 8000
 | 模型 | ✅ 已就绪 | 单模型：自训五类权重（person / helmet / nohelmet / vest / novest）一次前向；权重指纹见 `techline-v3.1.0/docs/模型卡片.md` |
 | 指标实测 | ✅ 已实测 | mAP 0.8654 / 误报 6.12% / 漏报 4.35% / 15.0 ms（GPU）；口径见 `techline-v3.1.0/docs/技术口径.md` |
 | Agent 平台搭建 | ✅ 已上线 | 研判台（对话 + 实测 + Word 工单）已发布到托管地址；`run_agents.py` 三 Agent 离线可跑 |
-| PPT 20 页 | ✅ 成品已交付 | `deliver/安巡Agent_PPT_1110.pptx` · 20 页 16:9 · 1.53 MB；逐页大纲见 `docs/05-PPT与视频.md` |
-| 6 分钟视频 | ✅ 成品已交付 | `deliver/安巡Agent_演示视频_1110.mp4` · 5 分 49 秒 · 9.58 MB；旁白稿见 `deliver/旁白稿.md` |
+| PPT 20 页 | ✅ 成品已交付 | `deliver/制造-上海中侨职业技术大学-张璟瑜-安巡Agent.pptx` · 20 页 16:9 · 1.59 MB；逐页大纲见 `docs/05-PPT与视频.md` |
+| 6 分钟视频 | ✅ 成品已交付 | `deliver/制造-上海中侨职业技术大学-张璟瑜-安巡Agent.mp4` · 5 分 49 秒 · 10.11 MB；旁白稿见 `deliver/旁白稿.md` |
 | 报名 | ✅ 已完成 | 老大 2026-11-10 确认：官网报名、缴费、建队完成 |
 | 提交包 | ✅ 已打包 | `deliver/制造-上海中侨职业技术大学-张璟瑜-安巡Agent.zip` · 10.28 MB · 只含 3 个文件 |
 
